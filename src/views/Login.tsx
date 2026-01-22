@@ -24,8 +24,7 @@ import { ENV_CONFIG } from '@server/config'
 import { signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
 import { valibotResolver } from '@hookform/resolvers/valibot'
-import { object, minLength, string, email, pipe, nonEmpty, number } from 'valibot'
-import classnames from 'classnames'
+import { object, minLength, string, pipe, nonEmpty } from 'valibot'
 import type { SubmitHandler } from 'react-hook-form'
 import type { InferInput } from 'valibot'
 import { toast } from 'react-toastify'
@@ -35,14 +34,11 @@ import type { Mode } from '@core/types'
 import type { Locale } from '@configs/i18n'
 
 // Component Imports
-import Logo from '@components/layout/shared/Logo'
-import Illustrations from '@components/Illustrations'
 
 // Config Imports
-import themeConfig, { getFirstMenuRoute } from '@configs/themeConfig'
+import { getFirstMenuRoute } from '@configs/themeConfig'
 
 // Hook Imports
-import { useImageVariant } from '@core/hooks/useImageVariant'
 import { useSettings } from '@core/hooks/useSettings'
 import useThemeByRole from '@core/hooks/useThemeByRole'
 
@@ -78,7 +74,6 @@ const createSchema = (t: (key: string, params?: Record<string, string | number>)
 type FormData = InferInput<ReturnType<typeof createSchema>>
 
 const Login = ({ mode }: { mode: Mode }) => {
-  const CONFIG = GET_THEME_CONFIG()
 
   // Hooks
   const dictionary = useDictionary()
@@ -103,14 +98,7 @@ const Login = ({ mode }: { mode: Mode }) => {
   const [loginLoading, setLoginLoading] = useState(false)
   const captchaPromiseRef = useRef<Promise<any> | null>(null)
 
-  const [selectValue, setSelectValue] = useState('kyc')
-  // Vars
-  const darkImg = '/images/pages/auth-v2-mask-dark.png'
-  const lightImg = '/images/pages/auth-v2-mask-light.png'
-  const darkIllustration = CONFIG?.loginIllustrationDark
-  const lightIllustration = CONFIG?.loginIllustration
-  const borderedDarkIllustration = CONFIG?.loginIllustrationBorderedDark
-  const borderedLightIllustration = CONFIG?.loginIllustrationBordered
+  const [selectValue, setSelectValue] = useState('operation')
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -128,8 +116,6 @@ const Login = ({ mode }: { mode: Mode }) => {
   } = useForm<FormData>({
     resolver: valibotResolver(schema),
     defaultValues: {
-      // email: 'admin',
-      // password: '123456',
       email: '',
       password: '',
       totp: ''
@@ -169,16 +155,7 @@ const Login = ({ mode }: { mode: Mode }) => {
       captchaRequested = true
       requestCaptchaImg()
     }
-  }, []) // 空依赖数组，确保只执行一次
-  const authBackground = useImageVariant(mode, lightImg, darkImg)
-
-  const characterIllustration = useImageVariant(
-    mode,
-    lightIllustration,
-    darkIllustration,
-    borderedLightIllustration,
-    borderedDarkIllustration
-  )
+  }, [requestCaptchaImg]) // 添加 requestCaptchaImg 到依赖数组
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
@@ -267,304 +244,342 @@ const Login = ({ mode }: { mode: Mode }) => {
   }
 
   return (
-    <div className='flex bs-full justify-center items-center min-bs-[100dvh] bg-gradient-to-br from-primary/5 via-backgroundPaper to-primary/10'>
-      {/* 左侧装饰区域 - 移动端隐藏 */}
-      <div
-        className={classnames(
-          'hidden md:flex bs-full items-center justify-center flex-1 min-bs-[100dvh] relative p-6',
-          {
-            'border-ie': settings.skin === 'bordered'
-          }
-        )}
-      >
-        <div className='plb-12 pis-12 relative z-10'>
-          <img
-            src={characterIllustration}
-            alt='character-illustration'
-            className='max-bs-[500px] max-is-full bs-auto'
-          />
-        </div>
-        <Illustrations
-          image1={{ src: '/images/illustrations/objects/tree-2.png' }}
-          image2={null}
-          maskImg={{ src: authBackground }}
-        />
-      </div>
+    <div className='flex bs-full min-bs-[100dvh] bg-[#f8fafc] relative overflow-hidden'>
+      {/* 现代感网格背景 */}
+      <div 
+        className='absolute inset-0 z-0'
+        style={{
+          backgroundImage: `
+            linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
+          `,
+          backgroundSize: '32px 32px',
+          maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)',
+          WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
+        }}
+      />
       
-      {/* 右侧登录表单区域 */}
-      <div className='flex justify-center items-center bs-full !min-is-full p-6 md:!min-is-[unset] md:p-12 md:is-[520px]'>
-        <div className='w-full max-w-md'>
-          {/* Logo 区域 */}
-          <div className='flex justify-center mb-8'>
-            <Logo />
-          </div>
-          
-          {/* 登录卡片 */}
-          <Box
-            sx={{
-              backgroundColor: 'background.paper',
-              borderRadius: 3,
-              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-              padding: { xs: 3, sm: 4 },
-              border: settings.skin === 'bordered' ? '1px solid' : 'none',
-              borderColor: 'divider'
+      {/* 极简背景光晕修饰 */}
+      <div 
+        className='absolute -top-24 -left-24 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-60'
+      />
+      <div 
+        className='absolute -bottom-24 -right-24 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-60'
+      />
+      
+      {/* 顶部 Header */}
+      <div className='absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-8'>
+        <div className='flex items-center gap-2.5'>
+          <img src='/images/logo.png' alt='Fidere Pay Logo' className='h-[34px] w-auto object-contain' />
+          <Typography 
+            variant='h6' 
+            sx={{ 
+              fontWeight: 700,
+              color: 'text.primary',
+              fontSize: '1.4rem',
+              letterSpacing: '-0.02em'
             }}
           >
-            <div className='flex flex-col gap-6'>
-              {/* 标题区域 */}
-              <div className='text-center mb-2'>
+            Fidere Pay
+          </Typography>
+        </div>
+        <div className='flex items-center gap-4'>
+          <IconButton size='medium' sx={{ color: 'text.secondary' }}>
+            <i className='ri-translate-2-line' />
+          </IconButton>
+          <IconButton size='medium' sx={{ color: 'text.secondary' }}>
+            <i className='ri-moon-line' />
+          </IconButton>
+        </div>
+      </div>
+
+      {/* 主要内容区域 */}
+      <div className='flex flex-col md:flex-row w-full relative z-10 max-w-[1600px] mx-auto'>
+        {/* 左侧信息展示区域 */}
+        <div className='hidden md:flex flex-col justify-center flex-1 p-12 md:p-20 lg:p-32'>
+          <div className='max-w-xl'>
+            <Typography 
+              variant='h2' 
+              sx={{ 
+                fontWeight: 800,
+                fontSize: { md: '3rem', lg: '3.5rem' },
+                color: 'text.primary',
+                mb: 3,
+                lineHeight: 1.1,
+                letterSpacing: '-0.03em'
+              }}
+            >
+              全球收付款平台
+            </Typography>
+            
+            <Typography 
+              variant='h5' 
+              sx={{ 
+                color: 'primary.main',
+                mb: 4,
+                fontWeight: 600,
+                letterSpacing: '0.1em'
+              }}
+            >
+              安全 · 便捷 · 高效
+            </Typography>
+            
+            <Typography 
+              variant='body1' 
+              sx={{ 
+                color: 'text.secondary',
+                mb: 8,
+                lineHeight: 1.8,
+                fontSize: '1.1rem',
+                maxWidth: '90%'
+              }}
+            >
+              连接全球200+国家和地区，支持多币种实时收款与汇款。银行级安全保障，让您的跨境资金流转更加便捷高效。
+            </Typography>
+            
+            {/* 功能特性 - 更简洁的列表样式 */}
+            <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10'>
+              {[
+                { icon: 'ri-time-line', title: '实时到账', desc: '7×24小时实时处理，资金秒速到账' },
+                { icon: 'ri-global-line', title: '多币种支持', desc: '支持50+主流货币，汇率实时更新' },
+                { icon: 'ri-shield-check-line', title: '安全保障', desc: '银行级加密技术，资金安全有保障' },
+                { icon: 'ri-line-chart-line', title: '低费率', desc: '行业领先的优惠费率，节省成本' }
+              ].map((item, index) => (
+                <div key={index} className='flex gap-4 items-start'>
+                  <div className='flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center'>
+                    <i className={`${item.icon} text-xl`} style={{ color: 'var(--mui-palette-primary-main)' }} />
+                  </div>
+                  <div>
+                    <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 0.5, color: 'text.primary' }}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant='body2' sx={{ color: 'text.secondary', lineHeight: 1.5 }}>
+                      {item.desc}
+                    </Typography>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* 右侧登录表单区域 */}
+        <div className='flex justify-center items-center w-full md:w-[500px] lg:w-[550px] p-6 md:p-12'>
+          <Box
+            sx={{
+              width: '100%',
+              maxWidth: 440,
+              backgroundColor: 'background.paper',
+              borderRadius: '24px',
+              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.05)',
+              padding: { xs: 6, sm: 8, md: 10 },
+              border: '1px solid',
+              borderColor: 'rgba(0,0,0,0.04)'
+            }}
+          >
+            <div className='flex flex-col gap-8'>
+              <div className='text-center md:text-left'>
                 <Typography 
                   variant='h4' 
                   sx={{ 
-                    fontWeight: 700,
-                    mb: 1,
-                    background: 'linear-gradient(135deg, var(--mui-palette-primary-main) 0%, var(--mui-palette-primary-dark) 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
+                    fontWeight: 800,
+                    mb: 1.5,
+                    color: 'text.primary',
+                    letterSpacing: '-0.02em'
                   }}
                 >
-                  {t('auth.welcomeMessage', {
-                    templateName: themeConfig.templateName,
-                    loginName: GET_THEME_CONFIG()?.loginName
-                  })}
+                  欢迎回来
                 </Typography>
-                <Typography variant='body1' color='text.secondary'>
-                  {t('auth.signInToAccount')}
+                <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.95rem' }}>
+                  请输入账号信息以管理您的项目
                 </Typography>
               </div>
               
-              <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-5'>
-            <Controller
-              name='email'
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  autoFocus
-                  type='email'
-                  label={t('auth.email')}
-                  variant='outlined'
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      backgroundColor: 'background.paper',
-                      '&:hover': {
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'primary.main'
+              <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-6'>
+                <Controller
+                  name='email'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      autoFocus
+                      placeholder='账号 / 邮箱'
+                      variant='outlined'
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '12px',
+                          backgroundColor: '#fcfdfe',
+                          '& fieldset': { borderColor: '#eef0f2' },
+                          '&:hover fieldset': { borderColor: 'primary.main' },
                         }
-                      },
-                      '&.Mui-focused': {
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderWidth: 2
-                        }
-                      }
-                    }
-                  }}
-                  onChange={e => {
-                    field.onChange(e.target.value)
-                    errorState !== null && setErrorState(null)
-                  }}
-                  {...((errors.email || errorState !== null) && {
-                    error: true,
-                    helperText: errors?.email?.message || errorState?.message[0]
-                  })}
+                      }}
+                      onChange={e => {
+                        field.onChange(e.target.value)
+                        errorState !== null && setErrorState(null)
+                      }}
+                      {...((errors.email || errorState !== null) && {
+                        error: true,
+                        helperText: errors?.email?.message || errorState?.message[0]
+                      })}
+                    />
+                  )}
                 />
-              )}
-            />
-            <Controller
-              name='password'
-              control={control}
-              rules={{ required: true }}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  fullWidth
-                  label={t('auth.password')}
-                  id='login-password'
-                  type={isPasswordShown ? 'text' : 'password'}
-                  variant='outlined'
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 2,
-                      backgroundColor: 'background.paper',
-                      '&:hover': {
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderColor: 'primary.main'
+                
+                <Controller
+                  name='password'
+                  control={control}
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      placeholder='密码'
+                      type={isPasswordShown ? 'text' : 'password'}
+                      variant='outlined'
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '12px',
+                          backgroundColor: '#fcfdfe',
+                          '& fieldset': { borderColor: '#eef0f2' },
+                          '&:hover fieldset': { borderColor: 'primary.main' },
                         }
-                      },
-                      '&.Mui-focused': {
-                        '& .MuiOutlinedInput-notchedOutline': {
-                          borderWidth: 2
+                      }}
+                      onChange={e => {
+                        field.onChange(e.target.value)
+                        errorState !== null && setErrorState(null)
+                      }}
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position='end'>
+                              <IconButton
+                                size='small'
+                                edge='end'
+                                onClick={handleClickShowPassword}
+                                onMouseDown={e => e.preventDefault()}
+                                sx={{ color: '#94a3b8' }}
+                              >
+                                <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                              </IconButton>
+                            </InputAdornment>
+                          )
                         }
-                      }
-                    }
-                  }}
-                  onChange={e => {
-                    field.onChange(e.target.value)
-                    errorState !== null && setErrorState(null)
-                  }}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <InputAdornment position='end'>
-                          <IconButton
-                            size='small'
-                            edge='end'
-                            onClick={handleClickShowPassword}
-                            onMouseDown={e => e.preventDefault()}
-                            aria-label='toggle password visibility'
-                            sx={{ color: 'text.secondary' }}
-                          >
-                            <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
-                          </IconButton>
-                        </InputAdornment>
-                      )
-                    }
-                  }}
-                  {...(errors.password && { error: true, helperText: errors.password.message })}
+                      }}
+                      {...(errors.password && { error: true, helperText: errors.password.message })}
+                    />
+                  )}
                 />
-              )}
-            />
-            {/* 验证码输入区域 */}
-            <Controller
-              control={control}
-              name='totp'
-              rules={{ required: true }}
-              render={({ field }) => (
-                <Stack direction='row' alignItems='flex-start' spacing={1.5}>
-                  <TextField
-                    {...field}
-                    fullWidth
-                    label={t('auth.captcha')}
-                    variant='outlined'
-                    value={field.value}
-                    onChange={field.onChange}
-                    placeholder={t('auth.captchaPlaceholder')}
-                    inputProps={{ maxLength: 6 }}
-                    error={!!errors.totp}
-                    helperText={errors.totp?.message}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 2,
-                        backgroundColor: 'background.paper',
-                        '&:hover': {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'primary.main'
-                          }
-                        },
-                        '&.Mui-focused': {
-                          '& .MuiOutlinedInput-notchedOutline': {
-                            borderWidth: 2
-                          }
-                        }
-                      }
-                    }}
-                  />
-                  {/* 验证码图片容器 */}
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      width: 127,
-                      height: 56,
-                      border: '2px solid',
-                      borderColor: 'divider',
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      backgroundColor: 'background.paper',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      flexShrink: 0,
-                      minWidth: 127,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease-in-out',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                      }
-                    }}
-                  >
-                    {captchaLoading ? (
-                      <Typography variant='body2' color='text.secondary'>
-                        {t('auth.loading')}
-                      </Typography>
-                    ) : captchaImg?.img ? (
-                      <img
-                        src={`${captchaImg?.img}`}
-                        alt={t('auth.captchaAlt')}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'fill', // 强制填满容器，可能会拉伸
-                          cursor: 'pointer'
-                        }}
-                        onClick={requestCaptchaImg}
-                        title={t('auth.refreshCaptcha')}
-                      />
-                    ) : (
-                      <Typography variant='body2' color='text.secondary'>
-                        {t('auth.captcha')}
-                      </Typography>
-                    )}
-                  </Box>
-                </Stack>
-              )}
-            />
-            {ENV_CONFIG?.IS_DEVELOPMENT && (
-              <Select
-                value={selectValue}
-                onChange={(e: SelectChangeEvent) => {
-                  setSelectValue(e.target.value)
-                }}
-              >
-                <MenuItem value='kyc'>{t('auth.role.kyc')}</MenuItem>
-                <MenuItem value='operation'>{t('auth.role.operation')}</MenuItem>
-              </Select>
-            )}
 
-            <div className='flex justify-between items-center flex-wrap gap-x-3 gap-y-1'>
-              <FormControlLabel 
-                control={<Checkbox defaultChecked />} 
-                label={t('auth.rememberMe')}
-                sx={{
-                  '& .MuiFormControlLabel-label': {
-                    fontSize: '0.875rem'
-                  }
-                }}
-              />
-            </div>
-            <Button
-              fullWidth
-              variant='contained'
-              type='submit'
-              disabled={loginLoading}
-              size='large'
-              sx={{
-                borderRadius: 2,
-                py: 1.5,
-                fontSize: '1rem',
-                fontWeight: 600,
-                textTransform: 'none',
-                background: 'linear-gradient(135deg, var(--mui-palette-primary-main) 0%, var(--mui-palette-primary-dark) 100%)',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, var(--mui-palette-primary-dark) 0%, var(--mui-palette-primary-main) 100%)',
-                  boxShadow: '0 6px 16px rgba(0, 0, 0, 0.2)',
-                  transform: 'translateY(-1px)'
-                },
-                '&:active': {
-                  transform: 'translateY(0)'
-                },
-                transition: 'all 0.2s ease-in-out'
-              }}
-              startIcon={loginLoading ? <CircularProgress size={20} color='inherit' /> : null}
-            >
-              {loginLoading ? t('auth.loggingIn') : t('auth.logIn')}
-            </Button>
-          </form>
+                <Controller
+                  control={control}
+                  name='totp'
+                  rules={{ required: true }}
+                  render={({ field }) => (
+                    <Stack direction='row' alignItems='center' spacing={2}>
+                      <TextField
+                        {...field}
+                        fullWidth
+                        placeholder='验证码'
+                        variant='outlined'
+                        inputProps={{ maxLength: 6 }}
+                        error={!!errors.totp}
+                        helperText={errors.totp?.message}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            backgroundColor: '#fcfdfe',
+                            '& fieldset': { borderColor: '#eef0f2' },
+                            '&:hover fieldset': { borderColor: 'primary.main' },
+                          }
+                        }}
+                      />
+                      <Box
+                        onClick={requestCaptchaImg}
+                        sx={{
+                          width: 130,
+                          height: 52,
+                          borderRadius: '12px',
+                          overflow: 'hidden',
+                          border: '1px solid #eef0f2',
+                          cursor: 'pointer',
+                          backgroundColor: '#fff',
+                          flexShrink: 0,
+                          '&:hover': { borderColor: 'primary.main' }
+                        }}
+                      >
+                        {captchaLoading ? (
+                          <div className='w-full h-full flex items-center justify-center'>
+                            <CircularProgress size={20} />
+                          </div>
+                        ) : captchaImg?.img ? (
+                          <img src={`${captchaImg?.img}`} alt='captcha' className='w-full h-full object-contain' />
+                        ) : (
+                          <div className='w-full h-full flex items-center justify-center text-xs text-gray-400'>
+                            点击刷新
+                          </div>
+                        )}
+                      </Box>
+                    </Stack>
+                  )}
+                />
+
+                <Select
+                  value={selectValue}
+                  onChange={(e: SelectChangeEvent) => setSelectValue(e.target.value)}
+                  sx={{ 
+                    borderRadius: '12px', 
+                    backgroundColor: '#fcfdfe', 
+                    '& .MuiOutlinedInput-notchedOutline': { borderColor: '#eef0f2' },
+                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'primary.main' }
+                  }}
+                >
+                  <MenuItem value='kyc'>KYC 模式</MenuItem>
+                  <MenuItem value='operation'>运营模式</MenuItem>
+                </Select>
+
+                <div className='flex justify-between items-center'>
+                  <FormControlLabel 
+                    control={<Checkbox sx={{ color: '#e2e8f0', '&.Mui-checked': { color: 'primary.main' } }} />} 
+                    label={<span className='text-sm text-gray-500'>记住账号</span>}
+                  />
+                  {/* <Typography variant='body2' sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 600 }}>
+                    忘记密码?
+                  </Typography> */}
+                </div>
+
+                <Button
+                  fullWidth
+                  variant='contained'
+                  type='submit'
+                  disabled={loginLoading}
+                  size='large'
+                  sx={{
+                    borderRadius: '12px',
+                    py: 1.8,
+                    fontSize: '1rem',
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    backgroundColor: 'primary.main',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                      boxShadow: '0 8px 20px rgba(var(--mui-palette-primary-mainChannel), 0.3)'
+                    }
+                  }}
+                  startIcon={loginLoading ? <CircularProgress size={20} color='inherit' /> : null}
+                >
+                  {loginLoading ? t('auth.loggingIn') : '立即登录'}
+                </Button>
+              </form>
+              
+              <Typography 
+                variant='caption' 
+                sx={{ textAlign: 'center', color: '#94a3b8', mt: 2 }}
+              >
+                © {new Date().getFullYear()} Fidere Pay. All rights reserved.
+              </Typography>
             </div>
           </Box>
         </div>

@@ -27,7 +27,7 @@ import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 
 export const metadata = {
-  title: 'ODI',
+  title: 'Fidere Pay',
   // title: 'Materio - Material Design Next.js Admin Template',
   description: '',
   icons: {
