@@ -31,8 +31,8 @@ export function checkAuthorization({ token, req: _req }: { token: any; req: Next
     '/public'
   ]
 
-  // 需要认证的路径 - 包含新增的kyc和operation路由
-  const protectedPaths = ['/dashboard', '/apps', '/admin', '/profile', '/settings', '/kyc', '/operation']
+  // 需要认证的路径 - 包含新增的kyc和operation路由，以及资产管理和全球汇款路由
+  const protectedPaths = ['/dashboard', '/apps', '/admin', '/profile', '/settings', '/kyc', '/operation', '/assets', '/remittance']
 
   // 检查公开路径
   if (publicPaths.some(path => pathname.startsWith(path))) {

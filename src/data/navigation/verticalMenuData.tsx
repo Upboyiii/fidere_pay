@@ -110,6 +110,38 @@ const verticalMenuData = (
       href: '/operation/clients'
     },
     {
+      label: '资产管理',
+      icon: 'ri-wallet-line',
+      children: [
+        {
+          label: '我的资产',
+          href: '/assets/my-assets'
+        },
+        {
+          label: '交易流水',
+          href: '/assets/transactions'
+        }
+      ]
+    },
+    {
+      label: '全球汇款',
+      icon: 'ri-global-line',
+      children: [
+        {
+          label: '创建汇款',
+          href: '/remittance/create'
+        },
+        {
+          label: '收款人列表',
+          href: '/remittance/recipients'
+        },
+        {
+          label: '汇款记录',
+          href: '/remittance/records'
+        }
+      ]
+    },
+    {
       label: '资产中心',
       icon: 'ri-user-line',
       href: '/operation/assets'
@@ -140,6 +172,86 @@ const verticalMenuData = (
       href: '/operation/financialProducts'
     }
   ]
+
+  // KYC角色的硬编码菜单
+  const kycHardcodedMenu: VerticalMenuDataType[] = [
+    {
+      label: '资产管理',
+      icon: 'ri-wallet-line',
+      children: [
+        {
+          label: '我的资产',
+          href: '/assets/my-assets'
+        },
+        {
+          label: '交易流水',
+          href: '/assets/transactions'
+        }
+      ]
+    },
+    {
+      label: '全球汇款',
+      icon: 'ri-global-line',
+      children: [
+        {
+          label: '创建汇款',
+          href: '/remittance/create'
+        },
+        {
+          label: '收款人列表',
+          href: '/remittance/recipients'
+        },
+        {
+          label: '汇款记录',
+          href: '/remittance/records'
+        }
+      ]
+    }
+  ]
+
+  // KYC角色：优先使用动态菜单，并将硬编码菜单合并到动态菜单前面
+  // 支持多种格式：'kyc', 'KYC', 'kyc模式' 等
+  const normalizedUserRole = userRole?.toLowerCase() || ''
+  const isKycMode = normalizedUserRole === 'kyc' || normalizedUserRole.includes('kyc')
+  
+  if (isKycMode) {
+    // 调试日志（开发环境）
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 KYC菜单调试信息:')
+      console.log('  - 原始用户角色:', userRole)
+      console.log('  - 标准化用户角色:', normalizedUserRole)
+      console.log('  - menuList 是否存在:', !!menuList)
+      console.log('  - menuList 长度:', menuList?.length || 0)
+    }
+    
+    // 如果提供了 menuList，使用动态菜单并合并硬编码菜单
+    if (menuList && menuList.length > 0) {
+      const dynamicMenu = convertMenuListToVerticalMenu(menuList)
+      
+      // 调试日志（开发环境）
+      if (process.env.NODE_ENV === 'development') {
+        console.log('  - 动态菜单转换后长度:', dynamicMenu.length)
+        console.log('  - 动态菜单示例:', dynamicMenu.slice(0, 2))
+        console.log('  - 硬编码菜单:', kycHardcodedMenu)
+      }
+      
+      // 如果动态菜单不为空，将硬编码菜单合并到动态菜单前面
+      if (dynamicMenu.length > 0) {
+        const mergedMenu = [...kycHardcodedMenu, ...dynamicMenu]
+        if (process.env.NODE_ENV === 'development') {
+          console.log('  - 合并后菜单长度:', mergedMenu.length)
+        }
+        return mergedMenu
+      }
+    }
+    
+    // 如果没有动态菜单或动态菜单为空，使用硬编码菜单作为后备
+    if (process.env.NODE_ENV === 'development') {
+      console.log('  - 使用硬编码菜单作为后备')
+      console.log('  - 硬编码菜单:', kycHardcodedMenu)
+    }
+    return kycHardcodedMenu
+  }
 
   // 运营角色：优先使用动态菜单，只显示运营相关的路由（/operation/ 开头）
   // 如果没有动态菜单，使用硬编码菜单作为后备
