@@ -20,6 +20,9 @@ import MenuItem from '@mui/material/MenuItem'
 import { GET_THEME_CONFIG, SITE_CONFIG, GET_ENTRANCE } from '@/utils/siteConfig'
 import { ENV_CONFIG } from '@server/config'
 
+// Component Imports
+import LogoSvg from '@core/svg/Logo'
+
 // Third-party Imports
 import { signIn } from 'next-auth/react'
 import { Controller, useForm } from 'react-hook-form'
@@ -270,7 +273,7 @@ const Login = ({ mode }: { mode: Mode }) => {
       {/* 顶部 Header */}
       <div className='absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-8'>
         <div className='flex items-center gap-2.5'>
-          <img src='/images/logo.png' alt='Fidere Pay Logo' className='h-[34px] w-auto object-contain' />
+          <LogoSvg className='h-[34px] w-[34px] flex-shrink-0' />
           <Typography 
             variant='h6' 
             sx={{ 

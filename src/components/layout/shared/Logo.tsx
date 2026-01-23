@@ -13,6 +13,9 @@ import type { VerticalNavContextProps } from '@menu/contexts/verticalNavContext'
 // Config Imports
 import themeConfig from '@configs/themeConfig'
 
+// Component Imports
+import LogoSvg from '@core/svg/Logo'
+
 // Hook Imports
 import useVerticalNav from '@menu/hooks/useVerticalNav'
 import { useSettings } from '@core/hooks/useSettings'
@@ -69,7 +72,7 @@ const Logo = ({ color }: { color?: CSSProperties['color'] }) => {
 
   return (
     <div className='flex items-center min-bs-[24px]'>
-      <img src='/images/logo.png' alt='Logo' className='h-[32px] w-auto object-contain' />
+      <LogoSvg className='h-[32px] w-[32px] flex-shrink-0' />
       <LogoText
         color={color}
         ref={logoTextRef}

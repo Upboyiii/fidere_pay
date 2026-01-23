@@ -31,7 +31,10 @@ export const metadata = {
   // title: 'Materio - Material Design Next.js Admin Template',
   description: '',
   icons: {
-    icon: '/favicon.ico',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
     shortcut: '/favicon.ico',
     apple: '/icon.png'
   }
