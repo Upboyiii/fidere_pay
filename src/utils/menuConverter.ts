@@ -83,17 +83,99 @@ const getMenuLabel = (node: MenuNode): string => {
 }
 
 /**
+ * 后端路径到前端路径的映射表
+ * 将后端返回的路径映射到前端实际的路由路径
+ */
+const ROUTE_MAPPING: Record<string, string> = {
+  // 系统配置
+  '/system/dict/type/list': '/admin/dictList',
+  '/system/config/list': '/admin/configList',
+  
+  // 权限管理
+  '/system/auth/menuList': '/admin/authMenu',
+  '/system/auth/roleList': '/admin/authRoles',
+  '/system/auth/deptList': '/admin/authDept',
+  '/system/auth/postList': '/admin/authPost',
+  '/system/auth/user/list': '/admin/authUser',
+  
+  // 系统工具
+  '/system/sysJob/list': '/admin/jobList',
+  '/system/sysAttachment/list': '/admin/sysAttachment',
+  
+  // 系统监控（如果需要显示的话）
+  '/system/monitor/operLog': '/admin/auditLogs',
+  
+  // OTC资产管理 - 管理员接口
+  '/api/v1/biz/asset/list': '/admin/otc/assets',
+  '/api/v1/biz/callback/list': '/admin/otc/callbacks',
+  '/api/v1/biz/currency/list': '/admin/otc/currencies',
+  '/api/v1/biz/fee-config/lis': '/admin/otc/fee-config',
+  '/api/v1/biz/recharge/list': '/admin/otc/recharges',
+  '/api/v1/biz/transaction/list': '/admin/otc/transactions',
+  '/api/v1/biz/transfer/list': '/admin/otc/transfers',
+  
+  // OTC资产管理 - 普通用户接口
+  '/api/v1/biz/user/api-key/list': '/otc/api-keys',
+  '/api/v1/biz/user/payee/list': '/remittance/recipients',
+  '/api/v1/biz/user/recharge/list': '/otc/recharges',
+  '/api/v1/biz/user/security': '/otc/security',
+  '/api/v1/biz/user/transaction/list': '/otc/transactions',
+  '/api/v1/biz/user/transfer/list': '/otc/transfers',
+  
+  // 资产管理
+  '/api/v1/biz/user/asset/list': '/assets/my-assets',
+  
+  // 全球汇款
+  '/api/v1/biz/user/transfer/create': '/remittance/create',
+  '/api/v1/biz/user/transfer/records': '/remittance/records',
+}
+
+/**
+ * 将后端路径映射到前端路径
+ * @param backendPath - 后端返回的路径
+ * @returns 前端实际的路由路径
+ */
+const mapBackendPathToFrontend = (backendPath: string | undefined): string => {
+  if (!backendPath) return '#'
+  
+  // 处理带参数的路径，如 /system/dict/data/list/:dictType
+  // 先尝试精确匹配
+  if (ROUTE_MAPPING[backendPath]) {
+    return ROUTE_MAPPING[backendPath]
+  }
+  
+  // 处理带参数的路径，移除参数部分后匹配
+  const pathWithoutParams = backendPath.split('/:')[0]
+  if (ROUTE_MAPPING[pathWithoutParams]) {
+    return ROUTE_MAPPING[pathWithoutParams]
+  }
+  
+  // 如果没有映射，返回原路径（可能需要后续处理）
+  return backendPath
+}
+
+/**
  * 需要隐藏的菜单路径列表
  * 这些路径对应的菜单及其所有子菜单都会被隐藏
  * 通常用于隐藏其他项目的功能，当前项目不支持的菜单
  */
 const HIDDEN_MENU_PATHS: string[] = [
   // 在这里添加需要隐藏的菜单路径
-  // '/system/tools',
   '/demo/outLink',
   '/system/sysNotice',
-  '/system/sysNotice',
-  '/system/monitor'
+  '/system/monitor', // 监控相关菜单默认隐藏
+  '/system/tools/gen', // 代码生成默认隐藏
+  '/system/swagger', // API文档默认隐藏（如果需要显示可以移除）
+  
+  // 运营相关路由（不需要显示）
+  '/operation/dashboard', // 概览
+  '/operation/clients', // 客户
+  '/operation/assets', // 资产中心
+  '/operation/fiatAssets', // 法币资产管理
+  '/operation/digitalAssets', // 数字资产管理
+  '/operation/transactions', // 交易管理
+  '/operation/feeCenter', // 费率中心
+  '/operation/financialProducts', // 理财产品
 ]
 
 /**
@@ -167,13 +249,25 @@ export const convertMenuListToVerticalMenu = (menuList: any[]): VerticalMenuData
       } as VerticalMenuDataType
     }
 
-    // 没有子菜单，使用 path 作为路由路径
-    const href = node.path || node.linkUrl || '#'
+    // 没有子菜单，处理路由路径
+    let href = '#'
 
+    // 如果有外部链接（isLink），优先使用外部链接
+    if (node.meta?.isLink && String(node.meta.isLink).trim()) {
+      href = node.meta.isLink
+    } else {
+      // 否则将后端路径映射到前端路径
+      const backendPath = node.path || node.linkUrl
+      href = mapBackendPathToFrontend(backendPath)
+    }
+
+    // 默认关闭 exactMatch，使菜单在进入二级/详情页时也保持高亮
+    // 例如：href 为 /assets/my-assets，当前路由为 /assets/my-assets/deposit 时，父级菜单仍然高亮
     return {
       label,
       icon,
-      href
+      href,
+      exactMatch: false
     }
   }
 

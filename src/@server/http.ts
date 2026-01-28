@@ -156,7 +156,21 @@ export function setConfig(config: RequestConfig) {
  * 发送请求
  */
 async function request<T = any>(url: string, options: RequestOptions = {}): Promise<RequestResponse<T>> {
-  const fullUrl = url.startsWith('http') ? url : `${globalConfig.baseURL}${url}`
+  // 处理 URL 拼接，避免双斜杠
+  let fullUrl: string
+  if (url.startsWith('http')) {
+    fullUrl = url
+  } else {
+    const baseURL = globalConfig.baseURL || ''
+    // 如果 baseURL 是 '/' 或 url 以 '/' 开头，直接拼接（避免双斜杠）
+    if (baseURL === '/' || url.startsWith('/')) {
+      fullUrl = baseURL === '/' ? url : `${baseURL}${url}`
+    } else {
+      // 确保 baseURL 和 url 之间有一个 '/'
+      const separator = baseURL.endsWith('/') ? '' : '/'
+      fullUrl = `${baseURL}${separator}${url}`
+    }
+  }
 
   // 获取有效的 access token
   let accessToken: string | null = null
@@ -514,7 +528,21 @@ export async function clientDel<T = any>(
   data?: any,
   options: RequestOptions = {}
 ): Promise<ServerResponse<T>> {
-  return clientRequestInternal<T>(url, { ...options, method: 'DELETE', body: data ? JSON.stringify(data) : undefined })
+  // 提取 params
+  const { params, ...restOptions } = options
+
+  // 如果有 params，将其转换为查询字符串并拼接到 URL
+  let finalUrl = url
+  if (params) {
+    const queryString = buildQueryString(params)
+    if (queryString) {
+      // 判断 URL 中是否已包含查询参数
+      const separator = url.includes('?') ? '&' : '?'
+      finalUrl = `${url}${separator}${queryString}`
+    }
+  }
+
+  return clientRequestInternal<T>(finalUrl, { ...restOptions, method: 'DELETE', body: data ? JSON.stringify(data) : undefined })
 }
 
 /**
@@ -631,7 +659,7 @@ export const useTokenManager = () => {
 export function initClient() {
   // 设置基础配置
   setConfig({
-    baseURL: '/admin-api',
+    baseURL: '/',
     timeout: SERVER_CONFIG.API.TIMEOUT
   })
 

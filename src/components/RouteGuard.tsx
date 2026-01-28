@@ -62,6 +62,7 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     const normalizedUserRole = userRole?.toLowerCase() || ''
     const isKycMode = normalizedUserRole === 'kyc' || normalizedUserRole.includes('kyc')
     const isOperationMode = normalizedUserRole === 'operation' || normalizedUserRole.includes('operation')
+    const isAdminMode = normalizedUserRole === 'admin' || normalizedUserRole.includes('admin')
 
     // 调试日志（开发环境）
     if (process.env.NODE_ENV === 'development') {
@@ -69,6 +70,16 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
       console.log('  - isKycMode:', isKycMode)
       console.log('  - isOperationMode:', isOperationMode)
       console.log('  - menuList length:', menuList?.length || 0)
+    }
+
+    // 特殊处理管理员角色：管理员有全部路由权限
+    if (isAdminMode) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('  - ✅ 管理员模式，允许访问所有路由')
+      }
+      setIsAuthorized(true)
+      setIsChecking(false)
+      return
     }
 
     // 优先检查硬编码路由（不需要等待菜单加载）

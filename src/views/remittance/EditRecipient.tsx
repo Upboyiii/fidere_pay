@@ -1,8 +1,11 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+
+// Util Imports
+import { getLocalizedPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -23,37 +26,243 @@ import Alert from '@mui/material/Alert'
 import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { Mode } from '@core/types'
 
+// API Imports
+import { addPayee, editPayee, getPayeeDetail, type PayeeItem } from '@server/otc-api'
+import { toast } from 'react-toastify'
+
 const EditRecipient = ({ mode }: { mode: Mode }) => {
   const params = useParams()
   const router = useRouter()
-  const recipientId = params?.id as string
+  const recipientId = params?.id ? Number(params.id) : null
+  const isEdit = !!recipientId
+  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
-  const [remittanceMethod, setRemittanceMethod] = useState('swift')
-  const [accountType, setAccountType] = useState('company')
-  const [currency, setCurrency] = useState('USD')
-  const [remittancePurpose, setRemittancePurpose] = useState('')
-  const [purposeDescription, setPurposeDescription] = useState('')
-  const [remarks, setRemarks] = useState('')
-  const [country, setCountry] = useState('')
-  const [province, setProvince] = useState('')
-  const [city, setCity] = useState('')
-  const [address, setAddress] = useState('')
-  const [postalCode, setPostalCode] = useState('')
-  const [phoneCode, setPhoneCode] = useState('+1')
-  const [phoneNumber, setPhoneNumber] = useState('')
-  const [email, setEmail] = useState('')
+  // 表单数据
+  const [formData, setFormData] = useState({
+    accountType: 1, // 1-公司 2-个人
+    companyName: '',
+    firstName: '',
+    lastName: '',
+    remitType: 1, // 1-SWIFT 2-本地
+    country: '',
+    countryCode: '',
+    state: '',
+    city: '',
+    address: '',
+    postalCode: '',
+    araeCode: '+86',
+    phone: '',
+    email: '',
+    accountName: '',
+    accountNo: '',
+    swiftCode: '',
+    bankName: '',
+    bankCountry: '',
+    bankCountryCode: '',
+    bankState: '',
+    bankCity: '',
+    bankAddress: '',
+    purpose: '',
+    purposeDesc: '',
+    remark: ''
+  })
+
+  // 加载收款人详情（编辑模式）
+  useEffect(() => {
+    if (isEdit && recipientId) {
+      const loadDetail = async () => {
+        setLoading(true)
+        try {
+          const res = await getPayeeDetail({ id: recipientId })
+          // API 响应结构：{ code: 0, message: "", data: PayeeItem }
+          // clientRequest 返回：{ data: { code: 0, message: "", data: PayeeItem } }
+          // 所以需要 res.data.data 来获取实际的 PayeeItem
+          const data = res.data?.data || res.data
+          if (data) {
+            console.log('加载的收款人详情数据:', data)
+            
+            // 解析电话号码（如果有区号）
+            let phone = data.phone || ''
+            let araeCode = data.araeCode || '+86' // 默认使用 +86
+            
+            // 如果电话号码包含区号但没有单独存储，尝试分离
+            if (phone && !data.araeCode) {
+              if (phone.startsWith('+')) {
+                // 如果电话号码以+开头但没有单独的区号，尝试提取
+                const match = phone.match(/^(\+\d{1,4})(.+)$/)
+                if (match) {
+                  araeCode = match[1]
+                  phone = match[2]
+                }
+              }
+            } else if (phone && araeCode && !phone.startsWith('+')) {
+              // 如果区号和号码是分开的，确保号码不包含区号
+              phone = phone.replace(/^\+\d{1,4}/, '')
+            }
+
+            setFormData({
+              accountType: data.accountType ?? 1,
+              companyName: data.companyName ?? '',
+              firstName: data.firstName ?? '',
+              lastName: data.lastName ?? '',
+              remitType: data.remitType ?? 1,
+              country: data.country ?? '',
+              countryCode: data.countryCode ?? data.country ?? '',
+              state: data.state ?? '',
+              city: data.city ?? '',
+              address: data.address ?? '',
+              postalCode: data.postalCode ?? '',
+              araeCode: araeCode,
+              phone: phone,
+              email: data.email ?? '',
+              accountName: data.accountName ?? '',
+              accountNo: data.accountNo ?? '',
+              swiftCode: data.swiftCode ?? '',
+              bankName: data.bankName ?? '',
+              bankCountry: data.bankCountry ?? '',
+              bankCountryCode: data.bankCountryCode ?? data.bankCountry ?? '',
+              bankState: data.bankState ?? '',
+              bankCity: data.bankCity ?? '',
+              bankAddress: data.bankAddress ?? '',
+              purpose: data.purpose ?? '',
+              purposeDesc: data.purposeDesc ?? '',
+              remark: data.remark ?? ''
+            })
+          } else {
+            console.warn('收款人详情数据为空:', res)
+            toast.error('未找到收款人详情数据')
+          }
+        } catch (error) {
+          console.error('加载收款人详情失败:', error)
+          toast.error('加载收款人详情失败')
+        } finally {
+          setLoading(false)
+        }
+      }
+      loadDetail()
+    }
+  }, [isEdit, recipientId])
 
   const handleBack = () => {
     router.back()
   }
 
-  const handleSubmit = () => {
-    // 处理提交逻辑
-    console.log('提交收款人信息')
+  const validateForm = () => {
+    if (!formData.country || !formData.countryCode) {
+      toast.error('请选择国家/地区')
+      return false
+    }
+    if (!formData.state) {
+      toast.error('请输入州/省')
+      return false
+    }
+    if (!formData.city) {
+      toast.error('请输入城市')
+      return false
+    }
+    if (!formData.address) {
+      toast.error('请输入详细地址')
+      return false
+    }
+    if (!formData.accountName) {
+      toast.error('请输入账户名称')
+      return false
+    }
+    if (!formData.accountNo) {
+      toast.error('请输入银行账号')
+      return false
+    }
+    if (!formData.bankName) {
+      toast.error('请输入银行名称')
+      return false
+    }
+    if (!formData.bankCountry || !formData.bankCountryCode) {
+      toast.error('请选择银行所在国家')
+      return false
+    }
+    if (formData.remitType === 1 && !formData.swiftCode) {
+      toast.error('SWIFT汇款需要填写SWIFT/BIC编码')
+      return false
+    }
+    return true
+  }
+
+  const handleSubmit = async () => {
+    if (!validateForm()) return
+
+    setSubmitting(true)
+    try {
+      // 构建提交数据
+      const submitData: any = {
+        accountType: formData.accountType,
+        remitType: formData.remitType,
+        country: formData.country,
+        countryCode: formData.countryCode || formData.country, // 如果没有单独的国家代码，使用国家名称
+        state: formData.state,
+        city: formData.city,
+        address: formData.address,
+        accountName: formData.accountName,
+        accountNo: formData.accountNo,
+        bankName: formData.bankName,
+        bankCountry: formData.bankCountry,
+        bankCountryCode: formData.bankCountryCode || formData.bankCountry
+      }
+
+      // 可选字段
+      if (formData.postalCode) submitData.postalCode = formData.postalCode
+      if (formData.araeCode) submitData.araeCode = formData.araeCode
+      // 电话号码：如果有区号和号码，合并；否则只传号码
+      if (formData.phone) {
+        if (formData.araeCode) {
+          submitData.phone = `${formData.araeCode}${formData.phone}`
+        } else {
+          submitData.phone = formData.phone
+        }
+      }
+      if (formData.email) submitData.email = formData.email
+      if (formData.swiftCode) submitData.swiftCode = formData.swiftCode
+      if (formData.bankState) submitData.bankState = formData.bankState
+      if (formData.bankCity) submitData.bankCity = formData.bankCity
+      if (formData.bankAddress) submitData.bankAddress = formData.bankAddress
+      if (formData.purpose) submitData.purpose = formData.purpose
+      if (formData.purposeDesc) submitData.purposeDesc = formData.purposeDesc
+      if (formData.remark) submitData.remark = formData.remark
+
+      // 根据账户类型添加相应字段
+      if (formData.accountType === 1) {
+        // 公司账户
+        if (formData.companyName) submitData.companyName = formData.companyName
+      } else {
+        // 个人账户
+        if (formData.firstName) submitData.firstName = formData.firstName
+        if (formData.lastName) submitData.lastName = formData.lastName
+      }
+
+      if (isEdit && recipientId) {
+        await editPayee({
+          id: recipientId,
+          ...submitData
+        })
+        toast.success('更新成功')
+      } else {
+        await addPayee(submitData)
+        toast.success('添加成功')
+      }
+      
+      router.push(getLocalizedPath('/remittance/recipients', params?.lang as string))
+    } catch (error: any) {
+      console.error('提交失败:', error)
+      const errorMessage = error?.message || (isEdit ? '更新失败' : '添加失败')
+      toast.error(errorMessage)
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -81,16 +290,36 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
         }}
       />
 
-      <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid size={{ xs: 12 }}>
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
+          <Grid size={{ xs: 12 }}>
           <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box>
-              <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                {recipientId ? '编辑收款人' : '新增收款人'}
-              </Typography>
-              <Typography color='text.secondary'>
-                管理您的全球收款账户，确保资金安全到账
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+              <IconButton
+                onClick={handleBack}
+                sx={{
+                  mt: 0.5,
+                  color: 'text.secondary',
+                  '&:hover': {
+                    bgcolor: 'action.hover',
+                    color: 'text.primary'
+                  }
+                }}
+              >
+                <i className='ri-arrow-left-line' />
+              </IconButton>
+              <Box sx={{ flex: 1 }}>
+                <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+                  {isEdit ? '编辑收款人' : '新增收款人'}
+                </Typography>
+                <Typography color='text.secondary'>
+                  管理您的全球收款账户，确保资金安全到账
+                </Typography>
+              </Box>
             </Box>
             
             {/* 简洁的步骤指示器 */}
@@ -142,64 +371,69 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
           </Box>
         </Grid>
 
-        {/* 基本设置 */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', height: '100%' }}>
-            <CardHeader 
-              title='基本设置' 
-              titleTypographyProps={{ sx: { fontWeight: 700, fontSize: '1.125rem' } }}
-            />
-            <Divider sx={{ borderColor: 'rgba(0,0,0,0.05)' }} />
-            <CardContent sx={{ py: 6 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <Box>
-                  <Typography variant='subtitle2' sx={{ mb: 3, fontWeight: 600 }}>汇款方式</Typography>
-                  <ToggleButtonGroup
-                    value={remittanceMethod}
-                    exclusive
-                    onChange={(_, value) => value && setRemittanceMethod(value)}
-                    fullWidth
+        {/* 基本设置 - 移到收款人信息上方，缩小面积 */}
+        <Grid size={{ xs: 12 }}>
+          <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ py: 4, px: 6 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Typography variant='subtitle1' sx={{ fontWeight: 600, minWidth: 100, color: 'text.primary' }}>
+                  汇款方式
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1.5 }}>
+                  <ToggleButton
+                    value={1}
+                    selected={formData.remitType === 1}
+                    onClick={() => setFormData({ ...formData, remitType: 1 })}
                     sx={{
-                      '& .MuiToggleButton-root': {
-                        borderRadius: '8px',
-                        border: '1px solid rgba(0,0,0,0.12)',
-                        px: 4,
-                        py: 2,
-                        fontWeight: 600,
-                        textTransform: 'none',
-                        fontSize: '0.875rem',
-                        '&.Mui-selected': {
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          borderColor: 'primary.main',
-                          '&:hover': {
-                            bgcolor: 'primary.dark'
-                          }
-                        },
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        borderColor: 'primary.main',
                         '&:hover': {
-                          bgcolor: 'action.hover'
+                          bgcolor: 'primary.dark'
                         }
+                      },
+                      '&:hover': {
+                        bgcolor: 'action.hover'
                       }
                     }}
                   >
-                    <ToggleButton value='swift'>SWIFT汇款</ToggleButton>
-                    <ToggleButton value='local'>本地汇款</ToggleButton>
-                  </ToggleButtonGroup>
-                </Box>
-
-                <Box>
-                  <Typography variant='subtitle2' sx={{ mb: 3, fontWeight: 600 }}>币种</Typography>
-                  <FormControl fullWidth size='small'>
-                    <Select
-                      value={currency}
-                      onChange={(e) => setCurrency(e.target.value)}
-                      sx={{ borderRadius: '12px' }}
-                    >
-                      <MenuItem value='USD'>USD - 美元</MenuItem>
-                      <MenuItem value='EUR'>EUR - 欧元</MenuItem>
-                      <MenuItem value='HKD'>HKD - 港币</MenuItem>
-                    </Select>
-                  </FormControl>
+                    SWIFT汇款
+                  </ToggleButton>
+                  <ToggleButton
+                    value={2}
+                    selected={formData.remitType === 2}
+                    onClick={() => setFormData({ ...formData, remitType: 2 })}
+                    sx={{
+                      borderRadius: '8px',
+                      border: '1px solid rgba(0,0,0,0.12)',
+                      px: 4,
+                      py: 1.5,
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      fontSize: '0.875rem',
+                      '&.Mui-selected': {
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        borderColor: 'primary.main',
+                        '&:hover': {
+                          bgcolor: 'primary.dark'
+                        }
+                      },
+                      '&:hover': {
+                        bgcolor: 'action.hover'
+                      }
+                    }}
+                  >
+                    本地汇款
+                  </ToggleButton>
                 </Box>
               </Box>
             </CardContent>
@@ -207,7 +441,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
         </Grid>
 
         {/* 收款人信息 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12 }}>
           <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', height: '100%' }}>
             <CardHeader 
               title='收款人信息' 
@@ -222,17 +456,24 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <FormControl fullWidth size='small'>
                     <Select
-                      value={country}
-                      onChange={(e) => setCountry(e.target.value)}
+                      value={formData.country}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setFormData({ 
+                          ...formData, 
+                          country: value,
+                          countryCode: value // 简化处理，实际应该根据国家名称获取国家代码
+                        })
+                      }}
                       displayEmpty
                       sx={{ borderRadius: '12px' }}
                     >
                       <MenuItem value=''>请选择国家/地区</MenuItem>
-                      <MenuItem value='HK'>香港</MenuItem>
-                      <MenuItem value='US'>美国</MenuItem>
-                      <MenuItem value='SG'>新加坡</MenuItem>
-                      <MenuItem value='GB'>英国</MenuItem>
-                      <MenuItem value='CN'>中国</MenuItem>
+                      <MenuItem value='香港'>香港</MenuItem>
+                      <MenuItem value='美国'>美国</MenuItem>
+                      <MenuItem value='新加坡'>新加坡</MenuItem>
+                      <MenuItem value='英国'>英国</MenuItem>
+                      <MenuItem value='中国'>中国</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -244,8 +485,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='州/省'
-                    value={province}
-                    onChange={(e) => setProvince(e.target.value)}
+                    value={formData.state}
+                    onChange={(e) => setFormData({ ...formData, state: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -257,8 +498,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='城市'
-                    value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -273,18 +514,18 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                       multiline
                       rows={3}
                       placeholder='请输入详细地址'
-                      value={address}
+                      value={formData.address}
                       onChange={(e) => {
                         const value = e.target.value
                         if (value.length <= 120) {
-                          setAddress(value)
+                          setFormData({ ...formData, address: value })
                         }
                       }}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                     />
                     <Box sx={{ position: 'absolute', bottom: 8, right: 12 }}>
                       <Typography variant='caption' color='text.secondary'>
-                        {address.length}/120
+                        {formData.address.length}/120
                       </Typography>
                     </Box>
                   </Box>
@@ -297,8 +538,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='邮编'
-                    value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    value={formData.postalCode}
+                    onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -309,8 +550,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <FormControl size='small' sx={{ width: 100 }}>
                       <Select
-                        value={phoneCode}
-                        onChange={(e) => setPhoneCode(e.target.value)}
+                        value={formData.araeCode}
+                        onChange={(e) => setFormData({ ...formData, araeCode: e.target.value })}
                         sx={{ borderRadius: '12px' }}
                       >
                         <MenuItem value='+1'>+1</MenuItem>
@@ -323,8 +564,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                       fullWidth
                       size='small'
                       placeholder='请输入电话号码'
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      value={formData.phone}
+                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                     />
                   </Box>
@@ -338,8 +579,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     size='small'
                     type='email'
                     placeholder='请输入邮箱地址'
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -358,43 +599,73 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
             <Divider sx={{ borderColor: 'rgba(0,0,0,0.05)' }} />
             <CardContent sx={{ py: 6 }}>
               <Grid container spacing={4}>
-                {/* 账户类型 */}
+                {/* 账户类型 - 改为紧凑的横向布局 */}
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant='subtitle2' sx={{ mb: 3, fontWeight: 600, color: 'text.primary' }}>账户类型</Typography>
-                  <ToggleButtonGroup
-                    value={accountType}
-                    exclusive
-                    onChange={(_, value) => value && setAccountType(value)}
-                    fullWidth
-                    sx={{
-                      '& .MuiToggleButton-root': {
-                        borderRadius: '12px',
-                        border: '1px solid rgba(0,0,0,0.12)',
-                        px: 6,
-                        py: 3,
-                        fontWeight: 600,
-                        textTransform: 'none',
-                        '&.Mui-selected': {
-                          bgcolor: 'primary.main',
-                          color: 'white',
-                          borderColor: 'primary.main',
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 2 }}>
+                    <Typography variant='body2' sx={{ fontWeight: 600, minWidth: 100, color: 'text.primary' }}>
+                      账户类型
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <ToggleButton
+                        value={1}
+                        selected={formData.accountType === 1}
+                        onClick={() => setFormData({ ...formData, accountType: 1 })}
+                        sx={{
+                          borderRadius: '8px',
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          px: 4,
+                          py: 1.5,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          fontSize: '0.875rem',
+                          '&.Mui-selected': {
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            borderColor: 'primary.main',
+                            '&:hover': {
+                              bgcolor: 'primary.dark'
+                            }
+                          },
                           '&:hover': {
-                            bgcolor: 'primary.dark'
+                            bgcolor: 'action.hover'
                           }
-                        },
-                        '&:hover': {
-                          bgcolor: 'action.hover'
-                        }
-                      }
-                    }}
-                  >
-                    <ToggleButton value='company'>公司账户</ToggleButton>
-                    <ToggleButton value='personal'>个人账户</ToggleButton>
-                  </ToggleButtonGroup>
+                        }}
+                      >
+                        公司账户
+                      </ToggleButton>
+                      <ToggleButton
+                        value={2}
+                        selected={formData.accountType === 2}
+                        onClick={() => setFormData({ ...formData, accountType: 2 })}
+                        sx={{
+                          borderRadius: '8px',
+                          border: '1px solid rgba(0,0,0,0.12)',
+                          px: 4,
+                          py: 1.5,
+                          fontWeight: 600,
+                          textTransform: 'none',
+                          fontSize: '0.875rem',
+                          '&.Mui-selected': {
+                            bgcolor: 'primary.main',
+                            color: 'white',
+                            borderColor: 'primary.main',
+                            '&:hover': {
+                              bgcolor: 'primary.dark'
+                            }
+                          },
+                          '&:hover': {
+                            bgcolor: 'action.hover'
+                          }
+                        }}
+                      >
+                        个人账户
+                      </ToggleButton>
+                    </Box>
+                  </Box>
                 </Grid>
 
                 {/* 公司英文名称（仅公司账户显示） */}
-                {accountType === 'company' && (
+                {formData.accountType === 1 && (
                   <Grid size={{ xs: 12 }}>
                     <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
                       公司英文名称 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
@@ -403,9 +674,43 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                       fullWidth
                       size='small'
                       placeholder='请输入公司英文全称'
+                      value={formData.companyName}
+                      onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                     />
                   </Grid>
+                )}
+
+                {/* 个人账户：名和姓 */}
+                {formData.accountType === 2 && (
+                  <>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
+                        名
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        size='small'
+                        placeholder='名'
+                        value={formData.firstName}
+                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
+                        姓
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        size='small'
+                        placeholder='姓'
+                        value={formData.lastName}
+                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                      />
+                    </Grid>
+                  </>
                 )}
 
                 {/* 账户名称 */}
@@ -416,7 +721,9 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   <TextField
                     fullWidth
                     size='small'
-                    placeholder={accountType === 'company' ? '请输入公司全称' : '请输入账户名称'}
+                    placeholder={formData.accountType === 1 ? '请输入公司全称' : '请输入账户名称'}
+                    value={formData.accountName}
+                    onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                   <Typography variant='caption' color='text.secondary' sx={{ mt: 1, display: 'block' }}>
@@ -433,30 +740,36 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='请输入银行账号或IBAN号码'
+                    value={formData.accountNo}
+                    onChange={(e) => setFormData({ ...formData, accountNo: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
 
                 {/* SWIFT/BIC 和 银行名称 */}
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
-                      SWIFT/BIC <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
-                    </Typography>
-                    <Tooltip title='SWIFT代码是银行国际识别码'>
-                      <IconButton size='small' sx={{ p: 0.5, color: 'text.secondary' }}>
-                        <i className='ri-question-line text-sm' />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                  <TextField
-                    fullWidth
-                    size='small'
-                    placeholder='请输入SWIFT/BIC'
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, sm: 6 }}>
+                {formData.remitType === 1 && (
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+                      <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                        SWIFT/BIC <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                      </Typography>
+                      <Tooltip title='SWIFT代码是银行国际识别码'>
+                        <IconButton size='small' sx={{ p: 0.5, color: 'text.secondary' }}>
+                          <i className='ri-question-line text-sm' />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                    <TextField
+                      fullWidth
+                      size='small'
+                      placeholder='请输入SWIFT/BIC'
+                      value={formData.swiftCode}
+                      onChange={(e) => setFormData({ ...formData, swiftCode: e.target.value })}
+                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                    />
+                  </Grid>
+                )}
+                <Grid size={{ xs: 12, sm: formData.remitType === 1 ? 6 : 12 }}>
                   <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
                     银行名称 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                   </Typography>
@@ -464,6 +777,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='请输入银行全称 (英文)'
+                    value={formData.bankName}
+                    onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -475,15 +790,24 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <FormControl fullWidth size='small'>
                     <Select
+                      value={formData.bankCountry}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setFormData({ 
+                          ...formData, 
+                          bankCountry: value,
+                          bankCountryCode: value // 简化处理
+                        })
+                      }}
                       displayEmpty
                       sx={{ borderRadius: '12px' }}
                     >
                       <MenuItem value=''>请选择国家</MenuItem>
-                      <MenuItem value='HK'>香港</MenuItem>
-                      <MenuItem value='US'>美国</MenuItem>
-                      <MenuItem value='SG'>新加坡</MenuItem>
-                      <MenuItem value='GB'>英国</MenuItem>
-                      <MenuItem value='CN'>中国</MenuItem>
+                      <MenuItem value='香港'>香港</MenuItem>
+                      <MenuItem value='美国'>美国</MenuItem>
+                      <MenuItem value='新加坡'>新加坡</MenuItem>
+                      <MenuItem value='英国'>英国</MenuItem>
+                      <MenuItem value='中国'>中国</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
@@ -497,6 +821,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='州/省'
+                    value={formData.bankState}
+                    onChange={(e) => setFormData({ ...formData, bankState: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -510,6 +836,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='城市'
+                    value={formData.bankCity}
+                    onChange={(e) => setFormData({ ...formData, bankCity: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -523,6 +851,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='银行分行详细地址 (选填)'
+                    value={formData.bankAddress}
+                    onChange={(e) => setFormData({ ...formData, bankAddress: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -547,8 +877,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <FormControl fullWidth size='small'>
                     <Select
-                      value={remittancePurpose}
-                      onChange={(e) => setRemittancePurpose(e.target.value)}
+                      value={formData.purpose}
+                      onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
                       displayEmpty
                       sx={{ borderRadius: '12px' }}
                     >
@@ -568,8 +898,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder='补充说明 (选填)'
-                    value={purposeDescription}
-                    onChange={(e) => setPurposeDescription(e.target.value)}
+                    value={formData.purposeDesc}
+                    onChange={(e) => setFormData({ ...formData, purposeDesc: e.target.value })}
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                 </Grid>
@@ -592,8 +922,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                 multiline
                 rows={4}
                 placeholder='请输入备注信息 (选填)'
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
+                value={formData.remark}
+                onChange={(e) => setFormData({ ...formData, remark: e.target.value })}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
               />
             </CardContent>
@@ -650,6 +980,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
             <Button 
               variant='contained' 
               onClick={handleSubmit}
+              disabled={loading || submitting}
+              startIcon={submitting ? <CircularProgress size={20} /> : null}
               sx={{ 
                 borderRadius: '12px', 
                 px: 10,
@@ -661,11 +993,12 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                 }
               }}
             >
-              下一步
+              {submitting ? (isEdit ? '更新中...' : '添加中...') : (isEdit ? '保存' : '下一步')}
             </Button>
           </Box>
         </Grid>
       </Grid>
+      )}
     </Box>
   )
 }

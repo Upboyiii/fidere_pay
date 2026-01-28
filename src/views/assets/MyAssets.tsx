@@ -1,11 +1,14 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 // Next Imports
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+
+// Util Imports
+import { getLocalizedPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -23,17 +26,27 @@ import InputLabel from '@mui/material/InputLabel'
 import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import Divider from '@mui/material/Divider'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { Mode } from '@core/types'
+
+// API Imports
+import { getUserAssetList, getUserTransactionList, type UserAssetListItem, type UserTransactionListItem } from '@server/otc-api'
+import { toast } from 'react-toastify'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
 const MyAssets = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [loading, setLoading] = useState(false)
+  const [assetsLoading, setAssetsLoading] = useState(false)
+  const [transactionsLoading, setTransactionsLoading] = useState(false)
   const [filters, setFilters] = useState({
     transactionId: '',
     currency: '',
@@ -42,45 +55,106 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   })
   const [showFilters, setShowFilters] = useState(true)
 
-  // 模拟资产数据
-  const usdtBalance = 3896
-  const availableBalance = 3895.5216
-  const frozenBalance = 0
-  const todayIncome = 0
-  const todayExpenditure = 0
-  const totalAssets = 0
+  // 资产数据
+  const [assets, setAssets] = useState<UserAssetListItem[]>([])
+  const [selectedAsset, setSelectedAsset] = useState<UserAssetListItem | null>(null)
 
-  // 模拟交易记录
-  const transactions = [
-    {
-      id: '2013914565066862594',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+15000',
-      createTime: '2026-01-21 18:00:24'
-    },
-    {
-      id: '2013907480774160385',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+160580',
-      createTime: '2026-01-21 17:32:15'
-    },
-    {
-      id: '2013865558210752514',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+150545',
-      createTime: '2026-01-21 14:45:40'
-    },
-    {
-      id: '2013160999066775553',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+2.0071',
-      createTime: '2026-01-19 16:06:00'
+  // 交易记录
+  const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
+  const [total, setTotal] = useState(0)
+
+  // 今日统计
+  const [todayStats, setTodayStats] = useState({
+    income: 0,
+    expenditure: 0,
+    totalAssets: 0
+  })
+
+  // 加载资产列表
+  const loadAssets = async () => {
+    setAssetsLoading(true)
+    try {
+      const res = await getUserAssetList()
+      const assetList = res.data?.list || []
+      setAssets(assetList)
+      // 默认选择第一个资产，如果没有则选择USDT
+      if (assetList.length > 0) {
+        const usdtAsset = assetList.find(a => a.currencyCode === 'USDT') || assetList[0]
+        setSelectedAsset(usdtAsset)
+      }
+    } catch (error) {
+      console.error('加载资产失败:', error)
+      toast.error('加载资产失败')
+    } finally {
+      setAssetsLoading(false)
     }
-  ]
+  }
+
+  // 加载交易记录
+  const loadTransactions = async () => {
+    setTransactionsLoading(true)
+    try {
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const tomorrow = new Date(today)
+      tomorrow.setDate(tomorrow.getDate() + 1)
+
+      const res = await getUserTransactionList({
+        pageNum: page + 1,
+        pageSize: rowsPerPage,
+        currencyCode: filters.currency || undefined,
+        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
+        endTime: filters.endDate ? new Date(filters.endDate).getTime() + 86400000 - 1 : undefined
+      })
+      
+      const transactionList = res.data?.list || []
+      setTransactions(transactionList)
+      setTotal(res.data?.total || 0)
+
+      // 计算今日统计
+      const todayTransactions = transactionList.filter(tx => {
+        const txDate = new Date(tx.createdAt)
+        return txDate >= today && txDate < tomorrow
+      })
+
+      const income = todayTransactions
+        .filter(tx => tx.direction === 1)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+      
+      const expenditure = todayTransactions
+        .filter(tx => tx.direction === 2)
+        .reduce((sum, tx) => sum + tx.amount, 0)
+
+      setTodayStats({
+        income,
+        expenditure,
+        totalAssets: assets.reduce((sum, asset) => sum + asset.balance, 0)
+      })
+    } catch (error) {
+      console.error('加载交易记录失败:', error)
+      toast.error('加载交易记录失败')
+    } finally {
+      setTransactionsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadAssets()
+  }, [])
+
+  useEffect(() => {
+    if (selectedAsset) {
+      loadTransactions()
+    }
+  }, [page, rowsPerPage, filters, selectedAsset])
+
+  // 当前显示的资产数据
+  const currentAsset = selectedAsset || {
+    currencyCode: 'USDT',
+    balance: 0,
+    frozenBalance: 0,
+    availableBalance: 0
+  }
 
   return (
     <Box 
@@ -155,18 +229,22 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     </Box>
                     <Box>
                       <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', fontWeight: 500, fontSize: '0.75rem' }}>
-                        USDT
+                        {currentAsset.currencyCode}
                       </Typography>
-                      <Typography variant='h4' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)' }}>
-                        {usdtBalance.toLocaleString()}
-                      </Typography>
+                      {assetsLoading ? (
+                        <CircularProgress size={24} sx={{ color: 'white' }} />
+                      ) : (
+                        <Typography variant='h4' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)' }}>
+                          {currentAsset.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                        </Typography>
+                      )}
                     </Box>
                   </Box>
                 </Box>
                 <Button
                   variant='contained'
                   size='small'
-                  onClick={() => router.push('/assets/deposit')}
+                  onClick={() => router.push(getLocalizedPath(`/assets/deposit?currency=${currentAsset.currencyCode}`, currentLang))}
                   startIcon={<i className='ri-add-circle-line' />}
                   sx={{
                     bgcolor: 'white',
@@ -193,7 +271,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  可用: {availableBalance.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 })}
+                  可用: {currentAsset.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}
                 </Typography>
                 <Typography 
                   variant='body2' 
@@ -204,7 +282,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  冻结: {frozenBalance.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+                  冻结: {currentAsset.frozenBalance.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 8 })}
                 </Typography>
               </Box>
 
@@ -216,7 +294,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     今日收入
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#a5f3a5', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    +{todayIncome.toFixed(2)}
+                    +{todayStats.income.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
@@ -224,7 +302,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     今日支出
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#ffcc80', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    -{todayExpenditure.toFixed(2)}
+                    -{todayStats.expenditure.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
@@ -232,7 +310,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     总资产
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    {totalAssets.toFixed(2)}
+                    {todayStats.totalAssets.toFixed(2)}
                   </Typography>
                 </Box>
               </Box>
@@ -272,7 +350,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               },
               border: '1px solid rgba(0,0,0,0.05)'
             }}
-            onClick={() => router.push('/remittance/create')}
+            onClick={() => router.push(getLocalizedPath('/remittance/create', currentLang))}
           >
             {/* 背景装饰 - 货币符号和地球图标 */}
             <Box
@@ -361,7 +439,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               },
               border: '1px solid rgba(0,0,0,0.05)'
             }}
-            onClick={() => router.push('/remittance/recipients/new')}
+            onClick={() => router.push(getLocalizedPath('/remittance/recipients/new', currentLang))}
           >
             {/* 背景装饰 - 人物连接网络图标 */}
             <Box
@@ -440,7 +518,9 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     资产记录
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <IconButton size='small'><i className='ri-refresh-line' /></IconButton>
+                    <IconButton size='small' onClick={loadTransactions} disabled={transactionsLoading}>
+                      {transactionsLoading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
+                    </IconButton>
                     <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
                     <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
                   </Box>
@@ -469,9 +549,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value=''>请选择币种</MenuItem>
-                        <MenuItem value='USDT'>USDT</MenuItem>
-                        <MenuItem value='USD'>USD</MenuItem>
-                        <MenuItem value='HKD'>HKD</MenuItem>
+                        {assets.map(asset => (
+                          <MenuItem key={asset.currencyCode} value={asset.currencyCode}>
+                            {asset.currencyCode}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
                   </Box>
@@ -506,7 +588,14 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     >
                       重置
                     </Button>
-                    <Button variant='contained' size='small' startIcon={<i className='ri-search-line' />} sx={{ borderRadius: '8px', px: 6 }}>
+                    <Button 
+                      variant='contained' 
+                      size='small' 
+                      startIcon={<i className='ri-search-line' />} 
+                      sx={{ borderRadius: '8px', px: 6 }}
+                      onClick={loadTransactions}
+                      disabled={transactionsLoading}
+                    >
                       查询
                     </Button>
                     <Button variant='text' size='small' sx={{ color: 'primary.main' }}>
@@ -530,60 +619,75 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((tx, index) => (
-                      <tr key={index} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
-                            {tx.id}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ color: 'primary.main', fontWeight: 600 }}>
-                            {tx.type}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2'>{tx.currency}</Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography
-                            variant='body2'
-                            sx={{
-                              fontWeight: 700,
-                              color: tx.amount.startsWith('+') ? '#4caf50' : '#ff5252'
-                            }}
-                          >
-                            {tx.amount}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' color='text.secondary'>
-                            {tx.createTime}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Button 
-                            size='small' 
-                            variant='text' 
-                            sx={{ fontWeight: 600 }}
-                            onClick={() => {}}
-                          >
-                            详情
-                          </Button>
+                    {transactionsLoading ? (
+                      <tr>
+                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
+                          <CircularProgress />
                         </td>
                       </tr>
-                    ))}
+                    ) : transactions.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          暂无交易记录
+                        </td>
+                      </tr>
+                    ) : (
+                      transactions.map((tx) => (
+                        <tr key={tx.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
+                              {tx.id}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ color: 'primary.main', fontWeight: 600 }}>
+                              {tx.bizType === 1 ? '充值' : tx.bizType === 2 ? '提现' : tx.bizType === 3 ? '转账' : '其他'}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2'>{tx.currencyCode}</Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                fontWeight: 700,
+                                color: tx.direction === 1 ? '#4caf50' : '#ff5252'
+                              }}
+                            >
+                              {tx.direction === 1 ? '+' : '-'}{tx.amount}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' color='text.secondary'>
+                              {new Date(tx.createdAt).toLocaleString()}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Button 
+                              size='small' 
+                              variant='text' 
+                              sx={{ fontWeight: 600 }}
+                              component={Link}
+                              href={getLocalizedPath('/assets/transactions', currentLang)}
+                            >
+                              详情
+                            </Button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>
 
               <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant='caption' color='text.disabled'>
-                  共 {transactions.length} 条记录
+                  共 {total} 条记录
                 </Typography>
                 <TablePagination
                   component='div'
-                  count={transactions.length}
+                  count={total}
                   page={page}
                   onPageChange={(_, newPage) => setPage(newPage)}
                   rowsPerPage={rowsPerPage}

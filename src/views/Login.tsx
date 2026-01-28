@@ -227,9 +227,9 @@ const Login = ({ mode }: { mode: Mode }) => {
         updateThemeByRole(signInData)
         // 等待 NextAuth 会话状态更新
         // await new Promise(resolve => setTimeout(resolve, 100))
-        // 获取 menuList 第一条的第一个路由，直接传入 menuList 避免读取 localStorage 的时序问题
-        const homePageUrl = getFirstMenuRoute(normalizedMenuList)
-        const redirectURL = searchParams.get('redirectTo') ?? homePageUrl
+        // 默认跳转到"我的资产"页面，如果有 redirectTo 参数则优先使用
+        const defaultHomePage = '/assets/my-assets'
+        const redirectURL = searchParams.get('redirectTo') ?? defaultHomePage
         const finalUrl = getLocalizedUrl(redirectURL, locale as Locale)
         router.replace(finalUrl)
       }

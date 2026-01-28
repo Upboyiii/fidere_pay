@@ -1,10 +1,13 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Next Imports
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+
+// Util Imports
+import { getLocalizedPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -23,61 +26,77 @@ import Chip from '@mui/material/Chip'
 import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { Mode } from '@core/types'
+
+// API Imports
+import { getUserTransferList, type TransferDetailItem } from '@server/otc-api'
+import { toast } from 'react-toastify'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
 const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [loading, setLoading] = useState(false)
+  const [records, setRecords] = useState<TransferDetailItem[]>([])
+  const [total, setTotal] = useState(0)
   const [filters, setFilters] = useState({
-    transactionId: '',
-    orderStatus: '',
+    applyNo: '',
+    status: '-1',
     startDate: '',
     endDate: ''
   })
   const [showFilters, setShowFilters] = useState(true)
 
-  // 模拟汇款记录数据
-  const records = [
-    {
-      id: 1,
-      recipient: {
-        name: 'CHAU YEUNG SO',
-        account: '32915070921',
-        swift: 'SCBLHKHH'
-      },
-      debitedAmount: 160000,
-      receivedAmount: 160000,
-      remittanceMethod: 'SWIFT',
-      status: '付款成功',
-      transactionId: 'UR202601211745500133...',
-      applicationTime: '2026-01-21 17:45:51'
-    },
-    {
-      id: 2,
-      recipient: {
-        name: 'SURPLUS COME LIMITED',
-        account: '035802319283831',
-        swift: 'WIHBHKHH'
-      },
-      debitedAmount: 150000,
-      receivedAmount: 150000,
-      remittanceMethod: 'SWIFT',
-      status: '付款成功',
-      transactionId: 'UR202601211451440132...',
-      applicationTime: '2026-01-21 14:51:45'
+  // 加载汇款记录
+  const loadRecords = async () => {
+    setLoading(true)
+    try {
+      const res = await getUserTransferList({
+        pageNum: page + 1,
+        pageSize: rowsPerPage,
+        status: filters.status !== '-1' ? Number(filters.status) : undefined,
+        applyNo: filters.applyNo || undefined,
+        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
+        endTime: filters.endDate ? new Date(filters.endDate + 'T23:59:59').getTime() : undefined
+      })
+      setRecords(res.data?.list || [])
+      setTotal(res.data?.total || 0)
+    } catch (error) {
+      console.error('加载汇款记录失败:', error)
+      toast.error('加载汇款记录失败')
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
 
-  const getStatusColor = (status: string) => {
-    if (status === '付款成功') return 'success'
-    if (status === '处理中') return 'warning'
-    if (status === '失败') return 'error'
+  useEffect(() => {
+    loadRecords()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowsPerPage, filters.status, filters.applyNo, filters.startDate, filters.endDate])
+
+  const getStatusLabel = (status: number) => {
+    const statusMap: Record<number, string> = {
+      0: '待审核',
+      1: '处理中',
+      2: '已完成',
+      3: '已驳回',
+      4: '失败'
+    }
+    return statusMap[status] || '未知'
+  }
+
+  const getStatusColor = (status: number) => {
+    if (status === 2) return 'success'
+    if (status === 1) return 'warning'
+    if (status === 3 || status === 4) return 'error'
     return 'default'
   }
 
@@ -141,13 +160,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <CardContent>
                 <Grid container spacing={4}>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>申请单号</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入交易ID'
-                      value={filters.transactionId}
-                      onChange={(e) => setFilters({ ...filters, transactionId: e.target.value })}
+                      placeholder='请输入申请单号'
+                      value={filters.applyNo}
+                      onChange={(e) => setFilters({ ...filters, applyNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -155,15 +174,17 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>订单状态</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
-                        value={filters.orderStatus}
-                        onChange={(e) => setFilters({ ...filters, orderStatus: e.target.value })}
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择状态</MenuItem>
-                        <MenuItem value='success'>付款成功</MenuItem>
-                        <MenuItem value='processing'>处理中</MenuItem>
-                        <MenuItem value='failed'>失败</MenuItem>
+                        <MenuItem value='-1'>全部</MenuItem>
+                        <MenuItem value='0'>待审核</MenuItem>
+                        <MenuItem value='1'>处理中</MenuItem>
+                        <MenuItem value='2'>已完成</MenuItem>
+                        <MenuItem value='3'>已驳回</MenuItem>
+                        <MenuItem value='4'>失败</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -196,12 +217,22 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                 <Button 
                   variant='text' 
                   size='small'
-                  onClick={() => setFilters({ transactionId: '', orderStatus: '', startDate: '', endDate: '' })}
+                  onClick={() => {
+                    setFilters({ applyNo: '', status: '-1', startDate: '', endDate: '' })
+                    setPage(0)
+                  }}
                   sx={{ color: 'text.secondary' }}
                 >
                   重置
                 </Button>
-                <Button variant='contained' size='small' startIcon={<i className='ri-search-line' />} sx={{ borderRadius: '8px', px: 6 }}>
+                <Button 
+                  variant='contained' 
+                  size='small' 
+                  startIcon={<i className='ri-search-line' />} 
+                  onClick={loadRecords}
+                  disabled={loading}
+                  sx={{ borderRadius: '8px', px: 6 }}
+                >
                   查询
                 </Button>
                 <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
@@ -226,7 +257,9 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                 所有汇款订单
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton size='small'><i className='ri-refresh-line' /></IconButton>
+                <IconButton size='small' onClick={loadRecords} disabled={loading}>
+                  {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
+                </IconButton>
                 <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
                 <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
               </Box>
@@ -264,69 +297,91 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {records.map((record) => (
-                    <tr key={record.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Box>
-                          <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>{record.recipient.name}</Typography>
-                          <Typography variant='caption' color='text.secondary'>
-                            {record.recipient.account} | SWIFT: {record.recipient.swift}
-                          </Typography>
-                        </Box>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'text.primary' }}>
-                          {record.debitedAmount.toLocaleString()} USDT
-                        </Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          {record.remittanceMethod}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'primary.main' }}>
-                          {record.receivedAmount.toLocaleString()} USD
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Chip 
-                          label={record.status} 
-                          size='small' 
-                          color={getStatusColor(record.status) as any} 
-                          sx={{ fontWeight: 600, borderRadius: '6px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
-                          {record.transactionId}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' color='text.secondary'>
-                          {record.applicationTime}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Button 
-                          size='small' 
-                          variant='text' 
-                          sx={{ fontWeight: 600 }}
-                          onClick={() => {}}
-                        >
-                          详情
-                        </Button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
+                        <CircularProgress />
                       </td>
                     </tr>
-                  ))}
+                  ) : records.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                        暂无汇款记录
+                      </td>
+                    </tr>
+                  ) : (
+                    records.map((record) => (
+                      <tr key={record.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Box>
+                            <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                              收款人ID: {record.payeeId}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                              币种: {record.currencyCode} → {record.receiveCurrencyCode}
+                            </Typography>
+                          </Box>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'text.primary' }}>
+                            {record.transferAmount.toLocaleString()} {record.currencyCode}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'primary.main' }}>
+                            {((record.transferAmount * record.exchangeRate) - (record.fee || 0)).toLocaleString()} {record.receiveCurrencyCode}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Chip 
+                            label={getStatusLabel(record.status)} 
+                            size='small' 
+                            color={getStatusColor(record.status) as any} 
+                            sx={{ fontWeight: 600, borderRadius: '6px' }}
+                          />
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
+                            {record.applyNo}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' color='text.secondary'>
+                            {record.createdAt 
+                              ? new Date(record.createdAt.toString().length === 10 ? record.createdAt * 1000 : record.createdAt).toLocaleString('zh-CN', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit'
+                                })
+                              : '-'}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Button 
+                            size='small' 
+                            variant='text' 
+                            sx={{ fontWeight: 600 }}
+                            onClick={() => router.push(getLocalizedPath(`/remittance/records/${record.applyNo}`, currentLang))}
+                          >
+                            详情
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </Box>
             <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant='caption' color='text.disabled'>
-                共 {records.length} 条记录
+                共 {total} 条记录
               </Typography>
               <TablePagination
                 component='div'
-                count={records.length}
+                count={total}
                 page={page}
                 onPageChange={(_, newPage) => setPage(newPage)}
                 rowsPerPage={rowsPerPage}

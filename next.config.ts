@@ -42,13 +42,42 @@ const nextConfig: NextConfig = {
       apiBaseUrl = 'http://b1dae9bc5cabbc13e4bee21af11cdb8d_manage.oditrust.com:9002'
     } else {
       // 开发环境
-      apiBaseUrl = 'http://b1dae9bc5cabbc13e4bee21af11cdb8d_manage.oditrust.com:9002'
+      apiBaseUrl = 'http://192.168.5.111:9009'
     }
     return [
       {
         source: '/admin-api/:path*',
         // destination: 'http://192.168.5.58:8808/admin-api/:path*' // 本地开发（可选）
-        destination: `${apiBaseUrl}/admin-api/:path*`
+        destination: `${apiBaseUrl}/:path*`
+      },
+      // 代理 API 路径（去掉 admin-api 前缀，添加 /api/v1/ 前缀）
+      {
+        source: '/pub/:path*',
+        destination: `${apiBaseUrl}/api/v1/pub/:path*`
+      },
+      {
+        source: '/system/:path*',
+        destination: `${apiBaseUrl}/api/v1/system/:path*`
+      },
+      {
+        source: '/member/:path*',
+        destination: `${apiBaseUrl}/api/v1/member/:path*`
+      },
+      {
+        source: '/operation/:path*',
+        destination: `${apiBaseUrl}/api/v1/operation/:path*`
+      },
+      {
+        source: '/general/:path*',
+        destination: `${apiBaseUrl}/api/v1/general/:path*`
+      },
+      {
+        source: '/api/v1/biz/:path*',
+        destination: `${apiBaseUrl}/api/v1/biz/:path*`
+      },
+      {
+        source: '/api/v1/pub/:path*',
+        destination: `${apiBaseUrl}/api/v1/pub/:path*`
       }
     ]
   },

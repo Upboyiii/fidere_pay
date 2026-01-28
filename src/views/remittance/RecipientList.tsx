@@ -1,11 +1,14 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
 // Next Imports
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+
+// Util Imports
+import { getLocalizedPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -25,54 +28,100 @@ import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Checkbox from '@mui/material/Checkbox'
 import Divider from '@mui/material/Divider'
+import CircularProgress from '@mui/material/CircularProgress'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
 
 // Type Imports
 import type { Mode } from '@core/types'
+
+// API Imports
+import { getPayeeList, deletePayee, type PayeeItem } from '@server/otc-api'
+import { toast } from 'react-toastify'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
 const RecipientList = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [loading, setLoading] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<PayeeItem | null>(null)
   const [filters, setFilters] = useState({
     remittanceMethod: '',
     accountType: '',
-    bankName: '',
-    startDate: '',
-    endDate: ''
+    searchKey: ''
   })
   const [showFilters, setShowFilters] = useState(true)
+  const [recipients, setRecipients] = useState<PayeeItem[]>([])
+  const [total, setTotal] = useState(0)
 
-  // 模拟收款人数据
-  const recipients = [
-    {
-      id: 1,
-      remittanceMethod: '国际汇款',
-      accountType: '公司',
-      name: 'UOB Kay Hian (Hong Kong) Ltd',
-      account: '600360200274',
-      bankName: 'THE HONGKONG AND SHANGHAI...',
-      currency: 'USD',
-      remark: 'Further credit to accoun...',
-      createTime: '2026-01-19 14:34:34'
-    },
-    {
-      id: 2,
-      remittanceMethod: '国际汇款',
-      accountType: '个人',
-      name: 'Kassius Macdonald ROBERTS...',
-      account: '431128693888',
-      bankName: 'CAIXABANK, S.A.',
-      currency: 'USD',
-      remark: '',
-      createTime: '2026-01-19 14:30:22'
+  // 加载收款人列表
+  const loadRecipients = async () => {
+    setLoading(true)
+    try {
+      const res = await getPayeeList({
+        pageNum: page + 1,
+        pageSize: rowsPerPage,
+        remitType: filters.remittanceMethod ? Number(filters.remittanceMethod) : undefined,
+        accountType: filters.accountType ? Number(filters.accountType) : undefined,
+        status: 1, // 只显示启用的
+        searchKey: filters.searchKey || undefined
+      })
+      setRecipients(res.data?.list || [])
+      setTotal(res.data?.total || 0)
+    } catch (error) {
+      console.error('加载收款人列表失败:', error)
+      toast.error('加载收款人列表失败')
+    } finally {
+      setLoading(false)
     }
-  ]
+  }
+
+  useEffect(() => {
+    loadRecipients()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, rowsPerPage, filters.remittanceMethod, filters.accountType, filters.searchKey])
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    try {
+      await deletePayee({ id: deleteTarget.id })
+      toast.success('删除成功')
+      setDeleteDialogOpen(false)
+      setDeleteTarget(null)
+      loadRecipients()
+    } catch (error) {
+      console.error('删除失败:', error)
+      toast.error('删除失败')
+    }
+  }
 
   const handleCopyAccount = (account: string) => {
     navigator.clipboard.writeText(account)
+    toast.success('已复制')
+  }
+
+  const getRemitTypeLabel = (remitType: number) => {
+    return remitType === 1 ? 'SWIFT汇款' : '本地汇款'
+  }
+
+  const getAccountTypeLabel = (accountType: number) => {
+    return accountType === 1 ? '公司' : '个人'
+  }
+
+  const getRecipientName = (recipient: PayeeItem) => {
+    if (recipient.accountType === 1) {
+      return recipient.companyName || recipient.accountName
+    } else {
+      return `${recipient.firstName || ''} ${recipient.lastName || ''}`.trim() || recipient.accountName
+    }
   }
 
   return (
@@ -114,7 +163,7 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
             <Button 
               variant='contained' 
               startIcon={<i className='ri-add-line' />} 
-              onClick={() => router.push('/remittance/recipients/new')}
+              onClick={() => router.push(getLocalizedPath('/remittance/recipients/new', currentLang))}
               sx={{ borderRadius: '8px', px: 6 }}
             >
               新增收款人
@@ -143,9 +192,9 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择汇款方式</MenuItem>
-                        <MenuItem value='swift'>SWIFT汇款</MenuItem>
-                        <MenuItem value='local'>本地汇款</MenuItem>
+                        <MenuItem value=''>全部</MenuItem>
+                        <MenuItem value='1'>SWIFT汇款</MenuItem>
+                        <MenuItem value='2'>本地汇款</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -158,31 +207,20 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择账户类型</MenuItem>
-                        <MenuItem value='personal'>个人</MenuItem>
-                        <MenuItem value='company'>公司</MenuItem>
+                        <MenuItem value=''>全部</MenuItem>
+                        <MenuItem value='2'>个人</MenuItem>
+                        <MenuItem value='1'>公司</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>银行名称</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>搜索关键词</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入银行名称'
-                      value={filters.bankName}
-                      onChange={(e) => setFilters({ ...filters, bankName: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>创建时间</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
-                      value={filters.startDate}
-                      onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                      placeholder='收款人名称、银行名称等'
+                      value={filters.searchKey}
+                      onChange={(e) => setFilters({ ...filters, searchKey: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
@@ -193,12 +231,22 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                 <Button 
                   variant='text' 
                   size='small'
-                  onClick={() => setFilters({ remittanceMethod: '', accountType: '', bankName: '', startDate: '', endDate: '' })}
+                  onClick={() => {
+                    setFilters({ remittanceMethod: '', accountType: '', searchKey: '' })
+                    setPage(0)
+                  }}
                   sx={{ color: 'text.secondary' }}
                 >
                   重置
                 </Button>
-                <Button variant='contained' size='small' startIcon={<i className='ri-search-line' />} sx={{ borderRadius: '8px', px: 6 }}>
+                <Button 
+                  variant='contained' 
+                  size='small' 
+                  startIcon={<i className='ri-search-line' />} 
+                  sx={{ borderRadius: '8px', px: 6 }}
+                  onClick={loadRecipients}
+                  disabled={loading}
+                >
                   查询
                 </Button>
                 <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
@@ -218,17 +266,20 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
               border: '1px solid rgba(0,0,0,0.05)'
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
-              <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                所有收款人
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton size='small'><i className='ri-refresh-line' /></IconButton>
-                <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
-                <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+            <CardContent sx={{ p: 0 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
+                <Typography variant='h6' sx={{ fontWeight: 700 }}>
+                  所有收款人
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <IconButton size='small' onClick={loadRecipients} disabled={loading}>
+                    {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
+                  </IconButton>
+                  <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
+                  <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+                </Box>
               </Box>
-            </Box>
-            <div className='overflow-x-auto'>
+              <div className='overflow-x-auto'>
               <table className={tableStyles.table} style={{ border: 'none' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#fcfdfe' }}>
@@ -237,94 +288,154 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>账户类型</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款方名称</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>银行信息</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {recipients.map((recipient) => (
-                    <tr key={recipient.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                      <td style={{ padding: '16px 24px' }}><Checkbox size='small' /></td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Chip label={recipient.remittanceMethod} size='small' sx={{ bgcolor: 'primary.lightOpacity', color: 'primary.main', fontWeight: 600, borderRadius: '6px' }} />
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Chip
-                          label={recipient.accountType}
-                          size='small'
-                          variant='outlined'
-                          sx={{ fontWeight: 600, borderRadius: '6px' }}
-                        />
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>{recipient.name}</Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Box>
-                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
-                            {recipient.account}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary'>
-                            {recipient.bankName}
-                          </Typography>
-                        </Box>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ fontWeight: 600 }}>{recipient.currency}</Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' color='text.secondary'>
-                          {recipient.createTime}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            size='small'
-                            variant='text'
-                            onClick={() => router.push(`/remittance/recipients/${recipient.id}/edit`)}
-                            sx={{ fontWeight: 600 }}
-                          >
-                            编辑
-                          </Button>
-                          <Button
-                            size='small'
-                            variant='text'
-                            color='error'
-                            sx={{ fontWeight: 600 }}
-                          >
-                            删除
-                          </Button>
-                        </Box>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center' }}>
+                        <CircularProgress />
                       </td>
                     </tr>
-                  ))}
+                  ) : recipients.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                        暂无收款人
+                      </td>
+                    </tr>
+                  ) : (
+                    recipients.map((recipient) => (
+                      <tr key={recipient.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                        <td style={{ padding: '16px 24px' }}><Checkbox size='small' /></td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Chip 
+                            label={getRemitTypeLabel(recipient.remitType)} 
+                            size='small' 
+                            sx={{ bgcolor: 'primary.lightOpacity', color: 'primary.main', fontWeight: 600, borderRadius: '6px' }} 
+                          />
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Chip
+                            label={getAccountTypeLabel(recipient.accountType)}
+                            size='small'
+                            variant='outlined'
+                            sx={{ fontWeight: 600, borderRadius: '6px' }}
+                          />
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
+                            {getRecipientName(recipient)}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
+                                {recipient.accountNo}
+                              </Typography>
+                              <IconButton 
+                                size='small' 
+                                onClick={() => handleCopyAccount(recipient.accountNo)}
+                                sx={{ p: 0.5 }}
+                              >
+                                <i className='ri-file-copy-line text-sm' />
+                              </IconButton>
+                            </Box>
+                            <Typography variant='caption' color='text.secondary'>
+                              {recipient.bankName}
+                            </Typography>
+                          </Box>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' color='text.secondary'>
+                            {(() => {
+                              const timeValue = (recipient as any).createTime || recipient.createdAt
+                              if (!timeValue) return '-'
+                              const timestamp = typeof timeValue === 'string' ? parseInt(timeValue) : timeValue
+                              const date = timestamp.toString().length === 10 ? new Date(timestamp * 1000) : new Date(timestamp)
+                              return date.toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })
+                            })()}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Box sx={{ display: 'flex', gap: 1 }}>
+                            <Button
+                              size='small'
+                              variant='text'
+                              component={Link}
+                              href={getLocalizedPath(`/remittance/recipients/${recipient.id}/edit`, currentLang)}
+                              sx={{ fontWeight: 600 }}
+                            >
+                              编辑
+                            </Button>
+                            <Button
+                              size='small'
+                              variant='text'
+                              color='error'
+                              onClick={() => {
+                                setDeleteTarget(recipient)
+                                setDeleteDialogOpen(true)
+                              }}
+                              sx={{ fontWeight: 600 }}
+                            >
+                              删除
+                            </Button>
+                          </Box>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
-            </div>
-            <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Typography variant='caption' color='text.disabled'>
-                共 {recipients.length} 个收款人
-              </Typography>
-              <TablePagination
-                component='div'
-                count={recipients.length}
-                page={page}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10))
-                  setPage(0)
-                }}
-                rowsPerPageOptions={[10, 25, 50]}
-                labelRowsPerPage=''
-                sx={{ border: 'none' }}
-              />
-            </Box>
+              </div>
+              <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Typography variant='caption' color='text.disabled'>
+                  共 {total} 个收款人
+                </Typography>
+                <TablePagination
+                  component='div'
+                  count={total}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10))
+                    setPage(0)
+                  }}
+                  rowsPerPageOptions={[10, 25, 50]}
+                  labelRowsPerPage=''
+                  sx={{ border: 'none' }}
+                />
+              </Box>
+            </CardContent>
           </Card>
         </Grid>
       </Grid>
+
+      {/* 删除确认对话框 */}
+      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+        <DialogTitle>确认删除</DialogTitle>
+        <DialogContent>
+          <Typography>
+            确定要删除收款人 "{deleteTarget ? getRecipientName(deleteTarget) : ''}" 吗？此操作不可恢复。
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
+          <Button onClick={handleDelete} color='error' variant='contained'>
+            删除
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   )
 }

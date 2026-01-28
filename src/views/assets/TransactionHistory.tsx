@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // Next Imports
 import { useRouter } from 'next/navigation'
@@ -22,9 +22,14 @@ import Chip from '@mui/material/Chip'
 import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Divider from '@mui/material/Divider'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { Mode } from '@core/types'
+
+// API Imports
+import { getUserTransactionList, getUserAssetList, type UserTransactionListItem, type UserAssetListItem } from '@server/otc-api'
+import { toast } from 'react-toastify'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -33,6 +38,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
+  const [loading, setLoading] = useState(false)
   const [filters, setFilters] = useState({
     transactionId: '',
     transactionType: '',
@@ -41,70 +47,65 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
     endDate: ''
   })
   const [showFilters, setShowFilters] = useState(true)
+  const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
+  const [total, setTotal] = useState(0)
+  const [assets, setAssets] = useState<UserAssetListItem[]>([])
 
-  // 模拟交易数据
-  const transactions = [
-    {
-      id: '2013914565066862594',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+15000',
-      status: '成功',
-      createTime: '2026-01-21 18:00:24'
-    },
-    {
-      id: '2013907480774160385',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+160580',
-      status: '成功',
-      createTime: '2026-01-21 17:32:15'
-    },
-    {
-      id: '2013865558210752514',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+150545',
-      status: '成功',
-      createTime: '2026-01-21 14:45:40'
-    },
-    {
-      id: '2013160999066775553',
-      type: '充值',
-      currency: 'USDT',
-      amount: '+2.0071',
-      status: '成功',
-      createTime: '2026-01-19 16:06:00'
-    },
-    {
-      id: '2013150999066775554',
-      type: '汇款',
-      currency: 'USDT',
-      amount: '-5000',
-      status: '处理中',
-      createTime: '2026-01-19 15:30:00'
-    },
-    {
-      id: '2013140999066775555',
-      type: '汇款',
-      currency: 'USDT',
-      amount: '-1000',
-      status: '成功',
-      createTime: '2026-01-19 14:20:00'
+  // 加载资产列表（用于币种筛选）
+  useEffect(() => {
+    const loadAssets = async () => {
+      try {
+        const res = await getUserAssetList()
+        setAssets(res.data?.list || [])
+      } catch (error) {
+        console.error('加载资产列表失败:', error)
+      }
     }
-  ]
+    loadAssets()
+  }, [])
 
-  const getStatusColor = (status: string) => {
-    if (status === '成功') return 'success'
-    if (status === '失败') return 'error'
-    if (status === '处理中') return 'warning'
-    return 'default'
+  // 加载交易记录
+  const loadTransactions = async () => {
+    setLoading(true)
+    try {
+      const res = await getUserTransactionList({
+        pageNum: page + 1,
+        pageSize: rowsPerPage,
+        currencyCode: filters.currency || undefined,
+        bizType: filters.transactionType ? Number(filters.transactionType) : undefined,
+        direction: undefined, // 不筛选方向，显示所有
+        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
+        endTime: filters.endDate ? new Date(filters.endDate).getTime() + 86400000 - 1 : undefined
+      })
+      
+      setTransactions(res.data?.list || [])
+      setTotal(res.data?.total || 0)
+    } catch (error) {
+      console.error('加载交易记录失败:', error)
+      toast.error('加载交易记录失败')
+    } finally {
+      setLoading(false)
+    }
   }
 
-  const getTypeColor = (type: string) => {
-    if (type === '充值') return 'primary'
-    if (type === '汇款') return 'warning'
-    return 'default'
+  useEffect(() => {
+    loadTransactions()
+  }, [page, rowsPerPage])
+
+  const getStatusColor = (bizType: number) => {
+    // 根据业务类型判断状态，这里简化处理
+    return 'success'
+  }
+
+  const getTypeLabel = (bizType: number) => {
+    const typeMap: Record<number, string> = {
+      1: '充值',
+      2: '提现',
+      3: '转账',
+      4: '汇款',
+      5: '其他'
+    }
+    return typeMap[bizType] || '其他'
   }
 
   return (
@@ -186,9 +187,10 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value=''>请选择</MenuItem>
-                        <MenuItem value='recharge'>充值</MenuItem>
-                        <MenuItem value='remittance'>汇款</MenuItem>
-                        <MenuItem value='withdraw'>提现</MenuItem>
+                        <MenuItem value='1'>充值</MenuItem>
+                        <MenuItem value='2'>提现</MenuItem>
+                        <MenuItem value='3'>转账</MenuItem>
+                        <MenuItem value='4'>汇款</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -202,9 +204,11 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value=''>请选择币种</MenuItem>
-                        <MenuItem value='USDT'>USDT</MenuItem>
-                        <MenuItem value='USD'>USD</MenuItem>
-                        <MenuItem value='HKD'>HKD</MenuItem>
+                        {assets.map(asset => (
+                          <MenuItem key={asset.currencyCode} value={asset.currencyCode}>
+                            {asset.currencyCode}
+                          </MenuItem>
+                        ))}
                       </Select>
                     </FormControl>
                   </Grid>
@@ -242,7 +246,14 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                 >
                   重置
                 </Button>
-                <Button variant='contained' size='small' startIcon={<i className='ri-search-line' />} sx={{ borderRadius: '8px', px: 6 }}>
+                <Button 
+                  variant='contained' 
+                  size='small' 
+                  startIcon={<i className='ri-search-line' />} 
+                  sx={{ borderRadius: '8px', px: 6 }}
+                  onClick={loadTransactions}
+                  disabled={loading}
+                >
                   查询
                 </Button>
                 <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
@@ -267,7 +278,9 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                 交易记录
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton size='small'><i className='ri-refresh-line' /></IconButton>
+                <IconButton size='small' onClick={loadTransactions} disabled={loading}>
+                  {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
+                </IconButton>
                 <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
                 <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
               </Box>
@@ -286,73 +299,87 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   </tr>
                 </thead>
                 <tbody>
-                  {transactions.map((tx, index) => (
-                    <tr key={index} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
-                          {tx.id}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            color: tx.type === '充值' ? 'primary.main' : 'warning.main',
-                            fontWeight: 600
-                          }}
-                        >
-                          {tx.type}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2'>{tx.currency}</Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            fontWeight: 700,
-                            color: tx.amount.startsWith('+') ? '#4caf50' : '#ff5252'
-                          }}
-                        >
-                          {tx.amount}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Chip 
-                          label={tx.status} 
-                          size='small' 
-                          color={getStatusColor(tx.status) as any} 
-                          sx={{ borderRadius: '6px', fontWeight: 600 }}
-                        />
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Typography variant='body2' color='text.secondary'>
-                          {tx.createTime}
-                        </Typography>
-                      </td>
-                      <td style={{ padding: '16px 24px' }}>
-                        <Button 
-                          size='small' 
-                          variant='text' 
-                          sx={{ fontWeight: 600 }}
-                          onClick={() => {}}
-                        >
-                          详情
-                        </Button>
+                  {loading ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
+                        <CircularProgress />
                       </td>
                     </tr>
-                  ))}
+                  ) : transactions.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                        暂无交易记录
+                      </td>
+                    </tr>
+                  ) : (
+                    transactions.map((tx) => (
+                      <tr key={tx.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
+                            {tx.id}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              color: tx.direction === 1 ? 'primary.main' : 'warning.main',
+                              fontWeight: 600
+                            }}
+                          >
+                            {getTypeLabel(tx.bizType)}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2'>{tx.currencyCode}</Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              fontWeight: 700,
+                              color: tx.direction === 1 ? '#4caf50' : '#ff5252'
+                            }}
+                          >
+                            {tx.direction === 1 ? '+' : '-'}{tx.amount}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Chip 
+                            label='成功' 
+                            size='small' 
+                            color='success' 
+                            sx={{ borderRadius: '6px', fontWeight: 600 }}
+                          />
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Typography variant='body2' color='text.secondary'>
+                            {new Date(tx.createdAt).toLocaleString()}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px' }}>
+                          <Button 
+                            size='small' 
+                            variant='text' 
+                            sx={{ fontWeight: 600 }}
+                            onClick={() => {}}
+                          >
+                            详情
+                          </Button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
             <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant='caption' color='text.disabled'>
-                共 {transactions.length} 条记录
+                共 {total} 条记录
               </Typography>
               <TablePagination
                 component='div'
-                count={transactions.length}
+                count={total}
                 page={page}
                 onPageChange={(_, newPage) => setPage(newPage)}
                 rowsPerPage={rowsPerPage}
