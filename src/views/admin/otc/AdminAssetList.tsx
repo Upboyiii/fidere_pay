@@ -55,25 +55,26 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>用户资产列表</Typography>
             </Box>
-            <Box className='flex items-center gap-4 mb-4'>
+            <Box className='flex items-center gap-4 mb-6'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 150 }}
               />
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '600px' }}>
                 <thead>
                   <tr>
                     <th>用户ID</th>

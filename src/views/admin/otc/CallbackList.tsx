@@ -12,8 +12,11 @@ import Button from '@mui/material/Button'
 import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid2'
-import IconButton from '@mui/material/IconButton'
 import Chip from '@mui/material/Chip'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -78,44 +81,48 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>回调记录列表</Typography>
             </Box>
-            <Box className='flex items-center gap-4 mb-4 flex-wrap'>
+            <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
               <TextField
                 label='回调类型'
                 value={filters.callbackType}
                 onChange={e => setFilters({ ...filters, callbackType: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
-              <TextField
-                label='回调状态'
-                value={filters.callbackStatus}
-                onChange={e => setFilters({ ...filters, callbackStatus: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value='-1'>全部</option>
-                <option value='0'>待处理</option>
-                <option value='1'>成功</option>
-                <option value='2'>失败</option>
-              </TextField>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='callback-status-label'>回调状态</InputLabel>
+                <Select
+                  labelId='callback-status-label'
+                  value={filters.callbackStatus}
+                  onChange={e => setFilters({ ...filters, callbackStatus: e.target.value })}
+                  label='回调状态'
+                >
+                  <MenuItem value='-1'>全部</MenuItem>
+                  <MenuItem value='0'>待处理</MenuItem>
+                  <MenuItem value='1'>成功</MenuItem>
+                  <MenuItem value='2'>失败</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label='开始时间'
                 type='datetime-local'
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -124,14 +131,15 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '900px' }}>
                 <thead>
                   <tr>
                     <th>ID</th>

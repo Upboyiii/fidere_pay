@@ -12,6 +12,10 @@ import Button from '@mui/material/Button'
 import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid2'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -67,49 +71,54 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>资金流水列表</Typography>
             </Box>
-            <Box className='flex items-center gap-4 mb-4 flex-wrap'>
+            <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
               <TextField
                 label='币种编码'
                 value={filters.currencyCode}
                 onChange={e => setFilters({ ...filters, currencyCode: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
               <TextField
                 label='业务类型'
                 value={filters.bizType}
                 onChange={e => setFilters({ ...filters, bizType: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
-              <TextField
-                label='方向'
-                value={filters.direction}
-                onChange={e => setFilters({ ...filters, direction: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value=''>全部</option>
-                <option value='1'>入账</option>
-                <option value='2'>出账</option>
-              </TextField>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='direction-label'>方向</InputLabel>
+                <Select
+                  labelId='direction-label'
+                  value={filters.direction}
+                  onChange={e => setFilters({ ...filters, direction: e.target.value })}
+                  label='方向'
+                >
+                  <MenuItem value=''>全部</MenuItem>
+                  <MenuItem value='1'>入账</MenuItem>
+                  <MenuItem value='2'>出账</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label='开始时间'
                 type='datetime-local'
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -124,8 +133,8 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '900px' }}>
                 <thead>
                   <tr>
                     <th>用户ID</th>

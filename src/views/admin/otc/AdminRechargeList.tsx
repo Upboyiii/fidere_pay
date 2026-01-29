@@ -13,6 +13,10 @@ import TablePagination from '@mui/material/TablePagination'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid2'
 import Chip from '@mui/material/Chip'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -80,44 +84,48 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>充值记录列表</Typography>
             </Box>
-            <Box className='flex items-center gap-4 mb-4 flex-wrap'>
+            <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
-              <TextField
-                label='状态'
-                value={filters.status}
-                onChange={e => setFilters({ ...filters, status: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value='-1'>全部</option>
-                <option value='0'>待确认</option>
-                <option value='1'>已到账</option>
-                <option value='2'>失败</option>
-                <option value='3'>已取消</option>
-              </TextField>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='recharge-status-label'>状态</InputLabel>
+                <Select
+                  labelId='recharge-status-label'
+                  value={filters.status}
+                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                  label='状态'
+                >
+                  <MenuItem value='-1'>全部</MenuItem>
+                  <MenuItem value='0'>待确认</MenuItem>
+                  <MenuItem value='1'>已到账</MenuItem>
+                  <MenuItem value='2'>失败</MenuItem>
+                  <MenuItem value='3'>已取消</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label='币种编码'
                 value={filters.currencyCode}
                 onChange={e => setFilters({ ...filters, currencyCode: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
               <TextField
                 label='充值单号'
                 value={filters.rechargeNo}
                 onChange={e => setFilters({ ...filters, rechargeNo: e.target.value })}
                 size='small'
+                sx={{ minWidth: 180 }}
               />
               <TextField
                 label='开始时间'
@@ -125,6 +133,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -133,14 +142,15 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '900px' }}>
                 <thead>
                   <tr>
                     <th>充值单号</th>

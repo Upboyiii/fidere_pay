@@ -7,11 +7,14 @@ import { useState, useEffect } from 'react'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid2'
 import Chip from '@mui/material/Chip'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -64,8 +67,8 @@ const CurrencyList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>币种管理</Typography>
@@ -73,37 +76,39 @@ const CurrencyList = ({ mode }: { mode: Mode }) => {
                 初始化默认币种
               </Button>
             </Box>
-            <Box className='flex items-center gap-4 mb-4'>
-              <TextField
-                label='币种类型'
-                value={filters.currencyType}
-                onChange={e => setFilters({ ...filters, currencyType: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value=''>全部</option>
-                <option value='1'>法币</option>
-                <option value='2'>数字货币</option>
-              </TextField>
-              <TextField
-                label='状态'
-                value={filters.status}
-                onChange={e => setFilters({ ...filters, status: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value='-1'>全部</option>
-                <option value='0'>禁用</option>
-                <option value='1'>启用</option>
-              </TextField>
+            <Box className='flex items-center gap-4 mb-6'>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='currency-type-label'>币种类型</InputLabel>
+                <Select
+                  labelId='currency-type-label'
+                  value={filters.currencyType}
+                  onChange={e => setFilters({ ...filters, currencyType: e.target.value })}
+                  label='币种类型'
+                >
+                  <MenuItem value=''>全部</MenuItem>
+                  <MenuItem value='1'>法币</MenuItem>
+                  <MenuItem value='2'>数字货币</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='currency-status-label'>状态</InputLabel>
+                <Select
+                  labelId='currency-status-label'
+                  value={filters.status}
+                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                  label='状态'
+                >
+                  <MenuItem value='-1'>全部</MenuItem>
+                  <MenuItem value='0'>禁用</MenuItem>
+                  <MenuItem value='1'>启用</MenuItem>
+                </Select>
+              </FormControl>
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '600px' }}>
                 <thead>
                   <tr>
                     <th>币种编码</th>

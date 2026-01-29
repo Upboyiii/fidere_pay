@@ -17,6 +17,10 @@ import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
 import Chip from '@mui/material/Chip'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -131,8 +135,8 @@ const FeeConfigList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>手续费配置</Typography>
@@ -140,31 +144,33 @@ const FeeConfigList = ({ mode }: { mode: Mode }) => {
                 新增配置
               </Button>
             </Box>
-            <Box className='flex items-center gap-4 mb-4'>
+            <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 150 }}
               />
-              <TextField
-                label='状态'
-                value={filters.status}
-                onChange={e => setFilters({ ...filters, status: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value='-1'>全部</option>
-                <option value='0'>禁用</option>
-                <option value='1'>启用</option>
-              </TextField>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='status-filter-label'>状态</InputLabel>
+                <Select
+                  labelId='status-filter-label'
+                  value={filters.status}
+                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                  label='状态'
+                >
+                  <MenuItem value='-1'>全部</MenuItem>
+                  <MenuItem value='0'>禁用</MenuItem>
+                  <MenuItem value='1'>启用</MenuItem>
+                </Select>
+              </FormControl>
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '800px' }}>
                 <thead>
                   <tr>
                     <th>用户ID</th>
@@ -254,16 +260,18 @@ const FeeConfigList = ({ mode }: { mode: Mode }) => {
               onChange={e => setFormData({ ...formData, ratioFee: e.target.value })}
               type='number'
             />
-            <TextField
-              label='状态'
-              value={formData.status}
-              onChange={e => setFormData({ ...formData, status: e.target.value })}
-              select
-              SelectProps={{ native: true }}
-            >
-              <option value='0'>禁用</option>
-              <option value='1'>启用</option>
-            </TextField>
+            <FormControl fullWidth>
+              <InputLabel id='form-status-label'>状态</InputLabel>
+              <Select
+                labelId='form-status-label'
+                value={formData.status}
+                onChange={e => setFormData({ ...formData, status: e.target.value })}
+                label='状态'
+              >
+                <MenuItem value='0'>禁用</MenuItem>
+                <MenuItem value='1'>启用</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               label='备注'
               value={formData.remark}

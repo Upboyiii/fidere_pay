@@ -17,6 +17,9 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
 import MenuItem from '@mui/material/MenuItem'
+import Dialog from '@mui/material/Dialog'
+import Tabs from '@mui/material/Tabs'
+import Tab from '@mui/material/Tab'
 import { GET_THEME_CONFIG, SITE_CONFIG, GET_ENTRANCE } from '@/utils/siteConfig'
 import { ENV_CONFIG } from '@server/config'
 
@@ -47,7 +50,8 @@ import useThemeByRole from '@core/hooks/useThemeByRole'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
-import { getCaptchaImg, loginApi } from '@server/login'
+import { getCaptchaImg, loginApi, verify2faApi } from '@server/login'
+import type { LoginResponse } from '@server/login'
 import { TokenManager } from '@/utils/tokenManager'
 import Select from '@mui/material/Select'
 import type { SelectChangeEvent } from '@mui/material/Select'
@@ -102,6 +106,15 @@ const Login = ({ mode }: { mode: Mode }) => {
   const captchaPromiseRef = useRef<Promise<any> | null>(null)
 
   const [selectValue, setSelectValue] = useState('operation')
+  
+  // 谷歌验证码弹窗相关状态
+  const [googleAuthDialogOpen, setGoogleAuthDialogOpen] = useState(false)
+  const [googleAuthTab, setGoogleAuthTab] = useState(0) // 0: 谷歌验证, 1: 邮箱验证
+  const [googleAuthCode, setGoogleAuthCode] = useState(['', '', '', '', '', ''])
+  const [pendingLoginData, setPendingLoginData] = useState<FormData | null>(null)
+  const [tempToken, setTempToken] = useState<string>('') // 2FA 临时 token
+  const googleAuthInputRefs = useRef<(HTMLInputElement | null)[]>([])
+  const [verifyLoading, setVerifyLoading] = useState(false)
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -162,10 +175,107 @@ const Login = ({ mode }: { mode: Mode }) => {
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
+  // 处理谷歌验证码输入
+  const handleGoogleAuthCodeChange = (index: number, value: string) => {
+    // 只允许数字
+    const numericValue = value.replace(/[^0-9]/g, '')
+    
+    if (numericValue.length <= 1) {
+      const newCode = [...googleAuthCode]
+      newCode[index] = numericValue
+      setGoogleAuthCode(newCode)
+      
+      // 自动跳转到下一个输入框
+      if (numericValue && index < 5) {
+        googleAuthInputRefs.current[index + 1]?.focus()
+      }
+    } else if (numericValue.length === 6) {
+      // 处理粘贴整个验证码的情况
+      setGoogleAuthCode(numericValue.split(''))
+      googleAuthInputRefs.current[5]?.focus()
+    }
+  }
+
+  // 处理谷歌验证码输入框的键盘事件
+  const handleGoogleAuthKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !googleAuthCode[index] && index > 0) {
+      googleAuthInputRefs.current[index - 1]?.focus()
+    }
+  }
+
+  // 关闭谷歌验证码弹窗
+  const handleCloseGoogleAuthDialog = () => {
+    setGoogleAuthDialogOpen(false)
+    setGoogleAuthCode(['', '', '', '', '', ''])
+    setPendingLoginData(null)
+    setTempToken('')
+    setGoogleAuthTab(0)
+  }
+
+  // 处理登录成功后的逻辑
+  const handleLoginSuccess = async (res: { data: LoginResponse }, formData: FormData) => {
+    // 检查 menuList 可能的位置
+    const menuList = res.data.menuList || res.data.menu || res.data?.userInfo?.menuList || []
+    const { token, refreshToken, expires, permissions, roles } = res.data
+    const { avatar, userName, userNickname, isAdmin } = res?.data?.userInfo || {}
+    // 确保 menuList 是数组格式，然后转为 JSON 字符串存储
+    const normalizedMenuList = Array.isArray(menuList) ? menuList : []
+    const menuListJson = normalizedMenuList.length > 0 ? JSON.stringify(normalizedMenuList) : '[]'
+    const _selectValue = ENV_CONFIG?.IS_DEVELOPMENT ? selectValue : SITE_CONFIG?.SITE_TYPE
+    // 存储到session中
+    const signInData = {
+      email: formData.email,
+      password: formData.password,
+      accessToken: token,
+      refreshToken,
+      username: userName,
+      nickname: userNickname,
+      avatar,
+      permissions,
+      roles,
+      timestamp: Date.now(),
+      role: _selectValue,
+      isAdmin,
+      menuList: menuListJson
+    }
+    // signIn 时不传递 menuList，避免存储在 JWT token/cookie 中导致 431 错误
+    const { menuList: _, ...signInCredentials } = signInData
+    const signInResult = await signIn('credentials', {
+      ...signInCredentials,
+      redirect: false
+    })
+    // 检查signIn是否成功
+    if (signInResult?.error) {
+      toast.error(t('auth.signInFailed', { error: signInResult.error }))
+      return
+    }
+    // 存储用户角色到 localStorage
+    localStorage.setItem('userRole', _selectValue)
+    // 使用 TokenManager 存储到 localStorage
+    TokenManager.setTokens(signInData)
+    // 清除重定向标记（防止重复重定向）
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('auth_redirect_triggered')
+      sessionStorage.removeItem('auth_redirect_executed')
+    }
+    // 关闭弹窗（如果有的话）
+    handleCloseGoogleAuthDialog()
+    // 显示成功提示
+    toast.success(t('auth.loginSuccess'))
+    // 根据用户角色更新主题设置
+    updateThemeByRole(signInData)
+    // 默认跳转到"我的资产"页面，如果有 redirectTo 参数则优先使用
+    const defaultHomePage = '/assets/my-assets'
+    const redirectURL = searchParams.get('redirectTo') ?? defaultHomePage
+    const finalUrl = getLocalizedUrl(redirectURL, locale as Locale)
+    router.replace(finalUrl)
+  }
+
+  // 第一步：提交登录，检查是否需要 2FA
   const onSubmit: SubmitHandler<FormData> = async (data: FormData) => {
     try {
       setLoginLoading(true)
-      setErrorState(null) // 清除之前的错误状态
+      setErrorState(null)
 
       const res = await loginApi({
         username: data.email,
@@ -174,75 +284,62 @@ const Login = ({ mode }: { mode: Mode }) => {
         verifyKey: captchaImg?.key,
         entrance: GET_ENTRANCE?.() ?? 'MANAGEMENT'
       })
-      // 判断登录是否成功
-      // 此时如果请求失败已经被抛出了，所以这里 res 一定存在
+
       if (res?.data) {
-        // 检查 menuList 可能的位置
-        const menuList = res.data.menuList || res.data.menu || res.data?.userInfo?.menuList || []
-        const { token, refreshToken, expires, permissions, roles } = res.data
-        const { avatar, userName, userNickname, isAdmin } = res?.data?.userInfo || {}
-        // 确保 menuList 是数组格式，然后转为 JSON 字符串存储
-        const normalizedMenuList = Array.isArray(menuList) ? menuList : []
-        const menuListJson = normalizedMenuList.length > 0 ? JSON.stringify(normalizedMenuList) : '[]'
-        const _selectValue = ENV_CONFIG?.IS_DEVELOPMENT ? selectValue : SITE_CONFIG?.SITE_TYPE
-        // 存储到session中
-        const signInData = {
-          email: data.email,
-          password: data.password,
-          accessToken: token,
-          refreshToken,
-          username: userName,
-          nickname: userNickname,
-          avatar,
-          permissions,
-          roles,
-          timestamp: Date.now(),
-          role: _selectValue,
-          isAdmin,
-          menuList: menuListJson // 存储到 localStorage，不传递到 signIn 避免 cookie 过大
+        // 检查是否需要 2FA 验证
+        if (res.data.needGoogleAuth && res.data.tempToken) {
+          // 需要 2FA，保存数据并打开验证码弹窗
+          setPendingLoginData(data)
+          setTempToken(res.data.tempToken)
+          setGoogleAuthDialogOpen(true)
+          setGoogleAuthCode(['', '', '', '', '', ''])
+          // 聚焦第一个输入框
+          setTimeout(() => {
+            googleAuthInputRefs.current[0]?.focus()
+          }, 100)
+        } else {
+          // 不需要 2FA，直接登录成功
+          await handleLoginSuccess(res, data)
         }
-        // signIn 时不传递 menuList，避免存储在 JWT token/cookie 中导致 431 错误
-        const { menuList: _, ...signInCredentials } = signInData
-        const signInResult = await signIn('credentials', {
-          ...signInCredentials,
-          redirect: false
-        })
-        // 检查signIn是否成功
-        if (signInResult?.error) {
-          toast.error(t('auth.signInFailed', { error: signInResult.error }))
-          return
-        }
-        // 存储用户角色到 localStorage
-        localStorage.setItem('userRole', _selectValue)
-        // 使用 TokenManager 存储到 localStorage
-        TokenManager.setTokens(signInData)
-        // 清除重定向标记（防止重复重定向）
-        if (typeof window !== 'undefined') {
-          sessionStorage.removeItem('auth_redirect_triggered')
-          sessionStorage.removeItem('auth_redirect_executed')
-        }
-        // 显示成功提示
-        toast.success(t('auth.loginSuccess'))
-        // 根据用户角色更新主题设置
-        updateThemeByRole(signInData)
-        // 等待 NextAuth 会话状态更新
-        // await new Promise(resolve => setTimeout(resolve, 100))
-        // 默认跳转到"我的资产"页面，如果有 redirectTo 参数则优先使用
-        const defaultHomePage = '/assets/my-assets'
-        const redirectURL = searchParams.get('redirectTo') ?? defaultHomePage
-        const finalUrl = getLocalizedUrl(redirectURL, locale as Locale)
-        router.replace(finalUrl)
       }
     } catch (error) {
-      // 从错误对象中提取错误消息
       const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
       toast.error(errorMessage)
       requestCaptchaImg()
-      // setErrorState({
-      //   message: [errorMessage]
-      // })
     } finally {
       setLoginLoading(false)
+    }
+  }
+
+  // 第二步：验证谷歌验证码
+  const handleGoogleAuthSubmit = async () => {
+    if (!pendingLoginData || !tempToken) return
+    
+    const googleCode = googleAuthCode.join('')
+    if (googleCode.length !== 6) {
+      toast.error('请输入6位验证码')
+      return
+    }
+
+    try {
+      setVerifyLoading(true)
+
+      const res = await verify2faApi({
+        tempToken: tempToken,
+        googleCode: googleCode
+      })
+      
+      if (res?.data) {
+        await handleLoginSuccess(res, pendingLoginData)
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
+      toast.error(errorMessage)
+      // 清空验证码输入
+      setGoogleAuthCode(['', '', '', '', '', ''])
+      googleAuthInputRefs.current[0]?.focus()
+    } finally {
+      setVerifyLoading(false)
     }
   }
 
@@ -542,15 +639,15 @@ const Login = ({ mode }: { mode: Mode }) => {
                   <MenuItem value='operation'>运营模式</MenuItem>
                 </Select>
 
-                <div className='flex justify-between items-center'>
+                {/* <div className='flex justify-between items-center'>
                   <FormControlLabel 
                     control={<Checkbox sx={{ color: '#e2e8f0', '&.Mui-checked': { color: 'primary.main' } }} />} 
                     label={<span className='text-sm text-gray-500'>记住账号</span>}
                   />
-                  {/* <Typography variant='body2' sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 600 }}>
+                  <Typography variant='body2' sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 600 }}>
                     忘记密码?
-                  </Typography> */}
-                </div>
+                  </Typography>
+                </div> */}
 
                 <Button
                   fullWidth
@@ -587,6 +684,243 @@ const Login = ({ mode }: { mode: Mode }) => {
           </Box>
         </div>
       </div>
+
+      {/* 谷歌验证码弹窗 */}
+      <Dialog
+        open={googleAuthDialogOpen}
+        onClose={handleCloseGoogleAuthDialog}
+        maxWidth='xs'
+        fullWidth
+        slotProps={{
+          backdrop: {
+            sx: {
+              backgroundColor: 'rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(8px)'
+            }
+          }
+        }}
+        PaperProps={{
+          sx: { 
+            borderRadius: '24px',
+            overflow: 'hidden',
+            position: 'relative',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            background: 'linear-gradient(to bottom, #ffffff, #fcfdfe)'
+          }
+        }}
+      >
+        {/* 顶部 Tab 栏 - 增加层次感 */}
+        <Box sx={{ px: 4, pt: 3 }}>
+          <Box sx={{ 
+            display: 'flex', 
+            borderBottom: '1px solid rgba(0,0,0,0.06)', 
+            position: 'relative', 
+            justifyContent: 'space-between', 
+            alignItems: 'center' 
+          }}>
+            <Box sx={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 1.5, 
+              pb: 2, 
+              color: 'primary.main',
+              fontWeight: 700,
+              fontSize: '1rem',
+              position: 'relative',
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                bottom: -1,
+                left: 0,
+                width: '100%',
+                height: 3,
+                backgroundColor: 'primary.main',
+                borderRadius: '3px 3px 0 0'
+              }
+            }}>
+              <Box 
+                component='img' 
+                src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
+                sx={{ width: 20, height: 20 }}
+              />
+              谷歌验证
+            </Box>
+            
+            <IconButton
+              onClick={handleCloseGoogleAuthDialog}
+              size='small'
+              sx={{
+                mb: 2,
+                color: '#94a3b8',
+                transition: 'all 0.2s',
+                '&:hover': { 
+                  color: '#64748b', 
+                  backgroundColor: '#f1f5f9',
+                  transform: 'rotate(90deg)'
+                }
+              }}
+            >
+              <i className='ri-close-line' style={{ fontSize: 22 }} />
+            </IconButton>
+          </Box>
+        </Box>
+
+        {/* 内容区域 */}
+        <Box sx={{ p: 5, pt: 4, textAlign: 'center' }}>
+          {/* 谷歌 Logo 容器 - 增加立体感 */}
+          <Box
+            sx={{
+              width: 100,
+              height: 100,
+              borderRadius: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mx: 'auto',
+              mb: 4,
+              background: '#fff',
+              boxShadow: `
+                0 10px 20px -5px rgba(0,0,0,0.05),
+                inset 0 -2px 6px rgba(0,0,0,0.02)
+              `,
+              border: '1px solid rgba(0,0,0,0.03)',
+              position: 'relative',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: -1,
+                borderRadius: '29px',
+                padding: '1px',
+                background: 'linear-gradient(to bottom, rgba(0,0,0,0.05), transparent)',
+                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                WebkitMaskComposite: 'xor',
+                maskComposite: 'exclude'
+              }
+            }}
+          >
+            <Box 
+              component='img' 
+              src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
+              sx={{ width: 48, height: 48, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.05))' }}
+            />
+          </Box>
+
+          {/* 标题 */}
+          <Typography variant='h5' sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', letterSpacing: '-0.02em' }}>
+            安全验证
+          </Typography>
+
+          {/* 描述 */}
+          <Typography variant='body2' sx={{ mb: 5, color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
+            请输入谷歌验证器中的 <Box component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>6位数字</Box> 验证码
+          </Typography>
+
+          {/* 6位验证码输入框 - 增加交互层次感 */}
+          <Box sx={{ display: 'flex', gap: 1.5, justifyContent: 'center', mb: 6 }}>
+            {googleAuthCode.map((digit, index) => (
+              <Box
+                key={index}
+                component='input'
+                ref={(el: HTMLInputElement | null) => { googleAuthInputRefs.current[index] = el }}
+                type='text'
+                inputMode='numeric'
+                maxLength={1}
+                value={digit}
+                autoFocus={index === 0}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleGoogleAuthCodeChange(index, e.target.value)}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleGoogleAuthKeyDown(index, e)}
+                onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                  e.preventDefault()
+                  const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6)
+                  if (pastedData.length === 6) {
+                    setGoogleAuthCode(pastedData.split(''))
+                    googleAuthInputRefs.current[5]?.focus()
+                  }
+                }}
+                sx={{
+                  width: 54,
+                  height: 68,
+                  border: '2px solid',
+                  borderColor: digit ? 'primary.main' : '#f1f5f9',
+                  borderRadius: '16px',
+                  fontSize: '1.8rem',
+                  fontWeight: 700,
+                  textAlign: 'center',
+                  outline: 'none',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                  bgcolor: digit ? '#fff' : '#f8fafc',
+                  color: '#1e293b',
+                  '&:focus': {
+                    borderColor: 'primary.main',
+                    bgcolor: '#fff',
+                    boxShadow: '0 0 0 4px rgba(var(--mui-palette-primary-mainChannel), 0.15)',
+                    transform: 'translateY(-2px)'
+                  },
+                  '&:hover': {
+                    borderColor: digit ? 'primary.main' : '#e2e8f0'
+                  }
+                }}
+              />
+            ))}
+          </Box>
+
+          {/* 按钮区域 - 增加质感 */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 1 }}>
+            <Button
+              variant='text'
+              fullWidth
+              onClick={handleCloseGoogleAuthDialog}
+              sx={{
+                borderRadius: '14px',
+                py: 1.8,
+                fontSize: '1rem',
+                fontWeight: 600,
+                color: '#64748b',
+                textTransform: 'none',
+                '&:hover': {
+                  bgcolor: '#f1f5f9',
+                  color: '#1e293b'
+                }
+              }}
+            >
+              取 消
+            </Button>
+            <Button
+              variant='contained'
+              fullWidth
+              disabled={googleAuthCode.join('').length !== 6 || verifyLoading}
+              onClick={handleGoogleAuthSubmit}
+              sx={{
+                borderRadius: '14px',
+                py: 1.8,
+                fontSize: '1rem',
+                fontWeight: 700,
+                boxShadow: '0 10px 15px -3px rgba(var(--mui-palette-primary-mainChannel), 0.3)',
+                textTransform: 'none',
+                bgcolor: 'primary.main',
+                position: 'relative',
+                overflow: 'hidden',
+                '&:hover': {
+                  bgcolor: 'primary.dark',
+                  boxShadow: '0 20px 25px -5px rgba(var(--mui-palette-primary-mainChannel), 0.4)',
+                  transform: 'translateY(-1px)'
+                },
+                '&:active': {
+                  transform: 'translateY(0)'
+                },
+                '&.Mui-disabled': {
+                  bgcolor: '#f1f5f9',
+                  color: '#cbd5e1',
+                  boxShadow: 'none'
+                }
+              }}
+              startIcon={verifyLoading ? <CircularProgress size={20} color='inherit' /> : null}
+            >
+              {verifyLoading ? '验证中...' : '开始验证'}
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
     </div>
   )
 }

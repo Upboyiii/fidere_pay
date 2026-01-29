@@ -32,7 +32,15 @@ import CircularProgress from '@mui/material/CircularProgress'
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getUserAssetList, getUserTransactionList, type UserAssetListItem, type UserTransactionListItem } from '@server/otc-api'
+import { 
+  getUserAssetList, 
+  getUserTransactionList, 
+  getCurrencyList,
+  initCurrency,
+  type UserAssetListItem, 
+  type UserTransactionListItem,
+  type CurrencyListItem
+} from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Style Imports
@@ -63,12 +71,30 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
   const [total, setTotal] = useState(0)
 
+  // 币种列表
+  const [currencyList, setCurrencyList] = useState<CurrencyListItem[]>([])
+
   // 今日统计
   const [todayStats, setTodayStats] = useState({
     income: 0,
     expenditure: 0,
     totalAssets: 0
   })
+
+  // 初始化币种并加载币种列表
+  const loadCurrencyList = async () => {
+    try {
+      // 先初始化默认币种
+      await initCurrency()
+      // 再获取币种列表
+      const res = await getCurrencyList()
+      const responseData = res.data as any
+      const list = responseData?.list || responseData?.data?.list || []
+      setCurrencyList(list)
+    } catch (error) {
+      console.error('加载币种列表失败:', error)
+    }
+  }
 
   // 加载资产列表
   const loadAssets = async () => {
@@ -140,6 +166,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
 
   useEffect(() => {
     loadAssets()
+    loadCurrencyList()
   }, [])
 
   useEffect(() => {
@@ -549,9 +576,9 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value=''>请选择币种</MenuItem>
-                        {assets.map(asset => (
-                          <MenuItem key={asset.currencyCode} value={asset.currencyCode}>
-                            {asset.currencyCode}
+                        {currencyList.map((currency, index) => (
+                          <MenuItem key={`${currency.currencyCode}-${currency.chain || index}`} value={currency.currencyCode}>
+                            {currency.currencyCode}{currency.chain ? `(${currency.chain})` : ''}
                           </MenuItem>
                         ))}
                       </Select>

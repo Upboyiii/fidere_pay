@@ -132,7 +132,7 @@ export interface FeeConfigListResponse {
 }
 
 export const getFeeConfigList = (params?: FeeConfigListParams) =>
-  clientRequest.get<FeeConfigListResponse>('/api/v1/biz/fee-config/lis', { params })
+  clientRequest.get<FeeConfigListResponse>('/api/v1/biz/fee-config/list', { params })
 
 // 8. 设置手续费配置
 export interface SetFeeConfigRequest {

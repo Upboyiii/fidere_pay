@@ -17,6 +17,10 @@ import Dialog from '@mui/material/Dialog'
 import DialogTitle from '@mui/material/DialogTitle'
 import DialogContent from '@mui/material/DialogContent'
 import DialogActions from '@mui/material/DialogActions'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -113,39 +117,42 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
-      <Grid xs={12}>
-        <Card>
+      <Grid size={12}>
+        <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
               <Typography variant='h5'>转账申请列表</Typography>
             </Box>
-            <Box className='flex items-center gap-4 mb-4 flex-wrap'>
+            <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
                 label='用户ID'
                 value={filters.userId}
                 onChange={e => setFilters({ ...filters, userId: e.target.value })}
                 size='small'
+                sx={{ minWidth: 120 }}
               />
-              <TextField
-                label='状态'
-                value={filters.status}
-                onChange={e => setFilters({ ...filters, status: e.target.value })}
-                size='small'
-                select
-                SelectProps={{ native: true }}
-              >
-                <option value='-1'>全部</option>
-                <option value='0'>待审核</option>
-                <option value='1'>处理中</option>
-                <option value='2'>已完成</option>
-                <option value='3'>已驳回</option>
-                <option value='4'>失败</option>
-              </TextField>
+              <FormControl size='small' sx={{ minWidth: 150 }}>
+                <InputLabel id='transfer-status-label'>状态</InputLabel>
+                <Select
+                  labelId='transfer-status-label'
+                  value={filters.status}
+                  onChange={e => setFilters({ ...filters, status: e.target.value })}
+                  label='状态'
+                >
+                  <MenuItem value='-1'>全部</MenuItem>
+                  <MenuItem value='0'>待审核</MenuItem>
+                  <MenuItem value='1'>处理中</MenuItem>
+                  <MenuItem value='2'>已完成</MenuItem>
+                  <MenuItem value='3'>已驳回</MenuItem>
+                  <MenuItem value='4'>失败</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 label='申请单号'
                 value={filters.applyNo}
                 onChange={e => setFilters({ ...filters, applyNo: e.target.value })}
                 size='small'
+                sx={{ minWidth: 180 }}
               />
               <TextField
                 label='开始时间'
@@ -153,6 +160,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
@@ -161,14 +169,15 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
                 size='small'
+                sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper}>
-              <table className={tableStyles.table}>
+            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1000px' }}>
                 <thead>
                   <tr>
                     <th>申请单号</th>
@@ -277,16 +286,18 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
         <DialogTitle>审核转账申请</DialogTitle>
         <DialogContent>
           <Box className='flex flex-col gap-4 mt-4'>
-            <TextField
-              label='审核状态'
-              value={auditForm.status}
-              onChange={e => setAuditForm({ ...auditForm, status: e.target.value })}
-              select
-              SelectProps={{ native: true }}
-            >
-              <option value='1'>通过</option>
-              <option value='3'>驳回</option>
-            </TextField>
+            <FormControl fullWidth>
+              <InputLabel id='audit-status-label'>审核状态</InputLabel>
+              <Select
+                labelId='audit-status-label'
+                value={auditForm.status}
+                onChange={e => setAuditForm({ ...auditForm, status: e.target.value })}
+                label='审核状态'
+              >
+                <MenuItem value='1'>通过</MenuItem>
+                <MenuItem value='3'>驳回</MenuItem>
+              </Select>
+            </FormControl>
             <TextField
               label='审核备注'
               value={auditForm.auditRemark}
