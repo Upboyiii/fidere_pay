@@ -219,8 +219,8 @@ export const convertMenuListToVerticalMenu = (menuList: any[]): VerticalMenuData
     // 根据当前语言获取菜单标题，支持向下兼容
     const label = getMenuLabel(node)
 
-    // 优先使用 meta.icon，其次使用 icon
-    const icon = node.meta?.icon || node.icon || 'xxx'
+    // 优先使用 meta.icon，其次使用 icon，如果都不存在则返回 undefined（不显示图标）
+    const icon = node.meta?.icon || node.icon || undefined
 
     // 检查是否有子菜单
     const hasChildren = node.children && node.children.length > 0

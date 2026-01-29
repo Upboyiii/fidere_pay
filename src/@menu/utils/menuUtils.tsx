@@ -46,13 +46,24 @@ export const confirmUrlInChildren = (children: ChildrenType['children'], url: st
     const { component, href, exactMatch, activeUrl, children: subChildren } = children.props
 
     if (component && component.props.href) {
-      return exactMatch === true || exactMatch === undefined
-        ? component.props.href === url
-        : activeUrl && url.includes(activeUrl)
+      const componentHref = component.props.href
+      if (exactMatch === true || exactMatch === undefined) {
+        return componentHref === url
+      } else {
+        // Non-exact match: use activeUrl if provided, otherwise use href
+        const matchUrl = activeUrl || componentHref
+        return matchUrl && matchUrl !== '/' && url.startsWith(matchUrl)
+      }
     }
 
     if (href) {
-      return exactMatch === true || exactMatch === undefined ? href === url : activeUrl && url.includes(activeUrl)
+      if (exactMatch === true || exactMatch === undefined) {
+        return href === url
+      } else {
+        // Non-exact match: use activeUrl if provided, otherwise use href
+        const matchUrl = activeUrl || href
+        return matchUrl && matchUrl !== '/' && url.startsWith(matchUrl)
+      }
     }
 
     if (subChildren) {
@@ -130,7 +141,10 @@ export const mapHorizontalToVerticalMenu = (children: ReactNode): ReactNode => {
 export const renderMenuIcon = (params: RenderMenuIconParams) => {
   const { icon, level, active, disabled, styles, renderExpandedMenuItemIcon, isBreakpointReached } = params
 
-  if (icon && (level === 0 || (!isBreakpointReached && level && level > 0))) {
+  // 如果有图标，优先显示图标
+  // level === 0: 顶级菜单，始终显示图标
+  // level > 0: 子菜单项，如果图标存在则显示（不受 isBreakpointReached 限制）
+  if (icon && (level === 0 || (level && level > 0))) {
     return (
       <StyledMenuIcon className={menuClasses.icon} rootStyles={styles}>
         {icon}
@@ -138,6 +152,7 @@ export const renderMenuIcon = (params: RenderMenuIconParams) => {
     )
   }
 
+  // 如果没有图标，但配置了 renderExpandedMenuItemIcon，则使用默认图标
   if (
     level &&
     level !== 0 &&

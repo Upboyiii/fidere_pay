@@ -122,6 +122,9 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
    * 初始化表单数据
    */
   useEffect(() => {
+    // 获取默认入口（第一个入口）
+    const defaultEntrance = entranceOptions.length > 0 ? entranceOptions[0].key : ''
+
     if (roleData) {
       // 编辑模式：查找父角色路径
       let parentPath = ''
@@ -149,13 +152,16 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
         endDate: '',
         startTime: '',
         endTime: '',
-        entrance: (roleData as any).entranceCodes || ''
+        entrance: defaultEntrance // 固定使用第一个入口（KYC）
       })
     } else {
-      // 新增模式
-      reset(defaultFormValues)
+      // 新增模式：默认选择第一个入口
+      reset({
+        ...defaultFormValues,
+        entrance: defaultEntrance
+      })
     }
-  }, [roleData, roleTree, reset, open])
+  }, [roleData, roleTree, reset, open, entranceOptions])
 
   /**
    * 根据角色路径字符串找到角色ID
@@ -406,6 +412,8 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
    */
   const onSubmit = (data: any) => {
     const parentId = data.parentId ? findRoleIdByPath(data.parentId) : 0
+    // 确保使用默认入口（第一个入口）
+    const defaultEntrance = entranceOptions.length > 0 ? entranceOptions[0].key : ''
 
     const submitData: any = {
       name: data.roleName || '',
@@ -414,7 +422,7 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
       status: data.status || '1',
       remark: data.remark || '',
       menuIds: data.menuIds || [],
-      entrance: data.entrance || ''
+      entrance: data.entrance || defaultEntrance
     }
 
     if (roleData) {
@@ -482,27 +490,29 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
               <Controller
                 name='entrance'
                 control={control}
-                rules={{ required: t('admin.selectEntranceRequired') }}
-                render={({ field, fieldState }) => (
-                  <FormControl fullWidth required error={!!fieldState.error}>
-                    <InputLabel id='entrance-select'>{t('admin.selectEntrance')}</InputLabel>
-                    <Select
-                      {...field}
-                      id='entrance-select'
-                      labelId='entrance-select'
-                      value={field.value ?? ''}
+                render={({ field }) => {
+                  // 确保使用第一个入口（KYC）
+                  const defaultEntrance = entranceOptions.length > 0 ? entranceOptions[0] : null
+                  const entranceKey = field.value || defaultEntrance?.key || ''
+                  const displayText = defaultEntrance?.remark || ''
+
+                  // 如果当前值不是第一个入口，更新为第一个入口
+                  if (entranceKey !== defaultEntrance?.key && defaultEntrance) {
+                    field.onChange(defaultEntrance.key)
+                  }
+
+                  return (
+                    <TextField
+                      fullWidth
                       label={t('admin.selectEntrance')}
-                      error={!!fieldState.error}
-                    >
-                      {entranceOptions.map(option => (
-                        <MenuItem key={option.key} value={option.key}>
-                          {option.remark}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                    {fieldState.error && <FormHelperText error>{fieldState.error.message}</FormHelperText>}
-                  </FormControl>
-                )}
+                      value={displayText}
+                      InputProps={{
+                        readOnly: true
+                      }}
+                      helperText={t('admin.entranceFixedToFirst')}
+                    />
+                  )
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>

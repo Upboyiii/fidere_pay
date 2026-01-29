@@ -28,7 +28,13 @@ import CircularProgress from '@mui/material/CircularProgress'
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getUserTransactionList, getUserAssetList, type UserTransactionListItem, type UserAssetListItem } from '@server/otc-api'
+import { 
+  getUserTransactionList, 
+  getCurrencyList,
+  initCurrency,
+  type UserTransactionListItem, 
+  type CurrencyListItem 
+} from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Style Imports
@@ -49,19 +55,24 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
   const [showFilters, setShowFilters] = useState(true)
   const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
   const [total, setTotal] = useState(0)
-  const [assets, setAssets] = useState<UserAssetListItem[]>([])
+  const [currencyList, setCurrencyList] = useState<CurrencyListItem[]>([])
 
-  // 加载资产列表（用于币种筛选）
+  // 初始化币种并加载币种列表（与我的资产页面一致）
   useEffect(() => {
-    const loadAssets = async () => {
+    const loadCurrencyList = async () => {
       try {
-        const res = await getUserAssetList()
-        setAssets(res.data?.list || [])
+        // 先初始化默认币种
+        await initCurrency()
+        // 再获取币种列表
+        const res = await getCurrencyList()
+        const responseData = res.data as any
+        const list = responseData?.list || responseData?.data?.list || []
+        setCurrencyList(list)
       } catch (error) {
-        console.error('加载资产列表失败:', error)
+        console.error('加载币种列表失败:', error)
       }
     }
-    loadAssets()
+    loadCurrencyList()
   }, [])
 
   // 加载交易记录
@@ -204,9 +215,9 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value=''>请选择币种</MenuItem>
-                        {assets.map(asset => (
-                          <MenuItem key={asset.currencyCode} value={asset.currencyCode}>
-                            {asset.currencyCode}
+                        {currencyList.map((currency, index) => (
+                          <MenuItem key={`${currency.currencyCode}-${(currency as any).chain || index}`} value={currency.currencyCode}>
+                            {currency.currencyCode}{(currency as any).chain ? `(${(currency as any).chain})` : ''}
                           </MenuItem>
                         ))}
                       </Select>

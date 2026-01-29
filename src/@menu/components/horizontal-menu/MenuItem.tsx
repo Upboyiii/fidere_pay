@@ -118,11 +118,17 @@ const MenuItem: ForwardRefRenderFunction<HTMLLIElement, MenuItemProps> = (props,
 
     if (href) {
       // Check if the current url matches any of the children urls
-      if (exactMatch ? pathname === href : activeUrl && pathname.includes(activeUrl)) {
-        setActive(true)
+      if (exactMatch) {
+        // Exact match: pathname must exactly equal href
+        setActive(pathname === href)
       } else {
-        setActive(false)
+        // Non-exact match: use activeUrl if provided, otherwise use href
+        const matchUrl = activeUrl || href
+        // Use startsWith for better matching (e.g., /assets/my-assets matches /assets/my-assets/deposit)
+        setActive(matchUrl && matchUrl !== '/' && pathname.startsWith(matchUrl))
       }
+    } else {
+      setActive(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])

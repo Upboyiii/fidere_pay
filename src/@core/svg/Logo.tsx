@@ -5,60 +5,67 @@ const Logo = (props: SVGAttributes<SVGElement>) => {
   return (
     <svg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg' {...props}>
       <defs>
-        <linearGradient id='fidereGradient' x1='0%' y1='0%' x2='100%' y2='100%'>
-          <stop offset='0%' stopColor='#6366f1' />
-          <stop offset='50%' stopColor='#7c3aed' />
-          <stop offset='100%' stopColor='#8b5cf6' />
+        {/* 主渐变 - 青蓝到深紫 */}
+        <linearGradient id='fidereMain' x1='0%' y1='0%' x2='100%' y2='100%'>
+          <stop offset='0%' stopColor='#00D4FF' />
+          <stop offset='50%' stopColor='#7B61FF' />
+          <stop offset='100%' stopColor='#5B4CFF' />
         </linearGradient>
-        <linearGradient id='fidereGradientLight' x1='0%' y1='0%' x2='100%' y2='100%'>
-          <stop offset='0%' stopColor='#818cf8' />
-          <stop offset='100%' stopColor='#a78bfa' />
+        
+        {/* 高光渐变 */}
+        <linearGradient id='fidereHighlight' x1='0%' y1='0%' x2='100%' y2='100%'>
+          <stop offset='0%' stopColor='#FFFFFF' stopOpacity='0.4' />
+          <stop offset='100%' stopColor='#FFFFFF' stopOpacity='0' />
         </linearGradient>
+        
+        {/* 发光效果 */}
+        <filter id='glow'>
+          <feGaussianBlur stdDeviation='1' result='coloredBlur' />
+          <feMerge>
+            <feMergeNode in='coloredBlur' />
+            <feMergeNode in='SourceGraphic' />
+          </feMerge>
+        </filter>
       </defs>
       
-      {/* Shield shape - represents security and trust */}
-      <path
-        d='M16 2L6 6V16C6 22.6274 10.3726 27 16 27C21.6274 27 26 22.6274 26 16V6L16 2Z'
-        fill='url(#fidereGradient)'
-      />
+      {/* 底部圆形背景 - 外圈 */}
+      <circle cx='16' cy='16' r='15' fill='url(#fidereMain)' />
       
-      {/* Shield highlight for depth */}
-      <path
-        d='M16 2L6 6V16C6 22.6274 10.3726 27 16 27C21.6274 27 26 22.6274 26 16V6L16 2Z'
-        fill='url(#fidereGradientLight)'
-        fillOpacity='0.3'
-      />
+      {/* 内圈高光 */}
+      <circle cx='16' cy='16' r='13' fill='none' stroke='url(#fidereHighlight)' strokeWidth='1' />
       
-      {/* Letter F - stylized for Fidere */}
+      {/* 抽象 F 字母 - 流动感设计 */}
+      {/* F 的主干 */}
       <path
-        d='M13 10H19C19.5523 10 20 10.4477 20 11V12C20 12.5523 19.5523 13 19 13H15V15H19C19.5523 15 20 15.4477 20 16V17C20 17.5523 19.5523 18 19 18H13C12.4477 18 12 17.5523 12 17V11C12 10.4477 12.4477 10 13 10Z'
+        d='M11 8C11 7.44772 11.4477 7 12 7H13C13.5523 7 14 7.44772 14 8V24C14 24.5523 13.5523 25 13 25H12C11.4477 25 11 24.5523 11 24V8Z'
         fill='white'
       />
       
-      {/* Payment card icon - represents payment functionality */}
-      <rect
-        x='10'
-        y='20'
-        width='12'
-        height='8'
-        rx='1.5'
+      {/* F 的上横线 - 带弧度流动感 */}
+      <path
+        d='M13 7H20C21.6569 7 23 8.34315 23 10C23 10.5523 22.5523 11 22 11H14V7H13Z'
         fill='white'
-        fillOpacity='0.95'
       />
-      <rect
-        x='12'
-        y='22'
-        width='8'
-        height='1.5'
-        rx='0.75'
-        fill='url(#fidereGradient)'
+      
+      {/* F 的中横线 - 带圆角 */}
+      <path
+        d='M14 14H19C19.5523 14 20 14.4477 20 15C20 15.5523 19.5523 16 19 16H14V14Z'
+        fill='white'
       />
-      <circle
-        cx='22'
-        cy='25'
-        r='1.5'
-        fill='url(#fidereGradient)'
+      
+      {/* 装饰性流动线条 - 代表金融流通 */}
+      <path
+        d='M18 19C18 18.4477 18.4477 18 19 18H20C20.5523 18 21 18.4477 21 19V20C21 21.6569 19.6569 23 18 23H17'
+        stroke='white'
+        strokeWidth='2'
+        strokeLinecap='round'
+        fill='none'
+        opacity='0.8'
       />
+      
+      {/* 点缀 - 代表连接和节点 */}
+      <circle cx='22' cy='10' r='2' fill='#00D4FF' filter='url(#glow)' />
+      <circle cx='17' cy='23' r='1.5' fill='white' opacity='0.9' />
     </svg>
   )
 }
