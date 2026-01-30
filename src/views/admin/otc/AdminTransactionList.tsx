@@ -166,9 +166,9 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                         <td>{item.currencyCode}</td>
                         <td>{item.bizType}</td>
                         <td>{item.direction === 1 ? '入账' : '出账'}</td>
-                        <td>{item.amount}</td>
-                        <td>{item.balance}</td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{item.amount ?? '-'}</td>
+                        <td>{item.balance ?? '-'}</td>
+                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                       </tr>
                     ))
                   )}

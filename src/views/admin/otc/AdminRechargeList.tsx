@@ -199,7 +199,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                             size='small'
                           />
                         </td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                         <td>
                           {item.status === 0 && (
                             <Button size='small' onClick={() => handleConfirm(item.rechargeNo)}>

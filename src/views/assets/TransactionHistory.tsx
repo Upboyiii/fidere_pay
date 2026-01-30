@@ -125,7 +125,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        backgroundColor: '#f8fafc' 
+        bgcolor: mode === 'dark' ? 'background.default' : '#f8fafc'
       }}
     >
       {/* 现代感网格背景 */}
@@ -135,10 +135,15 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: mode === 'dark' 
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
@@ -365,7 +370,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td style={{ padding: '16px 24px' }}>
                           <Typography variant='body2' color='text.secondary'>
-                            {new Date(tx.createdAt).toLocaleString()}
+                            {tx.createdAt ? new Date(tx.createdAt).toLocaleString() : '-'}
                           </Typography>
                         </td>
                         <td style={{ padding: '16px 24px' }}>

@@ -189,7 +189,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        backgroundColor: '#f8fafc' 
+        bgcolor: mode === 'dark' ? 'background.default' : '#f8fafc'
       }}
     >
       {/* 现代感网格背景 */}
@@ -199,10 +199,15 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: mode === 'dark' 
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
@@ -262,7 +267,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                         <CircularProgress size={24} sx={{ color: 'white' }} />
                       ) : (
                         <Typography variant='h4' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)' }}>
-                          {currentAsset.balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                          {(currentAsset.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
                         </Typography>
                       )}
                     </Box>
@@ -298,7 +303,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  可用: {currentAsset.availableBalance.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}
+                  可用: {(currentAsset.availableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}
                 </Typography>
                 <Typography 
                   variant='body2' 
@@ -309,7 +314,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  冻结: {currentAsset.frozenBalance.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 8 })}
+                  冻结: {(currentAsset.frozenBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 8 })}
                 </Typography>
               </Box>
 

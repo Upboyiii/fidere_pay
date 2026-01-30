@@ -180,7 +180,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td className='max-w-xs truncate'>{item.callbackUrl}</td>
                         <td>{item.retryCount}</td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                         <td>
                           <Button size='small' onClick={() => handleRetry(item.id)}>
                             重试

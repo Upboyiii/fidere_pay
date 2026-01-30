@@ -105,7 +105,7 @@ const Login = ({ mode }: { mode: Mode }) => {
   const [loginLoading, setLoginLoading] = useState(false)
   const captchaPromiseRef = useRef<Promise<any> | null>(null)
 
-  const [selectValue, setSelectValue] = useState('operation')
+  const [selectValue, setSelectValue] = useState('kyc')
   
   // 谷歌验证码弹窗相关状态
   const [googleAuthDialogOpen, setGoogleAuthDialogOpen] = useState(false)
@@ -115,12 +115,38 @@ const Login = ({ mode }: { mode: Mode }) => {
   const [tempToken, setTempToken] = useState<string>('') // 2FA 临时 token
   const googleAuthInputRefs = useRef<(HTMLInputElement | null)[]>([])
   const [verifyLoading, setVerifyLoading] = useState(false)
+  
+  // 主题切换动画相关状态
+  const [themeTransition, setThemeTransition] = useState(false)
+  const [pendingMode, setPendingMode] = useState<'light' | 'dark' | null>(null)
+  
   // Hooks
   const router = useRouter()
   const searchParams = useSearchParams()
   const { lang: locale } = useParams()
-  const { settings } = useSettings()
+  const { settings, updateSettings } = useSettings()
   const { updateThemeByRole } = useThemeByRole()
+
+  // 获取当前主题模式（优先使用 settings.mode，否则使用 prop）
+  const currentMode = settings.mode || mode
+
+  // 主题切换处理函数
+  const handleThemeToggle = () => {
+    const newMode = currentMode === 'dark' ? 'light' : 'dark'
+    setPendingMode(newMode)
+    setThemeTransition(true)
+    
+    // 动画进行到一半时切换主题
+    setTimeout(() => {
+      updateSettings({ mode: newMode })
+    }, 400)
+    
+    // 动画结束后清除状态
+    setTimeout(() => {
+      setThemeTransition(false)
+      setPendingMode(null)
+    }, 800)
+  }
 
   // 创建 schema，使用翻译函数（确保字典已加载）
   const schema = createSchema(t)
@@ -344,15 +370,23 @@ const Login = ({ mode }: { mode: Mode }) => {
   }
 
   return (
-    <div className='flex bs-full min-bs-[100dvh] bg-[#f8fafc] relative overflow-hidden'>
+    <div 
+      className='flex bs-full min-bs-[100dvh] relative overflow-hidden transition-colors duration-500'
+      style={{ backgroundColor: currentMode === 'dark' ? '#0f0f1a' : '#f8fafc' }}
+    >
       {/* 现代感网格背景 */}
       <div 
         className='absolute inset-0 z-0'
         style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
-          `,
+          backgroundImage: currentMode === 'dark'
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
+            `,
           backgroundSize: '32px 32px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)',
           WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
@@ -387,11 +421,120 @@ const Login = ({ mode }: { mode: Mode }) => {
           <IconButton size='medium' sx={{ color: 'text.secondary' }}>
             <i className='ri-translate-2-line' />
           </IconButton>
-          <IconButton size='medium' sx={{ color: 'text.secondary' }}>
-            <i className='ri-moon-line' />
+          <IconButton 
+            size='medium' 
+            onClick={handleThemeToggle}
+            sx={{ 
+              color: 'text.secondary',
+              transition: 'transform 0.3s ease',
+              '&:hover': {
+                transform: 'rotate(20deg)'
+              }
+            }}
+          >
+            <i className={currentMode === 'dark' ? 'ri-sun-line' : 'ri-moon-line'} />
           </IconButton>
         </div>
       </div>
+
+      {/* 主题切换月牙动画遮罩 */}
+      {themeTransition && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            bottom: 0,
+            left: 0,
+            zIndex: 9999,
+            pointerEvents: 'none',
+            overflow: 'hidden'
+          }}
+        >
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              right: '-100vmax',
+              width: '200vmax',
+              height: '200vmax',
+              borderRadius: '50%',
+              transform: 'translateY(-50%)',
+              bgcolor: pendingMode === 'dark' ? '#1a1a2e' : '#f8fafc',
+              animation: 'crescentSwipe 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+              boxShadow: pendingMode === 'dark' 
+                ? 'inset 30px 0 80px rgba(255, 255, 255, 0.1), -20px 0 60px rgba(0, 0, 0, 0.5)'
+                : 'inset -30px 0 80px rgba(0, 0, 0, 0.05), 20px 0 60px rgba(0, 0, 0, 0.1)',
+              '@keyframes crescentSwipe': {
+                '0%': {
+                  right: '-200vmax',
+                  opacity: 0.8
+                },
+                '50%': {
+                  right: '-50vmax',
+                  opacity: 1
+                },
+                '100%': {
+                  right: '100vmax',
+                  opacity: 0
+                }
+              }
+            }}
+          >
+            {/* 月牙内部光晕效果 */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '60%',
+                height: '60%',
+                borderRadius: '50%',
+                background: pendingMode === 'dark'
+                  ? 'radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%)'
+                  : 'radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%)',
+                animation: 'pulseGlow 0.8s ease-out'
+              }}
+            />
+          </Box>
+          
+          {/* 星星/阳光粒子效果 */}
+          {[...Array(8)].map((_, i) => (
+            <Box
+              key={i}
+              sx={{
+                position: 'absolute',
+                width: pendingMode === 'dark' ? '4px' : '8px',
+                height: pendingMode === 'dark' ? '4px' : '8px',
+                borderRadius: '50%',
+                bgcolor: pendingMode === 'dark' ? '#fff' : '#fbbf24',
+                top: `${20 + Math.random() * 60}%`,
+                right: `${10 + i * 10}%`,
+                opacity: 0,
+                animation: `sparkle 0.8s ${0.1 + i * 0.05}s ease-out forwards`,
+                boxShadow: pendingMode === 'dark'
+                  ? '0 0 10px #fff, 0 0 20px #fff'
+                  : '0 0 10px #fbbf24, 0 0 20px #fbbf24',
+                '@keyframes sparkle': {
+                  '0%': {
+                    opacity: 0,
+                    transform: 'scale(0) translateX(0)'
+                  },
+                  '50%': {
+                    opacity: 1,
+                    transform: 'scale(1.5) translateX(-50px)'
+                  },
+                  '100%': {
+                    opacity: 0,
+                    transform: 'scale(0) translateX(-100px)'
+                  }
+                }
+              }}
+            />
+          ))}
+        </Box>
+      )}
 
       {/* 主要内容区域 */}
       <div className='flex flex-col md:flex-row w-full relative z-10 max-w-[1600px] mx-auto'>
@@ -469,12 +612,14 @@ const Login = ({ mode }: { mode: Mode }) => {
             sx={{
               width: '100%',
               maxWidth: 440,
-              backgroundColor: 'background.paper',
+              backgroundColor: currentMode === 'dark' ? '#1e1e2d' : 'background.paper',
               borderRadius: '24px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.05)',
+              boxShadow: currentMode === 'dark' 
+                ? '0 20px 50px rgba(0, 0, 0, 0.3)' 
+                : '0 20px 50px rgba(0, 0, 0, 0.05)',
               padding: { xs: 6, sm: 8, md: 10 },
               border: '1px solid',
-              borderColor: 'rgba(0,0,0,0.04)'
+              borderColor: currentMode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
             }}
           >
             <div className='flex flex-col gap-8'>
@@ -510,8 +655,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '12px',
-                          backgroundColor: '#fcfdfe',
-                          '& fieldset': { borderColor: '#eef0f2' },
+                          backgroundColor: currentMode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                          '& fieldset': { borderColor: currentMode === 'dark' ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                           '&:hover fieldset': { borderColor: 'primary.main' },
                         }
                       }}
@@ -541,8 +686,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '12px',
-                          backgroundColor: '#fcfdfe',
-                          '& fieldset': { borderColor: '#eef0f2' },
+                          backgroundColor: currentMode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                          '& fieldset': { borderColor: currentMode === 'dark' ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                           '&:hover fieldset': { borderColor: 'primary.main' },
                         }
                       }}
@@ -559,7 +704,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                                 edge='end'
                                 onClick={handleClickShowPassword}
                                 onMouseDown={e => e.preventDefault()}
-                                sx={{ color: '#94a3b8' }}
+                                sx={{ color: currentMode === 'dark' ? 'rgba(255,255,255,0.5)' : '#94a3b8' }}
                               >
                                 <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
                               </IconButton>
@@ -589,8 +734,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',
-                            backgroundColor: '#fcfdfe',
-                            '& fieldset': { borderColor: '#eef0f2' },
+                            backgroundColor: currentMode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                            '& fieldset': { borderColor: currentMode === 'dark' ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                             '&:hover fieldset': { borderColor: 'primary.main' },
                           }
                         }}
@@ -602,9 +747,9 @@ const Login = ({ mode }: { mode: Mode }) => {
                           height: 52,
                           borderRadius: '12px',
                           overflow: 'hidden',
-                          border: '1px solid #eef0f2',
+                          border: currentMode === 'dark' ? '1px solid rgba(255,255,255,0.1)' : '1px solid #eef0f2',
                           cursor: 'pointer',
-                          backgroundColor: '#fff',
+                          backgroundColor: currentMode === 'dark' ? 'rgba(255,255,255,0.05)' : '#fff',
                           flexShrink: 0,
                           '&:hover': { borderColor: 'primary.main' }
                         }}
@@ -625,6 +770,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                   )}
                 />
 
+                {/* KYC模式选择器 - 默认为KYC模式，暂时隐藏
                 <Select
                   value={selectValue}
                   onChange={(e: SelectChangeEvent) => setSelectValue(e.target.value)}
@@ -638,6 +784,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                   <MenuItem value='kyc'>KYC 模式</MenuItem>
                   <MenuItem value='operation'>运营模式</MenuItem>
                 </Select>
+                */}
 
                 {/* <div className='flex justify-between items-center'>
                   <FormControlLabel 
@@ -676,7 +823,7 @@ const Login = ({ mode }: { mode: Mode }) => {
               
               <Typography 
                 variant='caption' 
-                sx={{ textAlign: 'center', color: '#94a3b8', mt: 2 }}
+                sx={{ textAlign: 'center', color: 'text.secondary', mt: 2 }}
               >
                 © {new Date().getFullYear()} Fidere Pay. All rights reserved.
               </Typography>
@@ -705,7 +852,7 @@ const Login = ({ mode }: { mode: Mode }) => {
             overflow: 'hidden',
             position: 'relative',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            background: 'linear-gradient(to bottom, #ffffff, #fcfdfe)'
+            bgcolor: 'background.paper'
           }
         }}
       >
@@ -713,7 +860,8 @@ const Login = ({ mode }: { mode: Mode }) => {
         <Box sx={{ px: 4, pt: 3 }}>
           <Box sx={{ 
             display: 'flex', 
-            borderBottom: '1px solid rgba(0,0,0,0.06)', 
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             position: 'relative', 
             justifyContent: 'space-between', 
             alignItems: 'center' 
@@ -751,11 +899,11 @@ const Login = ({ mode }: { mode: Mode }) => {
               size='small'
               sx={{
                 mb: 2,
-                color: '#94a3b8',
+                color: 'text.secondary',
                 transition: 'all 0.2s',
                 '&:hover': { 
-                  color: '#64748b', 
-                  backgroundColor: '#f1f5f9',
+                  color: 'text.primary', 
+                  backgroundColor: 'action.hover',
                   transform: 'rotate(90deg)'
                 }
               }}
@@ -778,24 +926,14 @@ const Login = ({ mode }: { mode: Mode }) => {
               justifyContent: 'center',
               mx: 'auto',
               mb: 4,
-              background: '#fff',
+              bgcolor: 'background.paper',
               boxShadow: `
                 0 10px 20px -5px rgba(0,0,0,0.05),
                 inset 0 -2px 6px rgba(0,0,0,0.02)
               `,
-              border: '1px solid rgba(0,0,0,0.03)',
-              position: 'relative',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                inset: -1,
-                borderRadius: '29px',
-                padding: '1px',
-                background: 'linear-gradient(to bottom, rgba(0,0,0,0.05), transparent)',
-                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'xor',
-                maskComposite: 'exclude'
-              }
+              border: '1px solid',
+              borderColor: 'divider',
+              position: 'relative'
             }}
           >
             <Box 
@@ -806,12 +944,12 @@ const Login = ({ mode }: { mode: Mode }) => {
           </Box>
 
           {/* 标题 */}
-          <Typography variant='h5' sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', letterSpacing: '-0.02em' }}>
+          <Typography variant='h5' sx={{ fontWeight: 800, mb: 1.5, color: 'text.primary', letterSpacing: '-0.02em' }}>
             安全验证
           </Typography>
 
           {/* 描述 */}
-          <Typography variant='body2' sx={{ mb: 5, color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
+          <Typography variant='body2' sx={{ mb: 5, color: 'text.secondary', fontSize: '0.95rem', lineHeight: 1.6 }}>
             请输入谷歌验证器中的 <Box component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>6位数字</Box> 验证码
           </Typography>
 
@@ -841,23 +979,23 @@ const Login = ({ mode }: { mode: Mode }) => {
                   width: 54,
                   height: 68,
                   border: '2px solid',
-                  borderColor: digit ? 'primary.main' : '#f1f5f9',
+                  borderColor: digit ? 'primary.main' : 'divider',
                   borderRadius: '16px',
                   fontSize: '1.8rem',
                   fontWeight: 700,
                   textAlign: 'center',
                   outline: 'none',
                   transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-                  bgcolor: digit ? '#fff' : '#f8fafc',
-                  color: '#1e293b',
+                  bgcolor: digit ? 'background.paper' : 'action.hover',
+                  color: 'text.primary',
                   '&:focus': {
                     borderColor: 'primary.main',
-                    bgcolor: '#fff',
+                    bgcolor: 'background.paper',
                     boxShadow: '0 0 0 4px rgba(var(--mui-palette-primary-mainChannel), 0.15)',
                     transform: 'translateY(-2px)'
                   },
                   '&:hover': {
-                    borderColor: digit ? 'primary.main' : '#e2e8f0'
+                    borderColor: digit ? 'primary.main' : 'text.disabled'
                   }
                 }}
               />
