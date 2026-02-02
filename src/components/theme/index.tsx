@@ -112,9 +112,9 @@ const CustomThemeProvider = (props: Props) => {
 
         // 更新皮肤相关的CSS变量
         if (settings.skin === 'bordered') {
-          root.style.setProperty('--mui-palette-background-default', currentMode === 'dark' ? '#312D4B' : '#FFFFFF')
+          root.style.setProperty('--mui-palette-background-default', currentMode === 'dark' ? '#312D4B' : '#F8FAFC')
         } else {
-          root.style.setProperty('--mui-palette-background-default', currentMode === 'dark' ? '#28243D' : '#F4F5FA')
+          root.style.setProperty('--mui-palette-background-default', currentMode === 'dark' ? '#28243D' : '#F8FAFC')
         }
       })
     }
