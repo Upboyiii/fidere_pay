@@ -22,12 +22,14 @@ import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
+import Drawer from '@mui/material/Drawer'
+import IconButton from '@mui/material/IconButton'
 
 // Type Imports
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getAdminTransferList, auditTransfer, completeTransfer, type AdminTransferListItem } from '@server/otc-api'
+import { getAdminTransferList, auditTransfer, completeTransfer, type AdminTransferListItem, type TransferDetailItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Style Imports
@@ -62,6 +64,8 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
     startTime: '',
     endTime: ''
   })
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [selectedRecord, setSelectedRecord] = useState<TransferDetailItem | null>(null)
 
   const loadData = async () => {
     setLoading(true)
@@ -156,6 +160,35 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
   // 统计待处理数量
   const pendingCount = data.filter(item => item.status === 0).length
   const processingCount = data.filter(item => item.status === 1).length
+
+  // 查看详情
+  const handleViewDetail = (item: AdminTransferListItem) => {
+    setSelectedRecord(item as unknown as TransferDetailItem)
+    setDrawerOpen(true)
+  }
+
+  const getStatusLabel = (status: number) => {
+    const statusMap: Record<number, string> = {
+      0: '待审核',
+      1: '处理中',
+      2: '已完成',
+      3: '已驳回',
+      4: '失败'
+    }
+    return statusMap[status] || '未知'
+  }
+
+  const formatTimestamp = (timestamp?: number) => {
+    if (!timestamp) return '-'
+    const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
+    return new Date(ms).toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
 
   return (
     <Grid container spacing={6}>
@@ -321,20 +354,39 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 重置
               </Button>
             </Box>
-            <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
-              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1600px' }}>
+            <Box
+              sx={{
+                overflowX: 'auto',
+                overflowY: 'visible',
+                '&::-webkit-scrollbar': {
+                  height: '10px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: '#f1f1f1',
+                  borderRadius: '5px',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#c1c1c1',
+                  borderRadius: '5px',
+                  '&:hover': {
+                    backgroundColor: '#a8a8a8',
+                  },
+                },
+              }}
+            >
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1200px' }}>
                 <thead>
                   <tr>
                     <th>申请单号</th>
                     <th>申请人</th>
-                    <th>收款人</th>
-                    <th>转账币种</th>
-                    <th>转账金额</th>
-                    <th>接收币种</th>
-                    <th>接收金额</th>
-                    <th>汇率</th>
+                    {/* <th>收款人</th> */}
+                    {/* <th>转账币种</th> */}
+                    {/* <th>转账金额</th> */}
+                    <th>币种</th>
+                    <th>金额</th>
+                    {/* <th>汇率</th> */}
                     <th>手续费</th>
-                    <th>汇款类型</th>
+                    <th>账户类型</th>
                     <th>状态</th>
                     <th>创建时间</th>
                     <th>审核时间</th>
@@ -345,13 +397,13 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={15} className='text-center'>
+                      <td colSpan={11} className='text-center'>
                         加载中...
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
-                      <td colSpan={15} className='text-center'>
+                      <td colSpan={11} className='text-center'>
                         暂无数据
                       </td>
                     </tr>
@@ -374,24 +426,24 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                         <td>
                           <span style={{ fontWeight: 600 }}>{item.userName}</span>
                         </td>
-                        <td>
+                        {/* <td>
                           <span style={{ fontWeight: 600 }}>{item.payeeName}</span>
-                        </td>
-                        <td>
+                        </td> */}
+                        {/* <td>
                           <Chip label={item.currencyCode} size='small' variant='outlined' />
-                        </td>
-                        <td style={{ fontWeight: 700, color: '#ff5252' }}>
+                        </td> */}
+                        {/* <td style={{ fontWeight: 700, color: '#ff5252' }}>
                           {item.transferAmount}
-                        </td>
+                        </td> */}
                         <td>
                           <Chip label={item.receiveCurrencyCode} size='small' variant='outlined' color='success' />
                         </td>
                         <td style={{ fontWeight: 700, color: '#4caf50' }}>
                           {item.receiveAmount}
                         </td>
-                        <td style={{ fontSize: '0.9rem', color: 'var(--mui-palette-text-secondary)' }}>
+                        {/* <td style={{ fontSize: '0.9rem', color: 'var(--mui-palette-text-secondary)' }}>
                           {item.exchangeRate}
-                        </td>
+                        </td> */}
                         <td style={{ color: 'var(--mui-palette-warning-main)' }}>
                           {item.feeAmount}
                         </td>
@@ -453,6 +505,14 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td>
                           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                            <Button
+                              size='small'
+                              variant='text'
+                              sx={{ fontWeight: 600 }}
+                              onClick={() => handleViewDetail(item)}
+                            >
+                              详情
+                            </Button>
                             {item.status === 0 && (
                               <Button
                                 size='small'
@@ -487,7 +547,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   )}
                 </tbody>
               </table>
-            </div>
+            </Box>
             <TablePagination
               component='div'
               count={total}
@@ -554,6 +614,285 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* 详情抽屉 */}
+      <Drawer
+        anchor='right'
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        PaperProps={{
+          sx: { 
+            width: { xs: '100%', sm: 500 },
+            borderTopLeftRadius: '0',
+            borderBottomLeftRadius: '0'
+          }
+        }}
+      >
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
+          {/* 头部 */}
+          <Box sx={{ px: 5, py: 4, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '18px' }}>
+                转账详情
+              </Typography>
+              <IconButton 
+                onClick={() => setDrawerOpen(false)} 
+                size='small'
+                sx={{ 
+                  width: 32,
+                  height: 32,
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                <i className='ri-close-line' style={{ fontSize: '20px' }} />
+              </IconButton>
+            </Box>
+          </Box>
+
+          {/* 内容 */}
+          {selectedRecord && (
+            <>
+              {/* 内容区域 */}
+              <Box sx={{ flex: 1, overflowY: 'auto', px: 5, py: 4, bgcolor: '#fafafa' }}>
+                {/* 状态和时间 */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        bgcolor: selectedRecord.status === 2 ? '#52c41a' : 
+                                 selectedRecord.status === 1 ? '#faad14' : 
+                                 selectedRecord.status === 3 || selectedRecord.status === 4 ? '#ff4d4f' : 
+                                 '#d9d9d9'
+                      }}
+                    />
+                    <Typography variant='body2' sx={{ fontWeight: 500, fontSize: '14px', color: '#000' }}>
+                      {getStatusLabel(selectedRecord.status)}
+                    </Typography>
+                  </Box>
+                  <Typography variant='caption' sx={{ fontSize: '12px', color: '#8c8c8c' }}>
+                    {formatTimestamp(selectedRecord.createTime || selectedRecord.createdAt)}
+                  </Typography>
+                </Box>
+
+                {/* 金额显示区域 */}
+                <Box
+                  sx={{
+                    bgcolor: '#f5f5f5',
+                    borderRadius: '8px',
+                    p: 4,
+                    mb: 4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    border: '1px solid #e8e8e8'
+                  }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
+                      转账金额
+                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#000', fontFamily: 'monospace' }}>
+                      {selectedRecord.currencyCode} {selectedRecord.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ px: 3, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        bgcolor: '#1890ff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mb: 1
+                      }}
+                    >
+                      <i className='ri-arrow-right-line' style={{ color: 'white', fontSize: '24px' }} />
+                    </Box>
+                    <Typography variant='caption' sx={{ fontSize: '11px', color: '#8c8c8c', textAlign: 'center', lineHeight: 1.3 }}>
+                      汇率<br />{selectedRecord.exchangeRate?.toFixed(4) || '-'}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ flex: 1, textAlign: 'right' }}>
+                    <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
+                      到账金额
+                    </Typography>
+                    <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#52c41a', fontFamily: 'monospace' }}>
+                      {selectedRecord.receiveCurrencyCode} {(selectedRecord.receiveAmount || (selectedRecord.transferAmount * (selectedRecord.exchangeRate || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* 基本信息 */}
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                  基本信息
+                </Typography>
+                <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易ID：</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '12px', color: '#262626' }}>
+                        {selectedRecord.applyNo}
+                      </Typography>
+                      <IconButton 
+                        size='small' 
+                        sx={{ width: 24, height: 24, p: 0 }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedRecord.applyNo)
+                          toast.success('已复制')
+                        }}
+                      >
+                        <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
+                      </IconButton>
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>申请人：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.userName || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeName || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>账户类型：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
+                      {selectedRecord.remitType === 1 ? '个人' : selectedRecord.remitType === 2 ? '企业' : String(selectedRecord.remitType || '-')}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>手续费：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.feeAmount || 0} {selectedRecord.currencyCode}</Typography>
+                  </Box>
+                  {selectedRecord.memo && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易备注：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.memo}</Typography>
+                    </Box>
+                  )}
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>更新时间：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{formatTimestamp(selectedRecord.updateTime || selectedRecord.updatedAt)}</Typography>
+                  </Box>
+                </Box>
+
+                {/* 审核信息 (仅审核后显示) */}
+                {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
+                  <>
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
+                      审核信息
+                    </Typography>
+                    <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
+                      {selectedRecord.auditRemark && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核备注：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
+                        </Box>
+                      )}
+                      {(selectedRecord.auditTime ?? 0) > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核时间：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
+                        </Box>
+                      )}
+                      {(selectedRecord.completeTime ?? 0) > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>完成时间：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </>
+                )}
+              </Box>
+
+              {/* 底部按钮 */}
+              <Box sx={{ px: 5, py: 4, borderTop: '1px solid #f0f0f0', bgcolor: '#fff', display: 'flex', gap: 2 }}>
+                <Button
+                  variant='outlined'
+                  onClick={() => setDrawerOpen(false)}
+                  sx={{ 
+                    flex: 1,
+                    borderRadius: '6px',
+                    py: 1.5,
+                    fontSize: '14px',
+                    fontWeight: 500,
+                    textTransform: 'none',
+                    borderColor: '#d9d9d9',
+                    color: '#595959',
+                    '&:hover': {
+                      borderColor: '#40a9ff',
+                      color: '#40a9ff',
+                      bgcolor: 'transparent'
+                    }
+                  }}
+                >
+                  关闭
+                </Button>
+                {selectedRecord.status === 0 && (
+                  <Button
+                    variant='contained'
+                    onClick={() => {
+                      setDrawerOpen(false)
+                      setCurrentItem(selectedRecord as unknown as AdminTransferListItem)
+                      setAuditForm({ status: '1', auditRemark: '' })
+                      setAuditDialogOpen(true)
+                    }}
+                    sx={{ 
+                      flex: 1,
+                      borderRadius: '6px',
+                      py: 1.5,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      bgcolor: '#1890ff',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        bgcolor: '#40a9ff',
+                        boxShadow: 'none'
+                      }
+                    }}
+                  >
+                    审核
+                  </Button>
+                )}
+                {selectedRecord.status === 1 && (
+                  <Button
+                    variant='contained'
+                    color='success'
+                    onClick={() => {
+                      setDrawerOpen(false)
+                      setCurrentItem(selectedRecord as unknown as AdminTransferListItem)
+                      setCompleteForm({ receiptUrl: '' })
+                      setCompleteDialogOpen(true)
+                    }}
+                    sx={{ 
+                      flex: 1,
+                      borderRadius: '6px',
+                      py: 1.5,
+                      fontSize: '14px',
+                      fontWeight: 500,
+                      textTransform: 'none',
+                      boxShadow: 'none',
+                      '&:hover': {
+                        boxShadow: 'none'
+                      }
+                    }}
+                  >
+                    完成
+                  </Button>
+                )}
+              </Box>
+            </>
+          )}
+        </Box>
+      </Drawer>
     </Grid>
   )
 }
