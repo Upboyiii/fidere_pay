@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 
 // MUI Imports
 import Card from '@mui/material/Card'
@@ -93,9 +93,32 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
     }
   }
 
+  // 搜索防抖
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+  
   useEffect(() => {
     loadData()
   }, [page, rowsPerPage])
+
+  // 过滤条件变化时使用防抖搜索
+  const handleSearch = useCallback(() => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+    searchTimerRef.current = setTimeout(() => {
+      setPage(0) // 搜索时重置到第一页
+      loadData()
+    }, 500)
+  }, [])
+
+  // 清理定时器
+  useEffect(() => {
+    return () => {
+      if (searchTimerRef.current) {
+        clearTimeout(searchTimerRef.current)
+      }
+    }
+  }, [])
 
   const handleAudit = async () => {
     if (!currentItem) return
@@ -130,48 +153,105 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
     }
   }
 
+  // 统计待处理数量
+  const pendingCount = data.filter(item => item.status === 0).length
+  const processingCount = data.filter(item => item.status === 1).length
+
   return (
     <Grid container spacing={6}>
-      <Grid size={12}>
-        <Card sx={{ width: '100%' }}>
-          <CardContent>
-            <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>转账申请列表</Typography>
-              <Box className='flex gap-6'>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    转账总额
-                  </Typography>
-                  <Typography variant='h6' sx={{ color: '#ff5252', fontWeight: 700 }}>
-                    {statistics.totalTransfer.toFixed(2)}
-                  </Typography>
-                </Box>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    接收总额
-                  </Typography>
-                  <Typography variant='h6' sx={{ color: '#4caf50', fontWeight: 700 }}>
-                    {statistics.totalReceive.toFixed(2)}
-                  </Typography>
-                </Box>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    手续费总额
-                  </Typography>
-                  <Typography variant='h6' sx={{ color: '#ff9800', fontWeight: 700 }}>
-                    {statistics.totalFee.toFixed(2)}
-                  </Typography>
-                </Box>
+      {/* 统计卡片 - 简洁风格 */}
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'primary.lighter', color: 'primary.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-send-plane-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>转账总额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
+              {statistics.totalTransfer.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'success.lighter', color: 'success.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-download-2-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>接收总额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+              {statistics.totalReceive.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'warning.lighter', color: 'warning.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-percent-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>手续费总额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+              {statistics.totalFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'info.lighter', color: 'info.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-time-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>待处理</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+                {pendingCount}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>待审核</Typography>
+              <Typography variant='h6' sx={{ fontWeight: 600, color: 'info.main', ml: 1 }}>
+                {processingCount}
+              </Typography>
+              <Typography variant='body2' color='text.secondary'>处理中</Typography>
+            </Box>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={12}>
+        <Card sx={{ width: '100%', borderRadius: '16px' }}>
+          <CardContent>
+            <Box className='flex items-center justify-between mb-4'>
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>转账申请列表</Typography>
+              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
+            </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
-              <TextField
-                label='用户ID'
-                value={filters.userId}
-                onChange={e => setFilters({ ...filters, userId: e.target.value })}
-                size='small'
-                sx={{ minWidth: 120 }}
-              />
               <TextField
                 label='用户名'
                 value={filters.userName}
@@ -292,20 +372,10 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                           </Tooltip>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontWeight: 600 }}>{item.userName}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--mui-palette-text-secondary)' }}>
-                              ID: {item.userId}
-                            </span>
-                          </div>
+                          <span style={{ fontWeight: 600 }}>{item.userName}</span>
                         </td>
                         <td>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            <span style={{ fontWeight: 600 }}>{item.payeeName}</span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--mui-palette-text-secondary)' }}>
-                              ID: {item.payeeId}
-                            </span>
-                          </div>
+                          <span style={{ fontWeight: 600 }}>{item.payeeName}</span>
                         </td>
                         <td>
                           <Chip label={item.currencyCode} size='small' variant='outlined' />

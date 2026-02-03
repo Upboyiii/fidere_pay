@@ -41,7 +41,7 @@ import type { Mode } from '@core/types'
 // API Imports
 import {
   createTransfer,
-  calculateTransferFee,
+  getUserFeeConfig,
   getPayeeList,
   uploadSingleFile,
   getUserAssetList,
@@ -73,7 +73,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
   const [recipientList, setRecipientList] = useState<PayeeItem[]>([])
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [calculatingFee, setCalculatingFee] = useState(false)
+  const [feeConfigLoading, setFeeConfigLoading] = useState(false)
   const [uploadedFile, setUploadedFile] = useState<{ name: string; path: string } | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -99,12 +99,44 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
   const steps = ['汇款金额', '收款人信息', '确认信息', '安全验证']
 
-  // 加载收款人列表和资产列表
+  // 加载收款人列表、资产列表和手续费配置
   useEffect(() => {
     loadRecipients()
     loadAssets()
     loadSecurityStatus()
+    loadFeeConfig()
   }, [])
+
+  // 加载手续费配置
+  const loadFeeConfig = async () => {
+    setFeeConfigLoading(true)
+    try {
+      const res = await getUserFeeConfig()
+      console.log('手续费配置响应:', res)
+      const apiData = res.data?.data || res.data
+      
+      // 设置手续费配置
+      // fixedFee: 固定费用
+      // ratioFee: 收费比例（如 0.001 表示 0.1%）
+      setFixedFee(apiData?.fixedFee || 0)
+      // 将 ratioFee 转换为百分比存储（0.001 => 0.1）
+      const ratioPercent = (apiData?.ratioFee || 0) * 100
+      setFeeRate(ratioPercent)
+      
+      console.log('手续费配置:', {
+        fixedFee: apiData?.fixedFee,
+        ratioFee: apiData?.ratioFee,
+        ratioPercent: ratioPercent
+      })
+    } catch (error) {
+      console.error('加载手续费配置失败:', error)
+      // 使用默认值
+      setFixedFee(0)
+      setFeeRate(0)
+    } finally {
+      setFeeConfigLoading(false)
+    }
+  }
 
   // 当资产加载完成后，更新支付币种为实际的 USDT 币种代码
   useEffect(() => {
@@ -174,86 +206,23 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
     }
   }
 
-  // 计算手续费
-  const calculateFee = useCallback(async () => {
-    if (!payAmount || parseFloat(payAmount) <= 0) {
-      setFee(0)
-      setFixedFee(0)
-      setFeeRate(0)
-      setExchangeRate(1.0)
-      setReceiveAmount('0.00')
-      return
-    }
-    
-    setCalculatingFee(true)
-    try {
-      console.log('计算手续费，参数:', { transferAmount: parseFloat(payAmount) })
-      const res = await calculateTransferFee({
-        transferAmount: parseFloat(payAmount)
-      })
-      console.log('计算手续费响应:', res)
-      const apiData = res.data?.data || res.data
-      
-      // API返回: fixedFee(固定费用), ratioFee(比例费), totalFee(总费用), totalAmount(总金额)
-      const totalFeeAmount = apiData?.totalFee || 0
-      const fixedFeeAmount = apiData?.fixedFee || 0
-      const ratioFeeAmount = apiData?.ratioFee || 0
-      const totalAmount = apiData?.totalAmount || parseFloat(payAmount)
-      
-      setFee(totalFeeAmount)
-      setFixedFee(fixedFeeAmount)
-      // ratioFee是比例费用的金额，如果需要显示百分比，需要计算
-      // 收费比例(%) = (比例费用 / 汇款金额) * 100
-      const ratioFeePercent = payAmount && parseFloat(payAmount) > 0 
-        ? (ratioFeeAmount / parseFloat(payAmount)) * 100 
-        : 0
-      setFeeRate(ratioFeePercent)
-      
-      // 计算汇率：如果API返回了totalAmount，可以用它来计算汇率
-      // 否则使用固定汇率 1:1
-      const apiExchangeRate = apiData?.exchangeRate || 1.0
-      setExchangeRate(apiExchangeRate)
-      
-      // 根据汇率计算收款金额
-      const receiveAmt = (parseFloat(payAmount) * apiExchangeRate).toFixed(2)
-      setReceiveAmount(receiveAmt)
-      
-      console.log('手续费计算结果:', { 
-        totalFee: totalFeeAmount,
-        fixedFee: fixedFeeAmount,
-        ratioFee: ratioFeeAmount,
-        ratioFeePercent: ratioFeePercent,
-        exchangeRate: apiExchangeRate, 
-        receiveAmount: receiveAmt 
-      })
-    } catch (error: any) {
-      console.error('计算手续费失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '计算手续费失败'
-      toast.error(errorMessage)
-      // 失败时使用默认值
-      setFee(0)
-      setFixedFee(0)
-      setFeeRate(0)
-      setExchangeRate(1.0)
-    } finally {
-      setCalculatingFee(false)
-    }
-  }, [payAmount])
-
-  // 当金额变化时自动计算手续费
+  // 根据已加载的手续费配置，在前端计算手续费（金额变化时自动计算）
   useEffect(() => {
     if (payAmount && parseFloat(payAmount) > 0) {
-      // 防抖：延迟500ms后计算
-      const timer = setTimeout(() => {
-        calculateFee()
-      }, 500)
+      const amount = parseFloat(payAmount)
+      // 手续费 = 固定费用 + (汇款金额 * 收费比例%)
+      const ratioFeeAmount = amount * (feeRate / 100)
+      const totalFeeAmount = fixedFee + ratioFeeAmount
+      setFee(totalFeeAmount)
       
-      return () => clearTimeout(timer)
+      // 根据汇率计算收款金额
+      const receiveAmt = (amount * exchangeRate).toFixed(2)
+      setReceiveAmount(receiveAmt)
     } else {
       setFee(0)
       setReceiveAmount('0.00')
     }
-  }, [payAmount, calculateFee])
+  }, [payAmount, fixedFee, feeRate, exchangeRate])
 
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -382,11 +351,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         setShowPassword(false)
       }
 
-      // 在进入确认步骤前，确保手续费已计算
-      if (activeStep === 1 && payAmount && parseFloat(payAmount) > 0 && !calculatingFee) {
-        calculateFee()
-      }
-
       setActiveStep(prev => prev + 1)
     } else {
       // 从安全验证步骤返回时，清空支付密码与谷歌验证码
@@ -408,7 +372,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        bgcolor: mode === 'dark' ? 'background.default' : '#f8fafc'
+        bgcolor: 'background.default'
       }}
     >
       {/* 现代感网格背景 */}
@@ -418,7 +382,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: mode === 'dark' 
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
             ? `
               linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
               linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
@@ -564,7 +528,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     <Box sx={{ p: 4, bgcolor: 'action.hover', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant='body2' color='text.secondary'>汇率</Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {calculatingFee ? (
+                        {feeConfigLoading ? (
                           <CircularProgress size={16} />
                         ) : (
                           <Typography variant='body2' sx={{ fontWeight: 700 }}>
@@ -577,7 +541,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                       <Box sx={{ p: 4, bgcolor: 'warning.lightOpacity', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant='body2' color='text.secondary'>手续费</Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {calculatingFee ? (
+                          {feeConfigLoading ? (
                             <CircularProgress size={16} />
                           ) : (
                             <Typography variant='body2' sx={{ fontWeight: 700, color: 'warning.main' }}>
@@ -765,37 +729,114 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 />
                 <Divider sx={{ borderColor: 'rgba(0,0,0,0.05)' }} />
                 <CardContent sx={{ py: 6 }}>
-                  <Box
-                    sx={{
-                      border: '2px dashed',
-                      borderColor: 'divider',
-                      borderRadius: '12px',
-                      p: 10,
-                      textAlign: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      bgcolor: 'background.paper',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        bgcolor: 'primary.lightOpacity'
-                      }
-                    }}
-                  >
-                    <i className='ri-arrow-up-line text-5xl text-primary mb-4' />
-                    <Typography variant='body1' sx={{ fontWeight: 500, mb: 3, color: 'text.primary' }}>
-                      Click or drag file to this area to upload
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
-                      Please upload a file in{' '}
-                      <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
-                        zip, pdf, doc, docx, png, jpg
-                      </Typography>
-                      {' '}format that does not exceed{' '}
-                      <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
-                        5MB
-                      </Typography>
-                    </Typography>
-                  </Box>
+                  {!uploadedFile ? (
+                    <>
+                      <input
+                        ref={fileInputRef}
+                        type='file'
+                        accept='application/zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/jpg'
+                        style={{ display: 'none' }}
+                        onChange={handleFileUpload}
+                        disabled={uploading}
+                      />
+                      <Box
+                        onClick={() => {
+                          if (!uploading && fileInputRef.current) {
+                            fileInputRef.current.click()
+                          }
+                        }}
+                        sx={{
+                          border: '2px dashed',
+                          borderColor: uploading ? 'action.disabled' : 'divider',
+                          borderRadius: '12px',
+                          p: 10,
+                          textAlign: 'center',
+                          cursor: uploading ? 'not-allowed' : 'pointer',
+                          transition: 'all 0.2s',
+                          bgcolor: 'background.paper',
+                          '&:hover': {
+                            borderColor: uploading ? 'action.disabled' : 'primary.main',
+                            bgcolor: uploading ? 'transparent' : 'primary.lightOpacity'
+                          }
+                        }}
+                      >
+                        {uploading ? (
+                          <>
+                            <CircularProgress size={48} sx={{ mb: 2 }} />
+                            <Typography variant='body1' sx={{ fontWeight: 500, color: 'text.primary' }}>
+                              上传中...
+                            </Typography>
+                          </>
+                        ) : (
+                          <>
+                            <i className='ri-cloud-upload-line text-5xl text-primary mb-4' />
+                            <Typography variant='body1' sx={{ fontWeight: 500, mb: 3, color: 'text.primary' }}>
+                              点击或拖拽文件到此处上传
+                            </Typography>
+                            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
+                              支持格式:{' '}
+                              <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
+                                zip, pdf, doc, docx, png, jpg
+                              </Typography>
+                              {' '}(最大{' '}
+                              <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
+                                5MB
+                              </Typography>
+                              )
+                            </Typography>
+                          </>
+                        )}
+                      </Box>
+                    </>
+                  ) : (
+                    <Box
+                      sx={{
+                        border: '1px solid',
+                        borderColor: 'success.main',
+                        borderRadius: '12px',
+                        p: 4,
+                        bgcolor: 'success.lightOpacity',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between'
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 2,
+                            bgcolor: 'success.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <i className='ri-file-text-line text-xl text-white' />
+                        </Box>
+                        <Box>
+                          <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                            {uploadedFile.name}
+                          </Typography>
+                          <Typography variant='caption' color='text.secondary'>
+                            上传成功
+                          </Typography>
+                        </Box>
+                      </Box>
+                      <IconButton
+                        onClick={handleRemoveFile}
+                        sx={{
+                          color: 'error.main',
+                          '&:hover': {
+                            bgcolor: 'error.lightOpacity'
+                          }
+                        }}
+                      >
+                        <i className='ri-delete-bin-line' />
+                      </IconButton>
+                    </Box>
+                  )}
                 </CardContent>
               </Card>
 
@@ -853,7 +894,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant='body2' color='text.secondary'>固定费用</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {calculatingFee ? (
+                      {feeConfigLoading ? (
                         <CircularProgress size={16} />
                       ) : (
                         <Typography variant='body2' sx={{ fontWeight: 700 }}>
@@ -865,7 +906,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant='body2' color='text.secondary'>收费比例</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {calculatingFee ? (
+                      {feeConfigLoading ? (
                         <CircularProgress size={16} />
                       ) : (
                         <Typography variant='body2' sx={{ fontWeight: 700 }}>
@@ -936,7 +977,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant='body2' color='text.secondary'>手续费</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {calculatingFee ? (
+                      {feeConfigLoading ? (
                         <CircularProgress size={16} />
                       ) : (
                         <Typography variant='body2' sx={{ fontWeight: 700 }}>
@@ -1173,7 +1214,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant='body2' color='text.secondary'>手续费</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>
-                      {calculatingFee ? <CircularProgress size={16} /> : `${fee.toFixed(4)} ${payCurrency}`}
+                      {feeConfigLoading ? <CircularProgress size={16} /> : `${fee.toFixed(4)} ${payCurrency}`}
                     </Typography>
                   </Box>
                 </Box>

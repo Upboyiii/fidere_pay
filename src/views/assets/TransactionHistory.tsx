@@ -125,7 +125,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        backgroundColor: '#f8fafc' 
+        bgcolor: 'background.default' 
       }}
     >
       {/* 现代感网格背景 */}
@@ -135,35 +135,54 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
       />
 
-      <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid size={{ xs: 12 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Box>
-              <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                交易流水
-              </Typography>
-              <Typography color='text.secondary'>
-                查看所有交易记录和流水明细
-              </Typography>
-            </Box>
-            <Button
-              variant='contained'
-              startIcon={<i className='ri-download-line' />}
-              sx={{ borderRadius: '8px', px: 6 }}
-            >
-              导出记录
-            </Button>
+      {/* 页面卡片容器 */}
+      <Card 
+        sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          borderRadius: '20px',
+          boxShadow: (theme) => theme.palette.mode === 'dark' 
+            ? '0 4px 24px rgba(0,0,0,0.4)' 
+            : '0 4px 24px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: (theme) => theme.palette.mode === 'dark' 
+            ? 'rgba(255,255,255,0.08)' 
+            : 'rgba(0,0,0,0.05)',
+          p: 6,
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Box>
+            <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+              交易流水
+            </Typography>
+            <Typography color='text.secondary'>
+              查看所有交易记录和流水明细
+            </Typography>
           </Box>
-        </Grid>
+          <Button
+            variant='contained'
+            startIcon={<i className='ri-download-line' />}
+            sx={{ borderRadius: '8px', px: 6 }}
+          >
+            导出记录
+          </Button>
+        </Box>
 
         {/* 筛选栏 */}
         {showFilters && (
@@ -308,19 +327,19 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>备注</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
+                    {/* <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th> */}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center' }}>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                         <CircularProgress />
                       </td>
                     </tr>
                   ) : transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                         暂无交易记录
                       </td>
                     </tr>
@@ -372,10 +391,27 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td style={{ padding: '16px 24px' }}>
                           <Typography variant='body2' color='text.secondary'>
-                            {tx.createTime}
+                            {(() => {
+                              // 兼容 createTime 和 createdAt 两个字段名
+                              const timestamp = tx.createTime || tx.createdAt
+                              if (!timestamp) return '-'
+                              // 如果是字符串格式的时间，直接返回
+                              if (typeof timestamp === 'string' && timestamp.includes('-')) return timestamp
+                              // 判断是秒级(10位)还是毫秒级(13位)时间戳
+                              const ts = Number(timestamp)
+                              const msTimestamp = ts > 9999999999 ? ts : ts * 1000
+                              return new Date(msTimestamp).toLocaleString('zh-CN', {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit',
+                                second: '2-digit'
+                              })
+                            })()}
                           </Typography>
                         </td>
-                        <td style={{ padding: '16px 24px' }}>
+                        {/* <td style={{ padding: '16px 24px' }}>
                           <Button 
                             size='small' 
                             variant='text' 
@@ -384,7 +420,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                           >
                             详情
                           </Button>
-                        </td>
+                        </td> */}
                       </tr>
                     ))
                   )}
@@ -412,7 +448,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
             </Box>
           </Card>
         </Grid>
-      </Grid>
+      </Card>
     </Box>
   )
 }

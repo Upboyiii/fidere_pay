@@ -130,7 +130,7 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        backgroundColor: '#f8fafc' 
+        bgcolor: 'background.default' 
       }}
     >
       {/* 现代感网格背景 */}
@@ -140,16 +140,38 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
       />
 
-      <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
+      {/* 页面卡片容器 */}
+      <Card 
+        sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          borderRadius: '20px',
+          boxShadow: (theme) => theme.palette.mode === 'dark' 
+            ? '0 4px 24px rgba(0,0,0,0.4)' 
+            : '0 4px 24px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: (theme) => theme.palette.mode === 'dark' 
+            ? 'rgba(255,255,255,0.08)' 
+            : 'rgba(0,0,0,0.05)',
+          p: 6,
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
@@ -420,6 +442,7 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
           </Card>
         </Grid>
       </Grid>
+      </Card>
 
       {/* 删除确认对话框 */}
       <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>

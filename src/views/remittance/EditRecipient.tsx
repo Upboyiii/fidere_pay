@@ -271,7 +271,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        bgcolor: mode === 'dark' ? 'background.default' : '#f8fafc'
+        bgcolor: 'background.default'
       }}
     >
       {/* 现代感网格背景 */}
@@ -281,7 +281,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: mode === 'dark' 
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
             ? `
               linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
               linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)

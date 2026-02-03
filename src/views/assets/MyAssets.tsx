@@ -138,7 +138,19 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
 
       // 计算今日统计
       const todayTransactions = transactionList.filter((tx: UserTransactionListItem) => {
-        const txDate = new Date(tx.createTime)
+        // 兼容 createTime 和 createdAt，以及秒级/毫秒级时间戳
+        const timestamp = tx.createTime || tx.createdAt
+        if (!timestamp) return false
+        // 如果是字符串格式，尝试解析
+        let txDate: Date
+        if (typeof timestamp === 'string') {
+          txDate = new Date(timestamp)
+        } else {
+          // 判断是秒级(10位)还是毫秒级(13位)时间戳
+          const ts = Number(timestamp)
+          const msTimestamp = ts > 9999999999 ? ts : ts * 1000
+          txDate = new Date(msTimestamp)
+        }
         return txDate >= today && txDate < tomorrow
       })
 
@@ -178,7 +190,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        bgcolor: mode === 'dark' ? 'background.default' : '#ffffff'
+        bgcolor: 'background.default'
       }}
     >
       {/* 现代感网格背景 */}
@@ -188,7 +200,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: mode === 'dark' 
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
             ? `
               linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
               linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
@@ -268,7 +280,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                   onClick={() => router.push(getLocalizedPath('/assets/deposit', currentLang))}
                   startIcon={<i className='ri-add-circle-line' />}
                   sx={{
-                    bgcolor: 'white',
+                    bgcolor: 'background.paper',
                     color: 'primary.main',
                     borderRadius: '8px',
                     fontWeight: 600,
@@ -687,7 +699,24 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' color='text.secondary'>
-                              {tx.createTime}
+                              {(() => {
+                                // 兼容 createTime 和 createdAt 两个字段名
+                                const timestamp = tx.createTime || tx.createdAt
+                                if (!timestamp) return '-'
+                                // 如果是字符串格式的时间，直接返回
+                                if (typeof timestamp === 'string' && timestamp.includes('-')) return timestamp
+                                // 判断是秒级(10位)还是毫秒级(13位)时间戳
+                                const ts = Number(timestamp)
+                                const msTimestamp = ts > 9999999999 ? ts : ts * 1000
+                                return new Date(msTimestamp).toLocaleString('zh-CN', {
+                                  year: 'numeric',
+                                  month: '2-digit',
+                                  day: '2-digit',
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                  second: '2-digit'
+                                })
+                              })()}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>

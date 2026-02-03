@@ -33,11 +33,24 @@ import Drawer from '@mui/material/Drawer'
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getUserTransferList, type TransferDetailItem } from '@server/otc-api'
+import { getUserTransferList, getTransferDetail, type TransferDetailItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
+
+// 获取 API 基础地址（用于文件下载）
+const getApiBaseUrl = () => {
+  // 优先使用环境变量
+  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+    return process.env.NEXT_PUBLIC_API_BASE_URL
+  }
+  // 根据当前环境判断
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://192.168.5.111:9009'
+  }
+  return 'https://server.fidere.xyz'
+}
 
 const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
@@ -57,6 +70,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const [showFilters, setShowFilters] = useState(true)
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<TransferDetailItem | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   // 加载汇款记录
   const loadRecords = async () => {
@@ -103,9 +117,22 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
     return 'default'
   }
 
-  const handleViewDetail = (record: TransferDetailItem) => {
-    setSelectedRecord(record)
+  const handleViewDetail = async (record: TransferDetailItem) => {
     setDrawerOpen(true)
+    setDetailLoading(true)
+    setSelectedRecord(null)
+    try {
+      const res = await getTransferDetail({ applyNo: record.applyNo })
+      const detail = res.data?.data || res.data
+      setSelectedRecord(detail as TransferDetailItem)
+    } catch (error) {
+      console.error('获取转账详情失败:', error)
+      toast.error('获取转账详情失败')
+      // 如果接口失败，使用列表中的数据作为兜底
+      setSelectedRecord(record)
+    } finally {
+      setDetailLoading(false)
+    }
   }
 
   const getRemitTypeLabel = (type: number) => {
@@ -130,7 +157,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        backgroundColor: '#f8fafc' 
+        bgcolor: 'background.default' 
       }}
     >
       {/* 现代感网格背景 */}
@@ -140,16 +167,38 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
-          `,
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+            `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
       />
 
-      <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
+      {/* 页面卡片容器 */}
+      <Card 
+        sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          borderRadius: '20px',
+          boxShadow: (theme) => theme.palette.mode === 'dark' 
+            ? '0 4px 24px rgba(0,0,0,0.4)' 
+            : '0 4px 24px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: (theme) => theme.palette.mode === 'dark' 
+            ? 'rgba(255,255,255,0.08)' 
+            : 'rgba(0,0,0,0.05)',
+          p: 6,
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Grid container spacing={6}>
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
@@ -412,6 +461,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           </Card>
         </Grid>
       </Grid>
+      </Card>
 
       {/* 详情抽屉 */}
       <Drawer
@@ -426,27 +476,37 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           }
         }}
       >
-        {selectedRecord && (
-          <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: '#fff' }}>
-            {/* 头部 */}
-            <Box sx={{ px: 5, py: 4, borderBottom: '1px solid #f0f0f0', bgcolor: '#fff' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '18px' }}>
-                  汇款订单详情
-                </Typography>
-                <IconButton 
-                  onClick={() => setDrawerOpen(false)} 
-                  size='small'
-                  sx={{ 
-                    width: 32,
-                    height: 32,
-                    '&:hover': { bgcolor: 'rgba(0,0,0,0.04)' }
-                  }}
-                >
-                  <i className='ri-close-line' style={{ fontSize: '20px' }} />
-                </IconButton>
-              </Box>
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', bgcolor: 'background.paper' }}>
+          {/* 头部 */}
+          <Box sx={{ px: 5, py: 4, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '18px' }}>
+                汇款订单详情
+              </Typography>
+              <IconButton 
+                onClick={() => setDrawerOpen(false)} 
+                size='small'
+                sx={{ 
+                  width: 32,
+                  height: 32,
+                  '&:hover': { bgcolor: 'action.hover' }
+                }}
+              >
+                <i className='ri-close-line' style={{ fontSize: '20px' }} />
+              </IconButton>
             </Box>
+          </Box>
+
+          {/* 加载状态 */}
+          {detailLoading && (
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CircularProgress />
+            </Box>
+          )}
+
+          {/* 内容 */}
+          {!detailLoading && selectedRecord && (
+            <>
 
             {/* 内容区域 */}
             <Box sx={{ flex: 1, overflowY: 'auto', px: 5, py: 4, bgcolor: '#fafafa' }}>
@@ -552,32 +612,83 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>汇款类型：</Typography>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{getRemitTypeLabel(selectedRecord.remitType || 1)}</Typography>
                 </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: selectedRecord.memo ? '1px solid #f0f0f0' : 'none' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>手续费：</Typography>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord.feeAmount || selectedRecord.fee || 0)} {selectedRecord.currencyCode}</Typography>
                 </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>固定手续费：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>{selectedRecord.fixedFee || 0} {selectedRecord.currencyCode}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>比例手续费：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>{selectedRecord.ratioFee || 0} {selectedRecord.currencyCode}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>汇款目的：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.purposeType || '-'}</Typography>
+                </Box>
+                {selectedRecord.purposeDesc && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>目的说明：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.purposeDesc}</Typography>
+                  </Box>
+                )}
                 {selectedRecord.memo && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易备注：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.memo}</Typography>
                   </Box>
                 )}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>更新时间：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{formatTimestamp(selectedRecord.updateTime || selectedRecord.updatedAt)}</Typography>
+                </Box>
               </Box>
 
               {/* 收款人信息 */}
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
                 收款人信息
               </Typography>
-              <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人姓名：</Typography>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{selectedRecord.payeeName || '-'}</Typography>
+              <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人姓名：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontWeight: 600 }}>{selectedRecord.payeeName || '-'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人ID：</Typography>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontFamily: 'monospace' }}>{selectedRecord.payeeId}</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人ID：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontFamily: 'monospace' }}>{selectedRecord.payeeId}</Typography>
                 </Box>
               </Box>
+
+              {/* 审核信息 (仅审核后显示) */}
+              {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
+                <>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
+                    审核信息
+                  </Typography>
+                  <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
+                    {selectedRecord.auditRemark && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核备注：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
+                      </Box>
+                    )}
+                    {(selectedRecord.auditTime ?? 0) > 0 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核时间：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
+                      </Box>
+                    )}
+                    {(selectedRecord.completeTime ?? 0) > 0 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>完成时间：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </>
+              )}
 
               {/* 交易材料 */}
               <Box sx={{ mb: 4 }}>
@@ -594,7 +705,8 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                       disabled={!selectedRecord.transactionMaterial}
                       onClick={() => {
                         if (selectedRecord.transactionMaterial) {
-                          window.open(selectedRecord.transactionMaterial, '_blank')
+                          const baseUrl = getApiBaseUrl()
+                          window.open(`${baseUrl}/${selectedRecord.transactionMaterial}`, '_blank')
                         }
                       }}
                       sx={{ 
@@ -630,18 +742,24 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
 
               {/* 回执单 */}
               <Box>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
                   回执单
                 </Typography>
-                <Box sx={{ bgcolor: '#fff', borderRadius: '8px', p: 3, mb: 2 }}>
+                <Box sx={{ bgcolor: 'background.paper', borderRadius: '8px', p: 3, mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>汇款回执单</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>汇款回执单</Typography>
                     <Button
                       variant='contained'
                       size='small'
                       startIcon={<i className='ri-download-line' />}
+                      disabled={!selectedRecord.receiptUrl}
                       onClick={() => {
-                        toast.info('正在生成回执单...')
+                        if (selectedRecord.receiptUrl) {
+                          const baseUrl = getApiBaseUrl()
+                          window.open(`${baseUrl}/${selectedRecord.receiptUrl}`, '_blank')
+                        } else {
+                          toast.info('暂无回执单')
+                        }
                       }}
                       sx={{ 
                         bgcolor: '#1890ff',
@@ -656,6 +774,10 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         '&:hover': {
                           bgcolor: '#40a9ff',
                           boxShadow: 'none'
+                        },
+                        '&:disabled': {
+                          bgcolor: '#f5f5f5',
+                          color: '#bfbfbf'
                         }
                       }}
                     >
@@ -663,9 +785,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     </Button>
                   </Box>
                 </Box>
-                <Typography variant='caption' sx={{ fontSize: '12px', color: '#8c8c8c', display: 'block', pl: 1 }}>
-                  暂无回执单
-                </Typography>
+                {!selectedRecord.receiptUrl && (
+                  <Typography variant='caption' sx={{ fontSize: '12px', color: 'text.disabled', display: 'block', pl: 1 }}>
+                    回执单将在汇款完成后生成
+                  </Typography>
+                )}
               </Box>
             </Box>
 
@@ -713,8 +837,9 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                 确认
               </Button>
             </Box>
-          </Box>
+          </>
         )}
+        </Box>
       </Drawer>
     </Box>
   )

@@ -20,6 +20,7 @@ import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
+import Chip from '@mui/material/Chip'
 
 // Third Party Imports
 import { toast } from 'react-toastify'
@@ -45,6 +46,14 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
     userNickname: ''
   })
 
+  // 统计数据
+  const [statistics, setStatistics] = useState({
+    totalBalance: 0,
+    totalFrozen: 0,
+    totalAvailable: 0,
+    userCount: 0
+  })
+
   // 调整资产弹窗状态
   const [adjustDialogOpen, setAdjustDialogOpen] = useState(false)
   const [adjusting, setAdjusting] = useState(false)
@@ -65,8 +74,21 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
         userName: filters.userName || undefined,
         userNickname: filters.userNickname || undefined
       })
-      setData(res.data?.list || [])
+      const list: AdminAssetListItem[] = res.data?.list || []
+      setData(list)
       setTotal(res.data?.total || 0)
+      
+      // 计算统计数据
+      const totalBalance = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.balance || 0), 0)
+      const totalFrozen = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.frozenBalance || 0), 0)
+      const totalAvailable = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.availableBalance || 0), 0)
+      const uniqueUsers = new Set(list.map((item: AdminAssetListItem) => item.userId))
+      setStatistics({
+        totalBalance,
+        totalFrozen,
+        totalAvailable,
+        userCount: uniqueUsers.size
+      })
     } catch (error) {
       console.error('加载数据失败:', error)
     } finally {
@@ -126,20 +148,92 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
 
   return (
     <Grid container spacing={6}>
+      {/* 统计卡片 - 简洁风格 */}
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'primary.lighter', color: 'primary.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-wallet-3-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>总余额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
+              {statistics.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'success.lighter', color: 'success.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-check-double-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>可用余额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+              {statistics.totalAvailable.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'warning.lighter', color: 'warning.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-lock-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>冻结余额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+              {statistics.totalFrozen.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'info.lighter', color: 'info.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-team-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>用户数量</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'info.main' }}>
+              {statistics.userCount}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
       <Grid size={12}>
-        <Card sx={{ width: '100%' }}>
+        <Card sx={{ width: '100%', borderRadius: '16px' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>用户资产列表</Typography>
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>用户资产列表</Typography>
+              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
-              <TextField
-                label='用户ID'
-                value={filters.userId}
-                onChange={e => setFilters({ ...filters, userId: e.target.value })}
-                size='small'
-                sx={{ minWidth: 120 }}
-              />
               <TextField
                 label='用户名'
                 value={filters.userName}
@@ -164,7 +258,6 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '800px' }}>
                 <thead>
                   <tr>
-                    <th>用户ID</th>
                     <th>用户名</th>
                     <th>用户昵称</th>
                     <th>币种</th>
@@ -190,7 +283,6 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                   ) : (
                     data.map(item => (
                       <tr key={`${item.userId}-${item.currencyCode}`}>
-                        <td>{item.userId}</td>
                         <td>{item.userName || '-'}</td>
                         <td>{item.userNickname || '-'}</td>
                         <td>{item.currencyCode}</td>
@@ -236,8 +328,8 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
             <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label='用户ID'
-                  value={selectedItem.userId}
+                  label='用户名'
+                  value={selectedItem.userName || '-'}
                   size='small'
                   disabled
                   sx={{ flex: 1 }}

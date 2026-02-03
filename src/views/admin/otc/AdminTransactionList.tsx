@@ -87,54 +87,78 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
     loadData()
   }, [page, rowsPerPage])
 
+  const netAmount = statistics.totalIncome - statistics.totalExpenditure
+
   return (
     <Grid container spacing={6}>
-      <Grid size={12}>
-        <Card sx={{ width: '100%' }}>
-          <CardContent>
-            <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>资金流水列表</Typography>
-              <Box className='flex gap-6'>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    总入账
-                  </Typography>
-                  <Typography variant='h6' sx={{ color: '#4caf50', fontWeight: 700 }}>
-                    +{statistics.totalIncome.toFixed(2)}
-                  </Typography>
-                </Box>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    总出账
-                  </Typography>
-                  <Typography variant='h6' sx={{ color: '#ff5252', fontWeight: 700 }}>
-                    -{statistics.totalExpenditure.toFixed(2)}
-                  </Typography>
-                </Box>
-                <Box className='text-right'>
-                  <Typography variant='caption' color='text.secondary'>
-                    净额
-                  </Typography>
-                  <Typography 
-                    variant='h6' 
-                    sx={{ 
-                      color: statistics.totalIncome - statistics.totalExpenditure >= 0 ? '#4caf50' : '#ff5252',
-                      fontWeight: 700 
-                    }}
-                  >
-                    {(statistics.totalIncome - statistics.totalExpenditure).toFixed(2)}
-                  </Typography>
-                </Box>
+      {/* 统计卡片 - 简洁风格 */}
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'success.lighter', color: 'success.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-arrow-down-circle-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>总入账</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+              +{statistics.totalIncome.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: 'error.lighter', color: 'error.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-arrow-up-circle-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>总出账</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: 'error.main' }}>
+              -{statistics.totalExpenditure.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
+          <CardContent sx={{ p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+              <Box sx={{ 
+                width: 44, height: 44, borderRadius: '12px', 
+                bgcolor: netAmount >= 0 ? 'primary.lighter' : 'error.lighter', 
+                color: netAmount >= 0 ? 'primary.main' : 'error.main',
+                display: 'flex', alignItems: 'center', justifyContent: 'center' 
+              }}>
+                <i className='ri-scales-3-line' style={{ fontSize: 22 }} />
+              </Box>
+            </Box>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>净额</Typography>
+            <Typography variant='h5' sx={{ fontWeight: 700, color: netAmount >= 0 ? 'primary.main' : 'error.main' }}>
+              {netAmount >= 0 ? '+' : ''}{netAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Grid>
+
+      <Grid size={12}>
+        <Card sx={{ width: '100%', borderRadius: '16px' }}>
+          <CardContent>
+            <Box className='flex items-center justify-between mb-4'>
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>资金流水列表</Typography>
+              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
+            </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
-              <TextField
-                label='用户ID'
-                value={filters.userId}
-                onChange={e => setFilters({ ...filters, userId: e.target.value })}
-                size='small'
-                sx={{ minWidth: 120 }}
-              />
               <TextField
                 label='用户名'
                 value={filters.userName}
@@ -256,9 +280,6 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                             <span style={{ fontSize: '0.85rem', color: 'var(--mui-palette-text-secondary)' }}>
                               {item.userNickname}
                             </span>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--mui-palette-text-secondary)' }}>
-                              ID: {item.userId}
-                            </span>
                           </div>
                         </td>
                         <td>
@@ -338,14 +359,19 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                           </Tooltip>
                         </td>
                         <td style={{ fontSize: '0.85rem' }}>
-                          {item.createTime ? new Date(item.createTime).toLocaleString('zh-CN', {
-                            year: 'numeric',
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                            second: '2-digit'
-                          }) : '-'}
+                          {(() => {
+                            // 兼容 createTime 和 createdAt 两个字段名，支持13位毫秒时间戳
+                            const timestamp = item.createTime || item.createdAt
+                            if (!timestamp) return '-'
+                            return new Date(timestamp).toLocaleString('zh-CN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })
+                          })()}
                         </td>
                       </tr>
                     ))

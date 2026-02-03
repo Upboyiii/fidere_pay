@@ -25,6 +25,13 @@ import { ENV_CONFIG } from '@server/config'
 
 // Component Imports
 import LogoSvg from '@core/svg/Logo'
+import ModeDropdown from '@components/layout/shared/ModeDropdown'
+
+// MUI Theme Imports
+import { useColorScheme } from '@mui/material/styles'
+
+// Third-party Imports for theme detection
+import { useMedia } from 'react-use'
 
 // Third-party Imports
 import { signIn } from 'next-auth/react'
@@ -105,7 +112,7 @@ const Login = ({ mode }: { mode: Mode }) => {
   const [loginLoading, setLoginLoading] = useState(false)
   const captchaPromiseRef = useRef<Promise<any> | null>(null)
 
-  const [selectValue, setSelectValue] = useState('operation')
+  const [selectValue, setSelectValue] = useState('kyc') // 默认 KYC 模式
   
   // 谷歌验证码弹窗相关状态
   const [googleAuthDialogOpen, setGoogleAuthDialogOpen] = useState(false)
@@ -121,6 +128,13 @@ const Login = ({ mode }: { mode: Mode }) => {
   const { lang: locale } = useParams()
   const { settings } = useSettings()
   const { updateThemeByRole } = useThemeByRole()
+  
+  // 主题模式检测
+  const { mode: muiMode, systemMode } = useColorScheme()
+  const isSystemDark = useMedia('(prefers-color-scheme: dark)', false)
+  const isDarkMode = muiMode === 'system' 
+    ? (systemMode === 'dark' || isSystemDark)
+    : muiMode === 'dark'
 
   // 创建 schema，使用翻译函数（确保字典已加载）
   const schema = createSchema(t)
@@ -364,15 +378,25 @@ const Login = ({ mode }: { mode: Mode }) => {
   }
 
   return (
-    <div className='flex bs-full min-bs-[100dvh] bg-[#f8fafc] relative overflow-hidden'>
+    <div 
+      className='flex bs-full min-bs-[100dvh] relative overflow-hidden transition-colors duration-300'
+      style={{ 
+        backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' 
+      }}
+    >
       {/* 现代感网格背景 */}
       <div 
         className='absolute inset-0 z-0'
         style={{
-          backgroundImage: `
-            linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
-            linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
-          `,
+          backgroundImage: isDarkMode
+            ? `
+              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
+            `
+            : `
+              linear-gradient(to right, rgba(0, 0, 0, 0.07) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0, 0, 0, 0.07) 1px, transparent 1px)
+            `,
           backgroundSize: '32px 32px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)',
           WebkitMaskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
@@ -381,10 +405,18 @@ const Login = ({ mode }: { mode: Mode }) => {
       
       {/* 极简背景光晕修饰 */}
       <div 
-        className='absolute -top-24 -left-24 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-60'
+        className='absolute -top-24 -left-24 w-[500px] h-[500px] rounded-full blur-[120px]'
+        style={{
+          backgroundColor: isDarkMode ? 'rgba(99, 102, 241, 0.15)' : 'rgba(var(--mui-palette-primary-mainChannel), 0.1)',
+          opacity: isDarkMode ? 0.8 : 0.6
+        }}
       />
       <div 
-        className='absolute -bottom-24 -right-24 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] opacity-60'
+        className='absolute -bottom-24 -right-24 w-[500px] h-[500px] rounded-full blur-[120px]'
+        style={{
+          backgroundColor: isDarkMode ? 'rgba(139, 92, 246, 0.15)' : 'rgba(var(--mui-palette-primary-mainChannel), 0.1)',
+          opacity: isDarkMode ? 0.8 : 0.6
+        }}
       />
       
       {/* 顶部 Header */}
@@ -407,9 +439,7 @@ const Login = ({ mode }: { mode: Mode }) => {
           <IconButton size='medium' sx={{ color: 'text.secondary' }}>
             <i className='ri-translate-2-line' />
           </IconButton>
-          <IconButton size='medium' sx={{ color: 'text.secondary' }}>
-            <i className='ri-moon-line' />
-          </IconButton>
+          <ModeDropdown />
         </div>
       </div>
 
@@ -491,10 +521,12 @@ const Login = ({ mode }: { mode: Mode }) => {
               maxWidth: 440,
               backgroundColor: 'background.paper',
               borderRadius: '24px',
-              boxShadow: '0 20px 50px rgba(0, 0, 0, 0.05)',
+              boxShadow: isDarkMode 
+                ? '0 20px 50px rgba(0, 0, 0, 0.4)' 
+                : '0 20px 50px rgba(0, 0, 0, 0.05)',
               padding: { xs: 6, sm: 8, md: 10 },
               border: '1px solid',
-              borderColor: 'rgba(0,0,0,0.04)'
+              borderColor: isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)'
             }}
           >
             <div className='flex flex-col gap-8'>
@@ -530,8 +562,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '12px',
-                          backgroundColor: '#fcfdfe',
-                          '& fieldset': { borderColor: '#eef0f2' },
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                          '& fieldset': { borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                           '&:hover fieldset': { borderColor: 'primary.main' },
                         }
                       }}
@@ -561,8 +593,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: '12px',
-                          backgroundColor: '#fcfdfe',
-                          '& fieldset': { borderColor: '#eef0f2' },
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                          '& fieldset': { borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                           '&:hover fieldset': { borderColor: 'primary.main' },
                         }
                       }}
@@ -609,8 +641,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                         sx={{
                           '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',
-                            backgroundColor: '#fcfdfe',
-                            '& fieldset': { borderColor: '#eef0f2' },
+                            backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fcfdfe',
+                            '& fieldset': { borderColor: isDarkMode ? 'rgba(255,255,255,0.1)' : '#eef0f2' },
                             '&:hover fieldset': { borderColor: 'primary.main' },
                           }
                         }}
@@ -622,9 +654,9 @@ const Login = ({ mode }: { mode: Mode }) => {
                           height: 52,
                           borderRadius: '12px',
                           overflow: 'hidden',
-                          border: '1px solid #eef0f2',
+                          border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #eef0f2',
                           cursor: 'pointer',
-                          backgroundColor: '#fff',
+                          backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
                           flexShrink: 0,
                           '&:hover': { borderColor: 'primary.main' }
                         }}
@@ -645,7 +677,8 @@ const Login = ({ mode }: { mode: Mode }) => {
                   )}
                 />
 
-                <Select
+                {/* 模式选择 - 默认 KYC 模式，暂时隐藏选择功能 */}
+                {/* <Select
                   value={selectValue}
                   onChange={(e: SelectChangeEvent) => setSelectValue(e.target.value)}
                   sx={{ 
@@ -657,7 +690,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 >
                   <MenuItem value='kyc'>KYC 模式</MenuItem>
                   <MenuItem value='operation'>运营模式</MenuItem>
-                </Select>
+                </Select> */}
 
                 {/* <div className='flex justify-between items-center'>
                   <FormControlLabel 

@@ -89,13 +89,6 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
-                label='用户ID'
-                value={filters.userId}
-                onChange={e => setFilters({ ...filters, userId: e.target.value })}
-                size='small'
-                sx={{ minWidth: 120 }}
-              />
-              <TextField
                 label='回调类型'
                 value={filters.callbackType}
                 onChange={e => setFilters({ ...filters, callbackType: e.target.value })}
@@ -143,7 +136,6 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>用户ID</th>
                     <th>回调类型</th>
                     <th>回调状态</th>
                     <th>回调URL</th>
@@ -169,7 +161,6 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                     data.map(item => (
                       <tr key={item.id}>
                         <td>{item.id}</td>
-                        <td>{item.userId}</td>
                         <td>{item.callbackType}</td>
                         <td>
                           <Chip

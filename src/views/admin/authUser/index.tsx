@@ -31,6 +31,11 @@ import {
   addUserApi,
   editUser
 } from '@server/admin'
+import { setFeeConfig } from '@server/otc-api'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import Select from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
 import { toast } from 'react-toastify'
 
 // Hook Imports
@@ -67,6 +72,16 @@ export default function AuthUser() {
   const [treeLoading, setTreeLoading] = useState(false)
   const [btnLoading, setBtnLoading] = useState(false)
   const tableRef = useRef<TableInstance>(null)
+  
+  // 手续费配置相关状态
+  const [feeConfigDialogOpen, setFeeConfigDialogOpen] = useState(false)
+  const [feeConfigUser, setFeeConfigUser] = useState<UserData | null>(null)
+  const [feeConfigData, setFeeConfigData] = useState({
+    fixedFee: '',
+    ratioFee: '',
+    status: 1,
+    remark: ''
+  })
   useEffect(() => {
     setTreeLoading(true)
     getDepartmentTree({ showOwner: true })
@@ -256,6 +271,46 @@ export default function AuthUser() {
     loadUserData({ pageNum: params?.pageNum, pageSize: params?.pageSize, ...searchParams })
   }
 
+  /**
+   * 配置手续费
+   */
+  const handleFeeConfig = useCallback((user: UserData) => {
+    setFeeConfigUser(user)
+    setFeeConfigData({
+      fixedFee: '',
+      ratioFee: '',
+      status: 1,
+      remark: ''
+    })
+    setFeeConfigDialogOpen(true)
+  }, [])
+
+  /**
+   * 确认配置手续费
+   */
+  const handleConfirmFeeConfig = async () => {
+    if (!feeConfigUser?.id) return
+    
+    try {
+      setBtnLoading(true)
+      await setFeeConfig({
+        userId: Number(feeConfigUser.id),
+        fixedFee: feeConfigData.fixedFee ? Number(feeConfigData.fixedFee) : undefined,
+        ratioFee: feeConfigData.ratioFee ? Number(feeConfigData.ratioFee) : undefined,
+        status: feeConfigData.status,
+        remark: feeConfigData.remark || undefined
+      })
+      setFeeConfigDialogOpen(false)
+      setFeeConfigUser(null)
+      toast.success(t('admin.operationSuccess'))
+    } catch (error: any) {
+      console.error(error)
+      toast.error(error?.message || t('admin.operationFailed'))
+    } finally {
+      setBtnLoading(false)
+    }
+  }
+
   // 初始化加载数据
   useEffect(() => {
     loadUserData({ pageNum: 1, pageSize: 10 })
@@ -293,6 +348,7 @@ export default function AuthUser() {
                 onDelete={handleDeleteUser}
                 onResetPassword={handleResetPassword}
                 onStatusChange={handleStatusChange}
+                onFeeConfig={handleFeeConfig}
                 tableRef={tableRef}
               />
             </Card>
@@ -393,6 +449,77 @@ export default function AuthUser() {
         <DialogActions>
           <Button onClick={() => setResetPasswordDialogOpen(false)}>{t('admin.cancel')}</Button>
           <Button onClick={handleConfirmResetPassword} variant='contained' disabled={btnLoading}>
+            {t('admin.confirm')}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 配置手续费对话框 */}
+      <Dialog open={feeConfigDialogOpen} onClose={() => setFeeConfigDialogOpen(false)} maxWidth='sm' fullWidth>
+        <DialogTitle className='flex items-center justify-between'>
+          配置手续费
+          <IconButton size='small' onClick={() => setFeeConfigDialogOpen(false)}>
+            <i className='ri-close-line' />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          <Typography className='mb-4' color='text.secondary'>
+            为用户 <strong>"{feeConfigUser?.userNickname || feeConfigUser?.userName}"</strong> 配置专属手续费
+          </Typography>
+          <Box className='flex flex-col gap-4 mt-4'>
+            <TextField
+              fullWidth
+              type='number'
+              label='固定手续费'
+              value={feeConfigData.fixedFee}
+              onChange={e => setFeeConfigData({ ...feeConfigData, fixedFee: e.target.value })}
+              placeholder='请输入固定手续费'
+              helperText='每笔交易的固定费用'
+              slotProps={{
+                input: {
+                  inputProps: { min: 0, step: 0.01 }
+                }
+              }}
+            />
+            <TextField
+              fullWidth
+              type='number'
+              label='比例手续费'
+              value={feeConfigData.ratioFee}
+              onChange={e => setFeeConfigData({ ...feeConfigData, ratioFee: e.target.value })}
+              placeholder='请输入比例手续费，如 0.001'
+              helperText='0.001 = 0.1%，即每100元收取0.1元'
+              slotProps={{
+                input: {
+                  inputProps: { min: 0, step: 0.0001 }
+                }
+              }}
+            />
+            <FormControl fullWidth>
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={feeConfigData.status}
+                label='状态'
+                onChange={e => setFeeConfigData({ ...feeConfigData, status: e.target.value as number })}
+              >
+                <MenuItem value={1}>启用</MenuItem>
+                <MenuItem value={0}>禁用</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              multiline
+              rows={2}
+              label='备注'
+              value={feeConfigData.remark}
+              onChange={e => setFeeConfigData({ ...feeConfigData, remark: e.target.value })}
+              placeholder='请输入备注信息（可选）'
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setFeeConfigDialogOpen(false)}>{t('admin.cancel')}</Button>
+          <Button onClick={handleConfirmFeeConfig} variant='contained' disabled={btnLoading}>
             {t('admin.confirm')}
           </Button>
         </DialogActions>

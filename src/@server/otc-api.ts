@@ -276,7 +276,8 @@ export interface AdminTransactionListItem {
   frozenBalanceBefore: number // 调整前冻结余额
   frozenBalanceAfter: number // 调整后冻结余额
   remark: string
-  createTime: number
+  createTime?: number // 创建时间（兼容旧字段）
+  createdAt?: number // 创建时间（13位毫秒时间戳）
   [key: string]: any
 }
 
@@ -795,6 +796,15 @@ export interface CalculateTransferFeeResponse {
 export const calculateTransferFee = (data: CalculateTransferFeeRequest) =>
   clientRequest.post<CalculateTransferFeeResponse>('/_api/v1/biz/user/transfer/calculate-fee', data)
 
+// 41.1 获取用户手续费配置
+export interface UserFeeConfigResponse {
+  fixedFee: number // 固定费用
+  ratioFee: number // 收费比例（如 0.001 表示 0.1%）
+}
+
+export const getUserFeeConfig = () =>
+  clientRequest.get<UserFeeConfigResponse>('/_api/v1/biz/user/transfer/fee-config')
+
 // 42. 创建转账申请
 export interface CreateTransferRequest {
   payeeId: number
@@ -830,15 +840,28 @@ export interface TransferDetailItem {
   currencyCode: string
   receiveCurrencyCode: string
   transferAmount: number
+  receiveAmount: number
   exchangeRate: number
-  fee: number
-  status: number
+  feeAmount: number
+  fixedFee: number
+  ratioFee: number
+  remitType: number // 1-SWIFT汇款 2-本地汇款
   purposeType: string
   purposeDesc?: string
   memo?: string
   transactionMaterial?: string
-  createdAt: number
-  updatedAt: number
+  status: number // 0-待审核 1-处理中 2-已完成 3-已驳回 4-失败
+  auditRemark?: string
+  auditUserId?: number
+  auditTime?: number
+  completeTime?: number
+  receiptUrl?: string
+  createTime: number
+  updateTime: number
+  // 兼容旧字段
+  createdAt?: number
+  updatedAt?: number
+  fee?: number
   [key: string]: any
 }
 

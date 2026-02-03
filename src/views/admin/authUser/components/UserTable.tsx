@@ -56,6 +56,8 @@ interface UserTableProps {
   onStatusChange?: (user: UserData, userStatus: boolean) => void
   /** 重置密码回调 */
   onResetPassword?: (user: UserData) => void
+  /** 配置手续费回调 */
+  onFeeConfig?: (user: UserData) => void
   /** 可选的 table 实例 ref，用于将 table 实例暴露给外层组件，便于外层控制表格 */
   tableRef?: React.MutableRefObject<TableInstance | null>
 }
@@ -82,6 +84,7 @@ const UserTable = ({
   onDelete,
   onResetPassword,
   onStatusChange,
+  onFeeConfig,
   tableRef
 }: UserTableProps) => {
   const t = useTranslate()
@@ -175,14 +178,23 @@ const UserTable = ({
             >
               {t('admin.reset')}
             </Link>
+            <Link
+              component='button'
+              variant='body2'
+              color='secondary'
+              onClick={() => onFeeConfig?.(row.original)}
+              className='cursor-pointer'
+            >
+              手续费
+            </Link>
           </Box>
         ),
         meta: {
-          className: 'w-32'
+          className: 'w-48'
         }
       }
     ],
-    [onEdit, onDelete, onResetPassword, onStatusChange, t]
+    [onEdit, onDelete, onResetPassword, onStatusChange, onFeeConfig, t]
   )
 
   return (

@@ -1,5 +1,27 @@
 import type { NextConfig } from 'next'
 
+// 统一计算 API 基础地址
+// 优先使用环境变量 API_URL，方便本地切换测试服务器
+// 使用方法：
+//   1. 连接本地开发服务器（默认）: 不设置或 API_URL=http://192.168.5.111:9009
+//   2. 连接测试服务器: API_URL=https://server.fidere.xyz
+//   可以在 .env.local 文件中设置，或启动时指定：API_URL=https://server.fidere.xyz npm run dev
+const getApiBaseUrl = () => {
+  // 优先使用环境变量
+  if (process.env.API_URL) {
+    return process.env.API_URL
+  }
+  // 生产环境使用线上地址
+  if (process.env.NODE_ENV === 'production') {
+    return 'https://server.fidere.xyz'
+  }
+  // 开发环境默认使用本地地址
+  return 'http://192.168.5.111:9009'
+}
+
+const apiBaseUrl = getApiBaseUrl()
+console.log('🔗 API Base URL:', apiBaseUrl)
+
 const nextConfig: NextConfig = {
   // 忽略构建错误
   experimental: {
@@ -27,24 +49,13 @@ const nextConfig: NextConfig = {
     // 网站类型配置，用于区分三个网站的入口 (kyc | operation | admin)
     NEXT_PUBLIC_SITE_TYPE: process.env.SITE_TYPE || 'admin',
     // 代理配置，暴露到客户端
-    proxy: process.env.proxy || ''
+    proxy: process.env.proxy || '',
+    // API 基础地址，用于文件下载等（暴露到客户端）
+    NEXT_PUBLIC_API_BASE_URL: apiBaseUrl
   },
   // 代理配置 - 类似 Vite 的代理方式
   // 注意：NextAuth 使用 /api/auth 路径（标准路径），不会与后端 API 代理冲突
   async rewrites() {
-    let apiBaseUrl: string
-    if (process.env.NODE_ENV === 'production' && process.env.proxy === 'odi') {
-      // 生产环境且 proxy 为 odi 时的请求地址
-      console.error('1231312')
-
-      apiBaseUrl = 'http://b1dae9bc5cabbc13e4bee21af11cdb8d_manage.oditrust.com:9002' // 可根据需要修改为其他地址
-    } else if (process.env.NODE_ENV === 'production') {
-      // 生产环境
-      apiBaseUrl = 'http://b1dae9bc5cabbc13e4bee21af11cdb8d_manage.oditrust.com:9002'
-    } else {
-      // 开发环境
-      apiBaseUrl = 'http://192.168.5.111:9009'
-    }
     return [
       {
         source: '/admin-api/:path*',

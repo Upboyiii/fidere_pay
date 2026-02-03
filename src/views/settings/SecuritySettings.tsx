@@ -209,7 +209,6 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       })
       toast.success('重置成功')
       setResetPayPasswordDialogOpen(false)
-      setOldPayPassword('')
       setNewPayPassword('')
       setConfirmPayPassword('')
       setVerificationCode('')
@@ -226,7 +225,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        bgcolor: mode === 'dark' ? 'background.default' : '#f8fafc'
+        bgcolor: 'background.default'
       }}
     >
       {/* 现代感网格背景 */}
@@ -236,7 +235,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: mode === 'dark' 
+          backgroundImage: (theme) => theme.palette.mode === 'dark' 
             ? `
               linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
               linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
@@ -250,17 +249,33 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         }}
       />
 
-      <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
-        <Grid size={{ xs: 12 }}>
-          <Box sx={{ mb: 4 }}>
-            <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              安全设置
-            </Typography>
-            <Typography color='text.secondary'>
-              管理您的账户安全设置，保护您的资金安全
-            </Typography>
-          </Box>
-        </Grid>
+      {/* 页面卡片容器 */}
+      <Card 
+        sx={{ 
+          position: 'relative', 
+          zIndex: 1,
+          borderRadius: '20px',
+          boxShadow: (theme) => theme.palette.mode === 'dark' 
+            ? '0 4px 24px rgba(0,0,0,0.4)' 
+            : '0 4px 24px rgba(0,0,0,0.08)',
+          border: '1px solid',
+          borderColor: (theme) => theme.palette.mode === 'dark' 
+            ? 'rgba(255,255,255,0.08)' 
+            : 'rgba(0,0,0,0.05)',
+          p: 6,
+          bgcolor: 'background.paper'
+        }}
+      >
+        <Box sx={{ mb: 4 }}>
+          <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
+            安全设置
+          </Typography>
+          <Typography color='text.secondary'>
+            管理您的账户安全设置，保护您的资金安全
+          </Typography>
+        </Box>
+
+        <Grid container spacing={6}>
 
         {/* Google验证器卡片 */}
         <Grid size={{ xs: 12, md: 6 }}>
@@ -380,7 +395,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                                 borderColor: 'divider',
                                 borderRadius: '8px',
                                 p: 1.5,
-                                bgcolor: 'white',
+                                bgcolor: 'background.paper',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
@@ -390,6 +405,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                                 value='https://apps.apple.com/app/google-authenticator/id388497605'
                                 size={100}
                                 level='M'
+                                bgColor='transparent'
                               />
                             </Box>
                             <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 500 }}>
@@ -409,7 +425,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                                 borderColor: 'divider',
                                 borderRadius: '8px',
                                 p: 1.5,
-                                bgcolor: 'white',
+                                bgcolor: 'background.paper',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
@@ -419,6 +435,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                                 value='https://play.google.com/store/apps/details?id=com.google.android.apps.authenticator2'
                                 size={100}
                                 level='M'
+                                bgColor='transparent'
                               />
                             </Box>
                             <Typography variant='caption' color='text.secondary' sx={{ fontWeight: 500 }}>
@@ -561,6 +578,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
           </Card>
         </Grid>
       </Grid>
+      </Card>
 
       {/* 绑定Google验证对话框 */}
       <Dialog 
@@ -589,13 +607,14 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                   borderColor: 'divider',
                   borderRadius: '8px',
                   p: 2,
-                  bgcolor: 'white'
+                  bgcolor: 'background.paper'
                 }}
               >
                 <QRCodeCanvas 
                   value={googleAuthQrCodeUrl} 
                   size={200}
                   level='M'
+                  bgColor='transparent'
                 />
               </Box>
             )}
@@ -610,7 +629,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                   display: 'flex', 
                   alignItems: 'center', 
                   gap: 1,
-                  bgcolor: '#f8fafc', 
+                  bgcolor: 'action.hover', 
                   p: 2, 
                   borderRadius: '8px'
                 }}>
@@ -851,7 +870,6 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         open={resetPayPasswordDialogOpen}
         onClose={() => {
           setResetPayPasswordDialogOpen(false)
-          setOldPayPassword('')
           setNewPayPassword('')
           setConfirmPayPassword('')
           setVerificationCode('')

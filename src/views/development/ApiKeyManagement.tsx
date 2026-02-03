@@ -350,7 +350,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       </Typography>
                       <Box
                         sx={{
-                          bgcolor: '#f8fafc',
+                          bgcolor: 'action.hover',
                           p: 1.5,
                           borderRadius: '8px',
                           mb: 2,
@@ -530,7 +530,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        bgcolor: '#f8fafc',
+                        bgcolor: 'action.hover',
                         p: 2,
                         borderRadius: '8px',
                         border: '1px solid',
@@ -565,7 +565,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
-                        bgcolor: '#f8fafc',
+                        bgcolor: 'action.hover',
                         p: 2,
                         borderRadius: '8px',
                         border: '1px solid',

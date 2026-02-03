@@ -91,13 +91,6 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
               <Typography variant='h5'>充值记录列表</Typography>
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
-              <TextField
-                label='用户ID'
-                value={filters.userId}
-                onChange={e => setFilters({ ...filters, userId: e.target.value })}
-                size='small'
-                sx={{ minWidth: 120 }}
-              />
               <FormControl size='small' sx={{ minWidth: 150 }}>
                 <InputLabel id='recharge-status-label'>状态</InputLabel>
                 <Select
@@ -154,7 +147,6 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 <thead>
                   <tr>
                     <th>充值单号</th>
-                    <th>用户ID</th>
                     <th>币种</th>
                     <th>金额</th>
                     <th>状态</th>
@@ -179,7 +171,6 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                     data.map(item => (
                       <tr key={item.id}>
                         <td>{item.rechargeNo}</td>
-                        <td>{item.userId}</td>
                         <td>{item.currencyCode}</td>
                         <td>{item.amount}</td>
                         <td>
