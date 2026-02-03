@@ -22,7 +22,7 @@ export function checkAuthorization({ token, req: _req }: { token: any; req: Next
   const publicPaths = [
     '/login',
     '/register',
-    '/api/auth',
+    '/_auth', // NextAuth 认证路径（已从 /api/auth 迁移）
     '/api/public',
     '/front-pages',
     '/_next',

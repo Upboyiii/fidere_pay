@@ -65,7 +65,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
 
   // 资产数据
   const [assets, setAssets] = useState<UserAssetListItem[]>([])
-  const [selectedAsset, setSelectedAsset] = useState<UserAssetListItem | null>(null)
+  
+  // 计算汇总数据
+  const totalAvailableBalance = assets.reduce((sum, asset) => sum + (asset.availableBalance || 0), 0)
+  const totalFrozenBalance = assets.reduce((sum, asset) => sum + (asset.frozenBalance || 0), 0)
+  const totalBalance = totalAvailableBalance + totalFrozenBalance
 
   // 交易记录
   const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
@@ -103,11 +107,6 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       const res = await getUserAssetList()
       const assetList = res.data?.list || []
       setAssets(assetList)
-      // 默认选择第一个资产，如果没有则选择USDT
-      if (assetList.length > 0) {
-        const usdtAsset = assetList.find(a => a.currencyCode === 'USDT') || assetList[0]
-        setSelectedAsset(usdtAsset)
-      }
     } catch (error) {
       console.error('加载资产失败:', error)
       toast.error('加载资产失败')
@@ -138,23 +137,23 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       setTotal(res.data?.total || 0)
 
       // 计算今日统计
-      const todayTransactions = transactionList.filter(tx => {
-        const txDate = new Date(tx.createdAt)
+      const todayTransactions = transactionList.filter((tx: UserTransactionListItem) => {
+        const txDate = new Date(tx.createTime)
         return txDate >= today && txDate < tomorrow
       })
 
       const income = todayTransactions
-        .filter(tx => tx.direction === 1)
-        .reduce((sum, tx) => sum + tx.amount, 0)
+        .filter((tx: UserTransactionListItem) => tx.direction === 1)
+        .reduce((sum: number, tx: UserTransactionListItem) => sum + tx.changeAmount, 0)
       
       const expenditure = todayTransactions
-        .filter(tx => tx.direction === 2)
-        .reduce((sum, tx) => sum + tx.amount, 0)
+        .filter((tx: UserTransactionListItem) => tx.direction === 2)
+        .reduce((sum: number, tx: UserTransactionListItem) => sum + tx.changeAmount, 0)
 
       setTodayStats({
         income,
         expenditure,
-        totalAssets: assets.reduce((sum, asset) => sum + asset.balance, 0)
+        totalAssets: assets.reduce((sum, asset) => sum + (asset.availableBalance || 0) + (asset.frozenBalance || 0), 0)
       })
     } catch (error) {
       console.error('加载交易记录失败:', error)
@@ -170,18 +169,8 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   }, [])
 
   useEffect(() => {
-    if (selectedAsset) {
-      loadTransactions()
-    }
-  }, [page, rowsPerPage, filters, selectedAsset])
-
-  // 当前显示的资产数据
-  const currentAsset = selectedAsset || {
-    currencyCode: 'USDT',
-    balance: 0,
-    frozenBalance: 0,
-    availableBalance: 0
-  }
+    loadTransactions()
+  }, [page, rowsPerPage, filters])
 
   return (
     <Box 
@@ -237,7 +226,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
           >
             <CardContent sx={{ position: 'relative', zIndex: 1, p: 6 }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
-                <Box>
+                <Box sx={{ flex: 1 }}>
                   <Typography variant='body2' sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600, fontSize: '0.875rem' }}>
                     账户信息
                   </Typography>
@@ -257,17 +246,17 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                         boxShadow: '0 2px 8px rgba(76, 175, 80, 0.3)'
                       }}
                     >
-                      T
+                      $
                     </Box>
                     <Box>
                       <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', fontWeight: 500, fontSize: '0.75rem' }}>
-                        {currentAsset.currencyCode}
+                        总资产
                       </Typography>
                       {assetsLoading ? (
                         <CircularProgress size={24} sx={{ color: 'white' }} />
                       ) : (
                         <Typography variant='h4' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)' }}>
-                          {(currentAsset.balance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
+                          {totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                         </Typography>
                       )}
                     </Box>
@@ -276,7 +265,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <Button
                   variant='contained'
                   size='small'
-                  onClick={() => router.push(getLocalizedPath(`/assets/deposit?currency=${currentAsset.currencyCode}`, currentLang))}
+                  onClick={() => router.push(getLocalizedPath('/assets/deposit', currentLang))}
                   startIcon={<i className='ri-add-circle-line' />}
                   sx={{
                     bgcolor: 'white',
@@ -303,7 +292,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  可用: {(currentAsset.availableBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 8 })}
+                  可用: {totalAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
                 <Typography 
                   variant='body2' 
@@ -314,7 +303,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  冻结: {(currentAsset.frozenBalance ?? 0).toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 8 })}
+                  冻结: {totalFrozenBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Box>
 
@@ -642,10 +631,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <table className={tableStyles.table} style={{ border: 'none' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#fcfdfe' }}>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>订单号</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易类型</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>备注</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
                     </tr>
@@ -653,13 +643,13 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                   <tbody>
                     {transactionsLoading ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                           <CircularProgress />
                         </td>
                       </tr>
                     ) : transactions.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                           暂无交易记录
                         </td>
                       </tr>
@@ -667,13 +657,13 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       transactions.map((tx) => (
                         <tr key={tx.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                           <td style={{ padding: '16px 24px' }}>
-                            <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
-                              {tx.id}
+                            <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500, fontSize: '0.8rem' }}>
+                              {tx.orderNo}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' sx={{ color: 'primary.main', fontWeight: 600 }}>
-                              {tx.bizType === 1 ? '充值' : tx.bizType === 2 ? '提现' : tx.bizType === 3 ? '转账' : '其他'}
+                              {tx.bizType === 1 ? '充值' : tx.bizType === 2 ? '提现' : tx.bizType === 3 ? '转账' : tx.bizType === 5 ? '调整' : '其他'}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
@@ -687,12 +677,17 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                                 color: tx.direction === 1 ? '#4caf50' : '#ff5252'
                               }}
                             >
-                              {tx.direction === 1 ? '+' : '-'}{tx.amount}
+                              {tx.direction === 1 ? '+' : '-'}{Math.abs(tx.changeAmount)}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
+                            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {tx.remark || '-'}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' color='text.secondary'>
-                              {new Date(tx.createdAt).toLocaleString()}
+                              {tx.createTime}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>

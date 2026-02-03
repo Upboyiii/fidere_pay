@@ -3,7 +3,7 @@
 
 // /**
 //  * Token 刷新 API 路由
-//  * POST /api/auth/refresh
+//  * POST /_auth/refresh
 //  */
 // export async function POST(req: Request) {
 //   return refreshToken(req as any)
@@ -11,7 +11,7 @@
 
 // /**
 //  * 验证 Token 有效性
-//  * GET /api/auth/refresh
+//  * GET /_auth/refresh
 //  */
 // export async function GET(req: Request) {
 //   return verifyToken(req as any)

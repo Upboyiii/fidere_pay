@@ -30,6 +30,7 @@ const nextConfig: NextConfig = {
     proxy: process.env.proxy || ''
   },
   // 代理配置 - 类似 Vite 的代理方式
+  // 注意：NextAuth 使用 /_auth 路径，不会与后端 API 代理冲突
   async rewrites() {
     let apiBaseUrl: string
     if (process.env.NODE_ENV === 'production' && process.env.proxy === 'odi') {
@@ -50,34 +51,15 @@ const nextConfig: NextConfig = {
         // destination: 'http://192.168.5.58:8808/admin-api/:path*' // 本地开发（可选）
         destination: `${apiBaseUrl}/:path*`
       },
-      // 代理 API 路径（去掉 admin-api 前缀，添加 /api/v1/ 前缀）
+      // 统一代理所有 /api/v1/ 开头的请求（完整路径）
       {
-        source: '/pub/:path*',
-        destination: `${apiBaseUrl}/api/v1/pub/:path*`
+        source: '/api/v1/:path*',
+        destination: `${apiBaseUrl}/api/v1/:path*`
       },
+      // 短路径支持（自动添加 /api/v1/ 前缀）
       {
-        source: '/system/:path*',
-        destination: `${apiBaseUrl}/api/v1/system/:path*`
-      },
-      {
-        source: '/member/:path*',
-        destination: `${apiBaseUrl}/api/v1/member/:path*`
-      },
-      {
-        source: '/operation/:path*',
-        destination: `${apiBaseUrl}/api/v1/operation/:path*`
-      },
-      {
-        source: '/general/:path*',
-        destination: `${apiBaseUrl}/api/v1/general/:path*`
-      },
-      {
-        source: '/api/v1/biz/:path*',
-        destination: `${apiBaseUrl}/api/v1/biz/:path*`
-      },
-      {
-        source: '/api/v1/pub/:path*',
-        destination: `${apiBaseUrl}/api/v1/pub/:path*`
+        source: '/:module(pub|system|member|operation|general)/:path*',
+        destination: `${apiBaseUrl}/api/v1/:module/:path*`
       }
     ]
   },

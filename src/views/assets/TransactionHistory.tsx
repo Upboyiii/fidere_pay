@@ -114,7 +114,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
       2: '提现',
       3: '转账',
       4: '汇款',
-      5: '其他'
+      5: '调整'
     }
     return typeMap[bizType] || '其他'
   }
@@ -197,11 +197,12 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择</MenuItem>
+                        <MenuItem value=''>全部类型</MenuItem>
                         <MenuItem value='1'>充值</MenuItem>
                         <MenuItem value='2'>提现</MenuItem>
                         <MenuItem value='3'>转账</MenuItem>
                         <MenuItem value='4'>汇款</MenuItem>
+                        <MenuItem value='5'>调整</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -300,10 +301,11 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ border: 'none' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#fcfdfe' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>订单号</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易类型</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>备注</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
@@ -312,13 +314,13 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center' }}>
                         <CircularProgress />
                       </td>
                     </tr>
                   ) : transactions.length === 0 ? (
                     <tr>
-                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                         暂无交易记录
                       </td>
                     </tr>
@@ -326,8 +328,8 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     transactions.map((tx) => (
                       <tr key={tx.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                         <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500 }}>
-                            {tx.id}
+                          <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500, fontSize: '0.8rem' }}>
+                            {tx.orderNo}
                           </Typography>
                         </td>
                         <td style={{ padding: '16px 24px' }}>
@@ -352,7 +354,12 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                               color: tx.direction === 1 ? '#4caf50' : '#ff5252'
                             }}
                           >
-                            {tx.direction === 1 ? '+' : '-'}{tx.amount}
+                            {tx.direction === 1 ? '+' : '-'}{Math.abs(tx.changeAmount)}
+                          </Typography>
+                        </td>
+                        <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
+                          <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {tx.remark || '-'}
                           </Typography>
                         </td>
                         <td style={{ padding: '16px 24px' }}>
@@ -365,7 +372,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td style={{ padding: '16px 24px' }}>
                           <Typography variant='body2' color='text.secondary'>
-                            {new Date(tx.createdAt).toLocaleString()}
+                            {tx.createTime}
                           </Typography>
                         </td>
                         <td style={{ padding: '16px 24px' }}>

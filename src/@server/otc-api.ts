@@ -10,12 +10,16 @@ import { clientRequest } from '@server/http'
 // 1. 查看用户资产列表
 export interface AdminAssetListParams {
   userId?: number
+  userName?: string // 用户名(模糊搜索)
+  userNickname?: string // 用户昵称(模糊搜索)
   pageNum?: number
   pageSize?: number
 }
 
 export interface AdminAssetListItem {
   userId: number
+  userName?: string
+  userNickname?: string
   currencyCode: string
   balance: number
   frozenBalance: number
@@ -31,7 +35,56 @@ export interface AdminAssetListResponse {
 export const getAdminAssetList = (params?: AdminAssetListParams) =>
   clientRequest.get<AdminAssetListResponse>('/api/v1/biz/asset/list', { params })
 
-// 2. 回调记录列表
+// 2. 调整用户资产
+export interface AdjustAssetRequest {
+  userId: number // 用户ID
+  currencyCode: string // 币种编码
+  adjustType: 1 | 2 // 调整类型 1-增加 2-扣减
+  amount: number // 调整金额
+  remark?: string // 调整原因/备注
+}
+
+export const adjustAsset = (data: AdjustAssetRequest) =>
+  clientRequest.post('/api/v1/biz/asset/adjust', data)
+
+// 3. 资产调整记录列表
+export interface AssetAdjustLogListParams {
+  pageNum?: number
+  pageSize?: number
+  userId?: number // 用户ID
+  userName?: string // 用户名(模糊搜索)
+  userNickname?: string // 用户昵称(模糊搜索)
+  adjustType?: number // 调整类型 0-全部 1-增加 2-扣减
+  startTime?: number // 开始时间
+  endTime?: number // 结束时间
+}
+
+export interface AssetAdjustLogListItem {
+  id: number
+  userId: number
+  userName?: string
+  userNickname?: string
+  currencyCode: string
+  adjustType: number // 1-增加 2-扣减
+  amount: number
+  balanceBefore: number // 调整前余额
+  balanceAfter: number // 调整后余额
+  remark?: string
+  operatorId?: number // 操作人ID
+  operatorName?: string // 操作人名称
+  createdAt: number
+  [key: string]: any
+}
+
+export interface AssetAdjustLogListResponse {
+  total: number
+  list: AssetAdjustLogListItem[]
+}
+
+export const getAssetAdjustLogList = (params?: AssetAdjustLogListParams) =>
+  clientRequest.get<AssetAdjustLogListResponse>('/api/v1/biz/asset/adjust-log/list', { params })
+
+// 4. 回调记录列表
 export interface CallbackListParams {
   pageNum?: number
   pageSize?: number
@@ -84,10 +137,18 @@ export interface CurrencyListParams {
 
 export interface CurrencyListItem {
   id: number
-  currencyCode: string
-  currencyName: string
-  currencyType: number
-  status: number
+  currencyCode: string // 币种编码，如 USD, USDT-TRC20
+  currencyName: string // 币种名称，如 美元, USDT-TRC20
+  currencyType: number // 币种类型 1-法币 2-数字货币
+  symbol: string // 货币符号，如 $
+  chain: string // 链名称，如 TRC20
+  contract: string // 合约地址
+  decimals: number // 小数位数
+  iconUrl: string // 图标URL
+  sort: number // 排序
+  status: number // 状态 0-禁用 1-启用
+  createTime: number // 创建时间（时间戳）
+  updateTime: number // 更新时间（时间戳）
   [key: string]: any
 }
 
@@ -191,6 +252,7 @@ export interface AdminTransactionListParams {
   pageNum?: number
   pageSize?: number
   userId?: number
+  userName?: string
   currencyCode?: string
   bizType?: number
   direction?: number
@@ -200,13 +262,21 @@ export interface AdminTransactionListParams {
 
 export interface AdminTransactionListItem {
   id: number
+  orderNo: string
   userId: number
+  userName: string
+  userNickname: string
   currencyCode: string
-  bizType: number
-  direction: number
-  amount: number
-  balance: number
-  createdAt: number
+  bizType: number // 业务类型 1-充值 2-提现 3-转账 5-管理员调整
+  bizId: number
+  direction: number // 方向 1-入账 2-出账
+  changeAmount: number // 变动金额
+  availableBalanceBefore: number // 调整前可用余额
+  availableBalanceAfter: number // 调整后可用余额
+  frozenBalanceBefore: number // 调整前冻结余额
+  frozenBalanceAfter: number // 调整后冻结余额
+  remark: string
+  createTime: number
   [key: string]: any
 }
 
@@ -242,6 +312,7 @@ export interface AdminTransferListParams {
   pageNum?: number
   pageSize?: number
   userId?: number
+  userName?: string
   status?: number // -1-全部
   applyNo?: string
   startTime?: number
@@ -250,13 +321,22 @@ export interface AdminTransferListParams {
 
 export interface AdminTransferListItem {
   id: number
-  userId: number
   applyNo: string
-  currencyCode: string
-  transferAmount: number
-  status: number
-  createdAt: number
-  updatedAt: number
+  userId: number
+  userName: string
+  payeeId: number
+  payeeName: string
+  currencyCode: string // 转账币种
+  receiveCurrencyCode: string // 接收币种
+  transferAmount: number // 转账金额
+  receiveAmount: number // 接收金额
+  exchangeRate: number // 汇率
+  feeAmount: number // 手续费
+  remitType: number // 汇款类型
+  status: number // 0-待审核 1-处理中 2-已完成 3-已驳回 4-失败
+  createTime: number
+  auditTime: number
+  completeTime: number
   [key: string]: any
 }
 
@@ -380,10 +460,15 @@ export const getDepositAddress = (params: GetDepositAddressParams) =>
 
 // 23. 获取我的资产列表
 export interface UserAssetListItem {
+  id?: number
+  userId?: number
   currencyCode: string
-  balance: number
-  frozenBalance: number
-  availableBalance: number
+  availableBalance: number // 可用余额
+  frozenBalance: number // 冻结余额
+  createTime?: number
+  updateTime?: number
+  version?: number
+  balance?: number // 总余额（前端计算：availableBalance + frozenBalance）
   [key: string]: any
 }
 
@@ -666,12 +751,23 @@ export interface UserTransactionListParams {
 
 export interface UserTransactionListItem {
   id: number
+  orderNo: string // 订单号
+  userId: number
   currencyCode: string
-  bizType: number
-  direction: number
-  amount: number
-  balance: number
-  createdAt: number
+  bizType: number // 业务类型 1-充值 2-提现 3-转账 5-管理员调整
+  bizId: number
+  direction: number // 方向 1-入账 2-出账
+  changeAmount: number // 变动金额
+  availableBalanceBefore: number // 调整前可用余额
+  availableBalanceAfter: number // 调整后可用余额
+  frozenBalanceBefore: number // 调整前冻结余额
+  frozenBalanceAfter: number // 调整后冻结余额
+  remark?: string // 备注
+  createTime: string // 创建时间 "2026-02-02 14:52:59"
+  // 兼容字段
+  amount?: number // 兼容旧版本 amount
+  balance?: number // 兼容旧版本 balance
+  createdAt?: number // 兼容旧版本 createdAt（时间戳）
   [key: string]: any
 }
 

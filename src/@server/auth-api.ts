@@ -15,7 +15,7 @@ import { createSuccessResponse, createErrorResponse } from '@server/utils'
 
 // /**
 //  * Token 刷新 API
-//  * POST /api/auth/refresh
+//  * POST /_auth/refresh
 //  */
 // export async function refreshToken(req: NextRequest): Promise<NextResponse> {
 //   try {
@@ -64,7 +64,7 @@ import { createSuccessResponse, createErrorResponse } from '@server/utils'
 
 /**
  * 验证 Token 有效性
- * GET /api/auth/verify
+ * GET /_auth/verify
  */
 export async function verifyToken(_req: NextRequest): Promise<NextResponse> {
   try {
@@ -100,7 +100,7 @@ export async function verifyToken(_req: NextRequest): Promise<NextResponse> {
 
 /**
  * 用户登录
- * POST /api/auth/login
+ * POST /_auth/login
  */
 export async function login(req: NextRequest): Promise<NextResponse> {
   try {
@@ -138,7 +138,7 @@ export async function login(req: NextRequest): Promise<NextResponse> {
 
 /**
  * 用户登出
- * POST /api/auth/logout
+ * POST /_auth/logout
  */
 export async function logout(_req: NextRequest): Promise<NextResponse> {
   try {

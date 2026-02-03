@@ -107,7 +107,7 @@ export class TokenManager {
   //  */
   // static async refreshToken(refreshToken: string): Promise<TokenData | null> {
   //   try {
-  //     const response = await fetch('/api/auth/refresh', {
+  //     const response = await fetch('/_auth/refresh', {
   //       method: 'POST',
   //       headers: {
   //         'Content-Type': 'application/json'

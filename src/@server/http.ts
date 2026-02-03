@@ -578,7 +578,7 @@ export const useTokenManager = () => {
   //       throw new Error('没有 refresh token')
   //     }
 
-  //     const response = await fetch('/api/auth/refresh', {
+  //     const response = await fetch('/_auth/refresh', {
   //       method: 'POST',
   //       headers: {
   //         'Content-Type': 'application/json'
