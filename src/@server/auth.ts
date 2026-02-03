@@ -76,8 +76,8 @@ export const authOptions: NextAuthOptions = {
   // 移除 Prisma 适配器，使用 JWT 策略
   secret: process.env.NEXTAUTH_SECRET || 'fallback-secret-key-for-development',
   
-  // 使用独立的 basePath，避免与后端 API 冲突
-  basePath: '/_auth',
+  // 使用默认的 /api/auth 路径（NextAuth 标准路径）
+  // basePath: '/api/auth',  // 注释掉，使用 NextAuth 默认值
 
   /**
    * Providers（认证提供者）

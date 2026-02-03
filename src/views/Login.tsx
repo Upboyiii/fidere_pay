@@ -240,13 +240,33 @@ const Login = ({ mode }: { mode: Mode }) => {
     }
     // signIn 时不传递 menuList，避免存储在 JWT token/cookie 中导致 431 错误
     const { menuList: _, ...signInCredentials } = signInData
+    
+    console.log('[Login] 开始 signIn 调用', { hasAccessToken: !!signInCredentials.accessToken })
+    
     const signInResult = await signIn('credentials', {
       ...signInCredentials,
-      redirect: false
+      redirect: false,
+      // 添加 callbackUrl 以便 NextAuth 知道登录成功后应该去哪里（虽然我们用 redirect: false）
+      callbackUrl: '/assets/my-assets'
     })
+    
+    console.log('[Login] signIn 结果', { 
+      ok: signInResult?.ok, 
+      error: signInResult?.error, 
+      status: signInResult?.status,
+      url: signInResult?.url 
+    })
+    
     // 检查signIn是否成功
     if (signInResult?.error) {
+      console.error('[Login] signIn 失败', signInResult.error)
       toast.error(t('auth.signInFailed', { error: signInResult.error }))
+      return
+    }
+    
+    if (!signInResult?.ok) {
+      console.error('[Login] signIn 返回 ok=false')
+      toast.error(t('auth.signInFailed', { error: 'Authentication failed' }))
       return
     }
     // 存储用户角色到 localStorage

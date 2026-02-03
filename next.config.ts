@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
     proxy: process.env.proxy || ''
   },
   // 代理配置 - 类似 Vite 的代理方式
-  // 注意：NextAuth 使用 /_auth 路径，不会与后端 API 代理冲突
+  // 注意：NextAuth 使用 /api/auth 路径（标准路径），不会与后端 API 代理冲突
   async rewrites() {
     let apiBaseUrl: string
     if (process.env.NODE_ENV === 'production' && process.env.proxy === 'odi') {
