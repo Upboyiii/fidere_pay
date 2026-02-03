@@ -63,7 +63,7 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : undefined
 
   // 获取动态菜单列表
-  const menuList = useMenu()
+  const { menuList } = useMenu()
 
   // 获取菜单数据
   const menuDataArray = menuData(dictionary, userRole as string, menuList)

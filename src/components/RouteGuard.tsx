@@ -30,8 +30,8 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname()
   const router = useRouter()
   const params = useParams()
-  const { data: session } = useSession()
-  const menuList = useMenu()
+  const { data: session, status: sessionStatus } = useSession()
+  const { menuList, isLoaded: isMenuLoaded } = useMenu()
   const [isChecking, setIsChecking] = useState(true)
   const [isAuthorized, setIsAuthorized] = useState(false)
 
@@ -47,6 +47,8 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
       console.log('🔍 RouteGuard 调试信息:')
       console.log('  - pathname:', pathname)
       console.log('  - routePath:', routePath)
+      console.log('  - isMenuLoaded:', isMenuLoaded)
+      console.log('  - sessionStatus:', sessionStatus)
     }
 
     // 检查是否是公开路径
@@ -105,19 +107,26 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
       return
     }
 
-    // 如果菜单列表还未加载，且不是硬编码路由，等待菜单加载
-    if (!menuList || menuList.length === 0) {
-      // 对于其他路由，等待菜单加载
+    // 如果菜单和 session 都还未加载完成，继续等待
+    if (!isMenuLoaded || sessionStatus === 'loading') {
       if (process.env.NODE_ENV === 'development') {
-        console.log('  - ⏳ 菜单列表为空，等待菜单加载')
+        console.log('  - ⏳ 菜单或 session 还未加载完成，继续等待')
       }
-      
-      // 等待一下再检查，避免误拦截
-      const timer = setTimeout(() => {
-        setIsChecking(false)
-      }, 300)
+      // 保持 isChecking 为 true，显示 loading 状态
+      return
+    }
 
-      return () => clearTimeout(timer)
+    // 菜单已加载完成，进行权限检查
+    if (menuList.length === 0) {
+      // 菜单为空，可能是新用户或没有分配菜单
+      if (process.env.NODE_ENV === 'development') {
+        console.log('  - ⚠️ 菜单列表为空')
+      }
+      // 如果菜单为空且不是特殊角色，暂时允许访问（避免误拦截）
+      // 可以根据业务需求调整这里的逻辑
+      setIsAuthorized(false)
+      setIsChecking(false)
+      return
     }
 
     // 检查路由权限
@@ -141,7 +150,7 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     }
 
     setIsChecking(false)
-  }, [pathname, menuList, router, params, session])
+  }, [pathname, menuList, isMenuLoaded, router, params, session, sessionStatus])
 
   // 检查中显示加载状态
   if (isChecking) {

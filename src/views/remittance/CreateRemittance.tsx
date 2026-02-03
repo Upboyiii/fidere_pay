@@ -97,7 +97,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
   const selectedRecipient = recipientList.find(r => r.id === selectedRecipientId)
 
-  const steps = ['汇款金额', '收款人信息', '确认信息', '安全验证']
+  const steps = ['汇款金额', '确认信息', '安全验证']
 
   // 加载收款人列表、资产列表和手续费配置
   useEffect(() => {
@@ -330,7 +330,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
   const handleStepChange = async (direction: 'next' | 'back') => {
     // 如果是从确认信息步骤进入安全验证步骤，检查安全设置
-    if (direction === 'next' && activeStep === 2) {
+    if (direction === 'next' && activeStep === 1) {
       // 检查是否已设置支付密码
       if (!payPasswordSet) {
         setSecurityCheckDialogOpen(true)
@@ -345,7 +345,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
     
     if (direction === 'next') {
       // 每次进入安全验证步骤前，清空支付密码与谷歌验证码
-      if (activeStep === 2) {
+      if (activeStep === 1) {
         setPayPassword('')
         setGoogleCode('')
         setShowPassword(false)
@@ -354,7 +354,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       setActiveStep(prev => prev + 1)
     } else {
       // 从安全验证步骤返回时，清空支付密码与谷歌验证码
-      if (activeStep === 3) {
+      if (activeStep === 2) {
         setPayPassword('')
         setGoogleCode('')
         setShowPassword(false)
@@ -545,7 +545,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             <CircularProgress size={16} />
                           ) : (
                             <Typography variant='body2' sx={{ fontWeight: 700, color: 'warning.main' }}>
-                              {fee.toFixed(4)} {payCurrency}
+                              {feeRate > 0 ? `${feeRate.toFixed(2)}%` : '0%'}
                             </Typography>
                           )}
                         </Box>
@@ -898,7 +898,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         <CircularProgress size={16} />
                       ) : (
                         <Typography variant='body2' sx={{ fontWeight: 700 }}>
-                          {fixedFee > 0 ? `${fixedFee.toFixed(4)} ${payCurrency}` : '0.00 ' + payCurrency}
+                          {fixedFee > 0 ? `${fixedFee.toFixed(4)} USDT` : '0.00 USDT'}
                         </Typography>
                       )}
                     </Box>
@@ -921,7 +921,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <Typography variant='body2' sx={{ fontWeight: 600 }}>总手续费</Typography>
                         <Typography variant='body2' sx={{ fontWeight: 700, color: 'primary.main' }}>
-                          {fee.toFixed(4)} {payCurrency}
+                          {fee.toFixed(4)} USDT
                         </Typography>
                       </Box>
                     </>
@@ -971,7 +971,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant='body2' color='text.secondary'>汇款金额</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>
-                      {payAmount || '0'} {payCurrency}
+                      {payAmount || '0'} USDT
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -981,7 +981,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         <CircularProgress size={16} />
                       ) : (
                         <Typography variant='body2' sx={{ fontWeight: 700 }}>
-                          {fee > 0 ? `${fee.toFixed(4)} ${payCurrency}` : '0.00 ' + payCurrency}
+                          {feeRate > 0 ? `${feeRate.toFixed(2)}%` : '0%'}
                         </Typography>
                       )}
                     </Box>
@@ -990,7 +990,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>您需支付总额</Typography>
                     <Typography variant='h6' sx={{ fontWeight: 800, color: 'primary.main' }}>
-                      {payAmount ? (parseFloat(payAmount) + fee).toFixed(4) : '0.00'} {payCurrency}
+                      {payAmount ? (parseFloat(payAmount) + fee).toFixed(4) : '0.00'} USDT
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
@@ -1005,180 +1005,8 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
           </>
         )}
 
-        {/* 步骤2: 交易材料和备注 */}
+        {/* 步骤2: 确认提交 */}
         {activeStep === 1 && (
-          <Grid size={{ xs: 12 }}>
-            <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
-              <CardHeader 
-                title='交易材料 (可选)' 
-                titleTypographyProps={{ sx: { fontWeight: 700 } }}
-                avatar={<i className='ri-file-upload-line text-primary text-xl' />}
-              />
-              <Divider sx={{ borderColor: 'rgba(0,0,0,0.05)' }} />
-              <CardContent 
-                className='py-10'
-                onClick={(e) => {
-                  console.log('CardContent 被点击', e.target)
-                }}
-              >
-                {!uploadedFile ? (
-                  <>
-                    <input
-                      ref={fileInputRef}
-                      type='file'
-                      id='file-upload'
-                      accept='application/zip,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/png,image/jpeg,image/jpg'
-                      style={{ display: 'none' }}
-                      onChange={handleFileUpload}
-                      disabled={uploading}
-                      onClick={(e) => {
-                        console.log('input 被点击', e)
-                        e.stopPropagation()
-                      }}
-                    />
-                    <Box
-                      component='div'
-                      onClick={(e) => {
-                        console.log('=== 点击上传区域 ===')
-                        console.log('事件对象:', e)
-                        console.log('目标元素:', e.target)
-                        console.log('当前元素:', e.currentTarget)
-                        console.log('uploading:', uploading)
-                        console.log('fileInputRef.current:', fileInputRef.current)
-                        console.log('hasRef:', !!fileInputRef.current)
-                        
-                        e.preventDefault()
-                        e.stopPropagation()
-                        
-                        if (uploading) {
-                          console.log('正在上传中，阻止点击')
-                          return
-                        }
-                        
-                        if (!fileInputRef.current) {
-                          console.error('fileInputRef.current 不存在！')
-                          return
-                        }
-                        
-                        console.log('准备触发文件选择器')
-                        try {
-                          fileInputRef.current.click()
-                          console.log('文件选择器已触发')
-                        } catch (error) {
-                          console.error('触发文件选择器失败:', error)
-                        }
-                      }}
-                      onMouseDown={(e) => {
-                        console.log('鼠标按下', e.target)
-                      }}
-                      onMouseUp={(e) => {
-                        console.log('鼠标抬起', e.target)
-                      }}
-                      sx={{
-                        border: '2px dashed',
-                        borderColor: uploading ? 'action.disabled' : 'divider',
-                        borderRadius: 3,
-                        p: 10,
-                        textAlign: 'center',
-                        cursor: uploading ? 'not-allowed' : 'pointer',
-                        transition: 'all 0.2s',
-                        display: 'block',
-                        userSelect: 'none',
-                        position: 'relative',
-                        zIndex: 10,
-                        pointerEvents: uploading ? 'none' : 'auto',
-                        '&:hover': {
-                          borderColor: uploading ? 'action.disabled' : 'primary.main',
-                          bgcolor: uploading ? 'transparent' : 'primary.lightOpacity'
-                        }
-                      }}
-                    >
-                      {uploading ? (
-                        <>
-                          <CircularProgress size={48} sx={{ mb: 2 }} />
-                          <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>上传中...</Typography>
-                        </>
-                      ) : (
-                        <>
-                          <i className='ri-cloud-upload-line text-5xl text-primary mb-4' />
-                          <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>点击或拖拽文件到此处上传</Typography>
-                          <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
-                            支持格式: ZIP, PDF, DOC, PNG, JPG (最大 5MB)
-                          </Typography>
-                          <Typography variant='caption' color='text.disabled'>
-                            上传交易相关的证明材料可以加快审核速度
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </>
-                ) : (
-                  <Box
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'success.main',
-                      borderRadius: 3,
-                      p: 6,
-                      bgcolor: 'success.lightOpacity',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between'
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 2,
-                          bgcolor: 'success.main',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}
-                      >
-                        <i className='ri-file-text-line text-2xl text-white' />
-                      </Box>
-                      <Box>
-                        <Typography variant='body1' sx={{ fontWeight: 600 }}>
-                          {uploadedFile.name}
-                        </Typography>
-                        <Typography variant='caption' color='text.secondary'>
-                          上传成功
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <IconButton
-                      onClick={handleRemoveFile}
-                      sx={{
-                        color: 'error.main',
-                        '&:hover': {
-                          bgcolor: 'error.lightOpacity'
-                        }
-                      }}
-                    >
-                      <i className='ri-delete-bin-line' />
-                    </IconButton>
-                  </Box>
-                )}
-
-                <Box sx={{ mt: 8 }}>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>备注信息 (可选)</Typography>
-                  <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
-                    placeholder='请输入汇款备注，如用途说明等'
-                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        )}
-
-        {/* 步骤3: 确认提交 */}
-        {activeStep === 2 && (
           <Grid size={{ xs: 12 }}>
             <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
               <CardContent className='py-16 text-center'>
@@ -1214,7 +1042,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography variant='body2' color='text.secondary'>手续费</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>
-                      {feeConfigLoading ? <CircularProgress size={16} /> : `${fee.toFixed(4)} ${payCurrency}`}
+                      {feeConfigLoading ? <CircularProgress size={16} /> : `${feeRate > 0 ? feeRate.toFixed(2) : '0'}%`}
                     </Typography>
                   </Box>
                 </Box>
@@ -1223,8 +1051,8 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
           </Grid>
         )}
 
-        {/* 步骤4: 安全验证 */}
-        {activeStep === 3 && (
+        {/* 步骤3: 安全验证 */}
+        {activeStep === 2 && (
           <Grid size={{ xs: 12 }}>
             <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
               <CardContent sx={{ py: 8, px: 6 }}>

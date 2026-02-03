@@ -105,7 +105,7 @@ const HorizontalMenu = ({ dictionary }: { dictionary: Awaited<ReturnType<typeof 
   const { lang: locale } = params
 
   // 获取动态菜单列表
-  const menuList = useMenu()
+  const { menuList } = useMenu()
 
   // 获取菜单数据（支持动态菜单）
   const menuData = verticalMenuData(dictionary, session?.role, menuList)

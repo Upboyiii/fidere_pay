@@ -185,7 +185,7 @@ const UserTable = ({
               onClick={() => onFeeConfig?.(row.original)}
               className='cursor-pointer'
             >
-              手续费
+              修改手续费
             </Link>
           </Box>
         ),
