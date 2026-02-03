@@ -34,7 +34,7 @@ const ClientProviders = ({ children, direction }: Props) => {
 
   return (
     <ErrorBoundary>
-      <NextAuthProvider basePath={process.env.NEXTAUTH_BASEPATH}>
+      <NextAuthProvider basePath={process.env.NEXTAUTH_BASEPATH || '/auth'}>
         <VerticalNavProvider>
           <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
             <ThemeProvider direction={direction} systemMode={systemMode}>

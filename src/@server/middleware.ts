@@ -22,7 +22,7 @@ export function checkAuthorization({ token, req: _req }: { token: any; req: Next
   const publicPaths = [
     '/login',
     '/register',
-    '/api/auth',
+    '/auth', // NextAuth 路径已从 /api/auth 改为 /auth
     '/api/public',
     '/front-pages',
     '/_next',
@@ -83,7 +83,7 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (NextAuth.js API routes)
+     * - auth (NextAuth.js API routes，已从 /api/auth 改为 /auth)
      * - api/public (public API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
@@ -92,6 +92,6 @@ export const config = {
      * - login, register (auth pages)
      * - images (public images)
      */
-    '/((?!api/auth|api/public|_next/static|_next/image|favicon.ico|front-pages|login|register|images).*)'
+    '/((?!auth|api/public|_next/static|_next/image|favicon.ico|front-pages|login|register|images).*)'
   ]
 }

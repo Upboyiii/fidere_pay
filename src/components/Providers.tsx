@@ -30,7 +30,7 @@ const Providers = async (props: Props) => {
   const [mode, settingsCookie, systemMode] = await Promise.all([getMode(), getSettingsFromCookie(), getSystemMode()])
 
   return (
-    <NextAuthProvider basePath={process.env.NEXTAUTH_BASEPATH}>
+    <NextAuthProvider basePath={process.env.NEXTAUTH_BASEPATH || '/auth'}>
       <VerticalNavProvider>
         <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
           <ThemeProvider direction={direction} systemMode={systemMode}>
