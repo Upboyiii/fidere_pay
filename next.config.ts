@@ -51,9 +51,10 @@ const nextConfig: NextConfig = {
         // destination: 'http://192.168.5.58:8808/admin-api/:path*' // 本地开发（可选）
         destination: `${apiBaseUrl}/:path*`
       },
-      // 统一代理所有 /api/v1/ 开头的请求（完整路径）
+      // 统一代理所有 /_api/v1/ 开头的请求（完整路径）
+      // 注意：使用 /_api/v1 前缀避免与服务器其他配置冲突
       {
-        source: '/api/v1/:path*',
+        source: '/_api/v1/:path*',
         destination: `${apiBaseUrl}/api/v1/:path*`
       },
       // 短路径支持（自动添加 /api/v1/ 前缀）

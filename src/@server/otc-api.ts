@@ -33,7 +33,7 @@ export interface AdminAssetListResponse {
 }
 
 export const getAdminAssetList = (params?: AdminAssetListParams) =>
-  clientRequest.get<AdminAssetListResponse>('/api/v1/biz/asset/list', { params })
+  clientRequest.get<AdminAssetListResponse>('/_api/v1/biz/asset/list', { params })
 
 // 2. 调整用户资产
 export interface AdjustAssetRequest {
@@ -45,7 +45,7 @@ export interface AdjustAssetRequest {
 }
 
 export const adjustAsset = (data: AdjustAssetRequest) =>
-  clientRequest.post('/api/v1/biz/asset/adjust', data)
+  clientRequest.post('/_api/v1/biz/asset/adjust', data)
 
 // 3. 资产调整记录列表
 export interface AssetAdjustLogListParams {
@@ -82,7 +82,7 @@ export interface AssetAdjustLogListResponse {
 }
 
 export const getAssetAdjustLogList = (params?: AssetAdjustLogListParams) =>
-  clientRequest.get<AssetAdjustLogListResponse>('/api/v1/biz/asset/adjust-log/list', { params })
+  clientRequest.get<AssetAdjustLogListResponse>('/_api/v1/biz/asset/adjust-log/list', { params })
 
 // 4. 回调记录列表
 export interface CallbackListParams {
@@ -115,7 +115,7 @@ export interface CallbackListResponse {
 }
 
 export const getCallbackList = (params?: CallbackListParams) =>
-  clientRequest.get<CallbackListResponse>('/api/v1/biz/callback/list', { params })
+  clientRequest.get<CallbackListResponse>('/_api/v1/biz/callback/list', { params })
 
 // 3. 重试回调
 export interface RetryCallbackRequest {
@@ -123,11 +123,11 @@ export interface RetryCallbackRequest {
 }
 
 export const retryCallback = (data: RetryCallbackRequest) =>
-  clientRequest.post('/api/v1/biz/callback/retry', data)
+  clientRequest.post('/_api/v1/biz/callback/retry', data)
 
 // 4. 初始化默认币种
 export const initCurrency = () =>
-  clientRequest.post('/api/v1/biz/currency/init', {})
+  clientRequest.post('/_api/v1/biz/currency/init', {})
 
 // 5. 获取币种列表
 export interface CurrencyListParams {
@@ -157,7 +157,7 @@ export interface CurrencyListResponse {
 }
 
 export const getCurrencyList = (params?: CurrencyListParams) =>
-  clientRequest.get<CurrencyListResponse>('/api/v1/biz/currency/list', { params })
+  clientRequest.get<CurrencyListResponse>('/_api/v1/biz/currency/list', { params })
 
 // 6. 删除手续费配置
 export interface DeleteFeeConfigRequest {
@@ -165,7 +165,7 @@ export interface DeleteFeeConfigRequest {
 }
 
 export const deleteFeeConfig = (data: DeleteFeeConfigRequest) =>
-  clientRequest.del('/api/v1/biz/fee-config/delete', { params: { userId: data.userId } })
+  clientRequest.del('/_api/v1/biz/fee-config/delete', { params: { userId: data.userId } })
 
 // 7. 手续费配置列表
 export interface FeeConfigListParams {
@@ -193,7 +193,7 @@ export interface FeeConfigListResponse {
 }
 
 export const getFeeConfigList = (params?: FeeConfigListParams) =>
-  clientRequest.get<FeeConfigListResponse>('/api/v1/biz/fee-config/list', { params })
+  clientRequest.get<FeeConfigListResponse>('/_api/v1/biz/fee-config/list', { params })
 
 // 8. 设置手续费配置
 export interface SetFeeConfigRequest {
@@ -205,7 +205,7 @@ export interface SetFeeConfigRequest {
 }
 
 export const setFeeConfig = (data: SetFeeConfigRequest) =>
-  clientRequest.post('/api/v1/biz/fee-config/set', data)
+  clientRequest.post('/_api/v1/biz/fee-config/set', data)
 
 // 9. 充值记录列表（管理员）
 export interface AdminRechargeListParams {
@@ -237,7 +237,7 @@ export interface AdminRechargeListResponse {
 }
 
 export const getAdminRechargeList = (params?: AdminRechargeListParams) =>
-  clientRequest.get<AdminRechargeListResponse>('/api/v1/biz/recharge/list', { params })
+  clientRequest.get<AdminRechargeListResponse>('/_api/v1/biz/recharge/list', { params })
 
 // 10. 手动确认充值
 export interface ManualConfirmRechargeRequest {
@@ -245,7 +245,7 @@ export interface ManualConfirmRechargeRequest {
 }
 
 export const manualConfirmRecharge = (data: ManualConfirmRechargeRequest) =>
-  clientRequest.post('/api/v1/biz/recharge/manual-confirm', data)
+  clientRequest.post('/_api/v1/biz/recharge/manual-confirm', data)
 
 // 11. 资金流水列表（管理员）
 export interface AdminTransactionListParams {
@@ -286,7 +286,7 @@ export interface AdminTransactionListResponse {
 }
 
 export const getAdminTransactionList = (params?: AdminTransactionListParams) =>
-  clientRequest.get<AdminTransactionListResponse>('/api/v1/biz/transaction/list', { params })
+  clientRequest.get<AdminTransactionListResponse>('/_api/v1/biz/transaction/list', { params })
 
 // 12. 审核转账申请
 export interface AuditTransferRequest {
@@ -296,7 +296,7 @@ export interface AuditTransferRequest {
 }
 
 export const auditTransfer = (data: AuditTransferRequest) =>
-  clientRequest.post('/api/v1/biz/transfer/audit', data)
+  clientRequest.post('/_api/v1/biz/transfer/audit', data)
 
 // 13. 完成转账
 export interface CompleteTransferRequest {
@@ -305,7 +305,7 @@ export interface CompleteTransferRequest {
 }
 
 export const completeTransfer = (data: CompleteTransferRequest) =>
-  clientRequest.post('/api/v1/biz/transfer/complete', data)
+  clientRequest.post('/_api/v1/biz/transfer/complete', data)
 
 // 14. 转账申请列表（管理员）
 export interface AdminTransferListParams {
@@ -346,7 +346,7 @@ export interface AdminTransferListResponse {
 }
 
 export const getAdminTransferList = (params?: AdminTransferListParams) =>
-  clientRequest.get<AdminTransferListResponse>('/api/v1/biz/transfer/list', { params })
+  clientRequest.get<AdminTransferListResponse>('/_api/v1/biz/transfer/list', { params })
 
 // ==================== 普通用户接口 ====================
 
@@ -377,7 +377,7 @@ export interface CreateApiKeyResponse {
 }
 
 export const createApiKey = (data: CreateApiKeyRequest) =>
-  clientRequest.post<CreateApiKeyResponse>('/api/v1/biz/user/api-key/create', data)
+  clientRequest.post<CreateApiKeyResponse>('/_api/v1/biz/user/api-key/create', data)
 
 // 16. 删除API Key
 export interface DeleteApiKeyRequest {
@@ -385,7 +385,7 @@ export interface DeleteApiKeyRequest {
 }
 
 export const deleteApiKey = (data: DeleteApiKeyRequest) =>
-  clientRequest.delete('/api/v1/biz/user/api-key/delete', undefined, { params: { id: data.id } })
+  clientRequest.delete('/_api/v1/biz/user/api-key/delete', undefined, { params: { id: data.id } })
 
 // 17. 获取我的API Key列表
 export interface ApiKeyListResponse {
@@ -393,7 +393,7 @@ export interface ApiKeyListResponse {
 }
 
 export const getApiKeyList = () =>
-  clientRequest.get<ApiKeyListResponse>('/api/v1/biz/user/api-key/list')
+  clientRequest.get<ApiKeyListResponse>('/_api/v1/biz/user/api-key/list')
 
 // 18. 重新生成API Secret
 export interface RegenerateApiSecretRequest {
@@ -405,7 +405,7 @@ export interface RegenerateApiSecretResponse {
 }
 
 export const regenerateApiSecret = (data: RegenerateApiSecretRequest) =>
-  clientRequest.post<RegenerateApiSecretResponse>('/api/v1/biz/user/api-key/regenerate', data)
+  clientRequest.post<RegenerateApiSecretResponse>('/_api/v1/biz/user/api-key/regenerate', data)
 
 // 19. 设置API Key状态
 export interface SetApiKeyStatusRequest {
@@ -414,7 +414,7 @@ export interface SetApiKeyStatusRequest {
 }
 
 export const setApiKeyStatus = (data: SetApiKeyStatusRequest) =>
-  clientRequest.post('/api/v1/biz/user/api-key/set-status', data)
+  clientRequest.post('/_api/v1/biz/user/api-key/set-status', data)
 
 // 20. 更新API Key
 export interface UpdateApiKeyRequest {
@@ -426,7 +426,7 @@ export interface UpdateApiKeyRequest {
 }
 
 export const updateApiKey = (data: UpdateApiKeyRequest) =>
-  clientRequest.put('/api/v1/biz/user/api-key/update', data)
+  clientRequest.put('/_api/v1/biz/user/api-key/update', data)
 
 // 21. 获取所有充值地址
 export interface DepositAddressItem {
@@ -441,7 +441,7 @@ export interface DepositAddressListResponse {
 }
 
 export const getAllDepositAddresses = () =>
-  clientRequest.get<DepositAddressListResponse>('/api/v1/biz/user/asset/address-list')
+  clientRequest.get<DepositAddressListResponse>('/_api/v1/biz/user/asset/address-list')
 
 // 22. 获取充值地址(按需创建)
 export interface GetDepositAddressParams {
@@ -456,7 +456,7 @@ export interface GetDepositAddressResponse {
 }
 
 export const getDepositAddress = (params: GetDepositAddressParams) =>
-  clientRequest.get<GetDepositAddressResponse>('/api/v1/biz/user/asset/deposit-address', { params })
+  clientRequest.get<GetDepositAddressResponse>('/_api/v1/biz/user/asset/deposit-address', { params })
 
 // 23. 获取我的资产列表
 export interface UserAssetListItem {
@@ -477,7 +477,7 @@ export interface UserAssetListResponse {
 }
 
 export const getUserAssetList = () =>
-  clientRequest.get<UserAssetListResponse>('/api/v1/biz/user/asset/list')
+  clientRequest.get<UserAssetListResponse>('/_api/v1/biz/user/asset/list')
 
 // 24. 添加收款人
 export interface AddPayeeRequest {
@@ -544,7 +544,7 @@ export interface PayeeItem {
 }
 
 export const addPayee = (data: AddPayeeRequest) =>
-  clientRequest.post<{ data: PayeeItem }>('/api/v1/biz/user/payee/add', data)
+  clientRequest.post<{ data: PayeeItem }>('/_api/v1/biz/user/payee/add', data)
 
 // 25. 删除收款人
 export interface DeletePayeeRequest {
@@ -552,7 +552,7 @@ export interface DeletePayeeRequest {
 }
 
 export const deletePayee = (data: DeletePayeeRequest) =>
-  clientRequest.del('/api/v1/biz/user/payee/delete', { params: { id: data.id } })
+  clientRequest.del('/_api/v1/biz/user/payee/delete', { params: { id: data.id } })
 
 // 26. 获取收款人详情
 export interface GetPayeeDetailParams {
@@ -564,7 +564,7 @@ export interface GetPayeeDetailResponse {
 }
 
 export const getPayeeDetail = (params: GetPayeeDetailParams) =>
-  clientRequest.get<GetPayeeDetailResponse>('/api/v1/biz/user/payee/detail', { params })
+  clientRequest.get<GetPayeeDetailResponse>('/_api/v1/biz/user/payee/detail', { params })
 
 // 27. 编辑收款人
 export interface EditPayeeRequest {
@@ -598,7 +598,7 @@ export interface EditPayeeRequest {
 }
 
 export const editPayee = (data: EditPayeeRequest) =>
-  clientRequest.put('/api/v1/biz/user/payee/edit', data)
+  clientRequest.put('/_api/v1/biz/user/payee/edit', data)
 
 // 28. 获取收款人列表
 export interface PayeeListParams {
@@ -616,7 +616,7 @@ export interface PayeeListResponse {
 }
 
 export const getPayeeList = (params?: PayeeListParams) =>
-  clientRequest.get<PayeeListResponse>('/api/v1/biz/user/payee/list', { params })
+  clientRequest.get<PayeeListResponse>('/_api/v1/biz/user/payee/list', { params })
 
 // 29. 获取充值详情
 export interface GetRechargeDetailParams {
@@ -642,7 +642,7 @@ export interface GetRechargeDetailResponse {
 }
 
 export const getRechargeDetail = (params: GetRechargeDetailParams) =>
-  clientRequest.get<GetRechargeDetailResponse>('/api/v1/biz/user/recharge/detail', { params })
+  clientRequest.get<GetRechargeDetailResponse>('/_api/v1/biz/user/recharge/detail', { params })
 
 // 30. 获取我的充值记录
 export interface UserRechargeListParams {
@@ -661,7 +661,7 @@ export interface UserRechargeListResponse {
 }
 
 export const getUserRechargeList = (params?: UserRechargeListParams) =>
-  clientRequest.get<UserRechargeListResponse>('/api/v1/biz/user/recharge/list', { params })
+  clientRequest.get<UserRechargeListResponse>('/_api/v1/biz/user/recharge/list', { params })
 
 // 31. 绑定谷歌验证
 export interface BindGoogleAuthRequest {
@@ -670,7 +670,7 @@ export interface BindGoogleAuthRequest {
 }
 
 export const bindGoogleAuth = (data: BindGoogleAuthRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/google-auth/bind', data)
+  clientRequest.post('/_api/v1/biz/user/security/google-auth/bind', data)
 
 // 32. 生成谷歌验证密钥
 export interface GenerateGoogleAuthResponse {
@@ -679,7 +679,7 @@ export interface GenerateGoogleAuthResponse {
 }
 
 export const generateGoogleAuth = () =>
-  clientRequest.post<GenerateGoogleAuthResponse>('/api/v1/biz/user/security/google-auth/generate', {})
+  clientRequest.post<GenerateGoogleAuthResponse>('/_api/v1/biz/user/security/google-auth/generate', {})
 
 // 33. 获取谷歌验证绑定状态
 export interface GoogleAuthStatusResponse {
@@ -687,7 +687,7 @@ export interface GoogleAuthStatusResponse {
 }
 
 export const getGoogleAuthStatus = () =>
-  clientRequest.get<GoogleAuthStatusResponse>('/api/v1/biz/user/security/google-auth/status')
+  clientRequest.get<GoogleAuthStatusResponse>('/_api/v1/biz/user/security/google-auth/status')
 
 // 34. 解绑谷歌验证
 export interface UnbindGoogleAuthRequest {
@@ -695,7 +695,7 @@ export interface UnbindGoogleAuthRequest {
 }
 
 export const unbindGoogleAuth = (data: UnbindGoogleAuthRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/google-auth/unbind', data)
+  clientRequest.post('/_api/v1/biz/user/security/google-auth/unbind', data)
 
 // 35. 验证谷歌验证码
 export interface VerifyGoogleAuthRequest {
@@ -703,7 +703,7 @@ export interface VerifyGoogleAuthRequest {
 }
 
 export const verifyGoogleAuth = (data: VerifyGoogleAuthRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/google-auth/verify', data)
+  clientRequest.post('/_api/v1/biz/user/security/google-auth/verify', data)
 
 // 36. 重置支付密码
 export interface ResetPayPasswordRequest {
@@ -712,7 +712,7 @@ export interface ResetPayPasswordRequest {
 }
 
 export const resetPayPassword = (data: ResetPayPasswordRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/pay-password/reset', data)
+  clientRequest.post('/_api/v1/biz/user/security/pay-password/reset', data)
 
 // 37. 设置支付密码
 export interface SetPayPasswordRequest {
@@ -720,7 +720,7 @@ export interface SetPayPasswordRequest {
 }
 
 export const setPayPassword = (data: SetPayPasswordRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/pay-password/set', data)
+  clientRequest.post('/_api/v1/biz/user/security/pay-password/set', data)
 
 // 38. 获取支付密码设置状态
 export interface PayPasswordStatusResponse {
@@ -728,7 +728,7 @@ export interface PayPasswordStatusResponse {
 }
 
 export const getPayPasswordStatus = () =>
-  clientRequest.get<PayPasswordStatusResponse>('/api/v1/biz/user/security/pay-password/status')
+  clientRequest.get<PayPasswordStatusResponse>('/_api/v1/biz/user/security/pay-password/status')
 
 // 39. 验证支付密码
 export interface VerifyPayPasswordRequest {
@@ -736,7 +736,7 @@ export interface VerifyPayPasswordRequest {
 }
 
 export const verifyPayPassword = (data: VerifyPayPasswordRequest) =>
-  clientRequest.post('/api/v1/biz/user/security/pay-password/verify', data)
+  clientRequest.post('/_api/v1/biz/user/security/pay-password/verify', data)
 
 // 40. 获取我的资金流水
 export interface UserTransactionListParams {
@@ -777,7 +777,7 @@ export interface UserTransactionListResponse {
 }
 
 export const getUserTransactionList = (params?: UserTransactionListParams) =>
-  clientRequest.get<UserTransactionListResponse>('/api/v1/biz/user/transaction/list', { params })
+  clientRequest.get<UserTransactionListResponse>('/_api/v1/biz/user/transaction/list', { params })
 
 // 41. 计算转账手续费
 export interface CalculateTransferFeeRequest {
@@ -793,7 +793,7 @@ export interface CalculateTransferFeeResponse {
 }
 
 export const calculateTransferFee = (data: CalculateTransferFeeRequest) =>
-  clientRequest.post<CalculateTransferFeeResponse>('/api/v1/biz/user/transfer/calculate-fee', data)
+  clientRequest.post<CalculateTransferFeeResponse>('/_api/v1/biz/user/transfer/calculate-fee', data)
 
 // 42. 创建转账申请
 export interface CreateTransferRequest {
@@ -815,7 +815,7 @@ export interface CreateTransferResponse {
 }
 
 export const createTransfer = (data: CreateTransferRequest) =>
-  clientRequest.post<CreateTransferResponse>('/api/v1/biz/user/transfer/create', data)
+  clientRequest.post<CreateTransferResponse>('/_api/v1/biz/user/transfer/create', data)
 
 // 43. 获取转账详情
 export interface GetTransferDetailParams {
@@ -847,7 +847,7 @@ export interface GetTransferDetailResponse {
 }
 
 export const getTransferDetail = (params: GetTransferDetailParams) =>
-  clientRequest.get<GetTransferDetailResponse>('/api/v1/biz/user/transfer/detail', { params })
+  clientRequest.get<GetTransferDetailResponse>('/_api/v1/biz/user/transfer/detail', { params })
 
 // 44. 下载转账记录PDF
 export interface DownloadTransferPdfParams {
@@ -855,7 +855,7 @@ export interface DownloadTransferPdfParams {
 }
 
 export const downloadTransferPdf = (params: DownloadTransferPdfParams) =>
-  clientRequest.get('/api/v1/biz/user/transfer/download-pdf', { params })
+  clientRequest.get('/_api/v1/biz/user/transfer/download-pdf', { params })
 
 // 45. 获取我的转账列表
 export interface UserTransferListParams {
@@ -873,7 +873,7 @@ export interface UserTransferListResponse {
 }
 
 export const getUserTransferList = (params?: UserTransferListParams) =>
-  clientRequest.get<UserTransferListResponse>('/api/v1/biz/user/transfer/list', { params })
+  clientRequest.get<UserTransferListResponse>('/_api/v1/biz/user/transfer/list', { params })
 
 // 46. 上传文件
 export interface UploadFileResponse {
@@ -887,7 +887,7 @@ export interface UploadFileResponse {
 export const uploadSingleFile = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
-  return clientRequest.post<UploadFileResponse>('/api/v1/system/upload/singleFile', formData, {
+  return clientRequest.post<UploadFileResponse>('/_api/v1/system/upload/singleFile', formData, {
     headers: {
       'Content-Type': 'multipart/form-data'
     }
@@ -913,4 +913,4 @@ export interface CregisDepositCallbackRequest {
 }
 
 export const cregisDepositCallback = (data: CregisDepositCallbackRequest) =>
-  clientRequest.post('/api/v1/pub/callback/cregis/deposit', data)
+  clientRequest.post('/_api/v1/pub/callback/cregis/deposit', data)
