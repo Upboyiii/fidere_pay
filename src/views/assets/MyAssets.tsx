@@ -719,7 +719,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                               })()}
                             </Typography>
                           </td>
-                          <td style={{ padding: '16px 24px' }}>
+                          {/* <td style={{ padding: '16px 24px' }}>
                             <Button 
                               size='small' 
                               variant='text' 
@@ -729,7 +729,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                             >
                               详情
                             </Button>
-                          </td>
+                          </td> */}
                         </tr>
                       ))
                     )}
