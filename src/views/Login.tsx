@@ -180,6 +180,9 @@ const Login = ({ mode }: { mode: Mode }) => {
       sessionStorage.removeItem('resetCaptcha')
     }
 
+    // 清除退出登录标记（登录页面加载时清除，防止残留）
+    sessionStorage.removeItem('logout_in_progress')
+
     // 使用全局标记确保只执行一次
     if (!captchaRequested) {
       captchaRequested = true

@@ -657,9 +657,14 @@ export const useTokenManager = () => {
  * 初始化客户端配置
  */
 export function initClient() {
+  // 获取 API 基础地址
+  // 优先使用 NEXT_PUBLIC_API_BASE_URL 环境变量（直接请求后端服务器）
+  // 如果未设置，则使用 '/'（通过 Next.js rewrites 代理）
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/'
+  
   // 设置基础配置
   setConfig({
-    baseURL: '/',
+    baseURL: apiBaseUrl,
     timeout: SERVER_CONFIG.API.TIMEOUT
   })
 

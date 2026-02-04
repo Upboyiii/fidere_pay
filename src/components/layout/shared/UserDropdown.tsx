@@ -79,13 +79,18 @@ const UserDropdown = () => {
   }
 
   const handleUserLogout = async () => {
+    // 先关闭下拉菜单，避免UI状态冲突
+    setOpen(false)
+
+    // 设置退出登录标记，防止 ClientAuthGuard 在清除 token 后触发重定向导致 404
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('logout_in_progress', 'true')
+    }
+
     // 调用退出接口，即使失败也继续执行后续操作
     try {
       await logoutApi()
     } catch (error) {}
-
-    // 先关闭下拉菜单，避免UI状态冲突
-    setOpen(false)
 
     // 清理本地存储的token和用户数据（先清理，避免signOut过程中的状态冲突）
     localStorage.removeItem('auth_tokens')

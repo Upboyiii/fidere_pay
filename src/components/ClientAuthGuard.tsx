@@ -73,6 +73,10 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
           clearRedirectFlag()
           redirectTriggeredRef.current = false
           setShouldRedirect(false)
+          // 清除退出登录标记（登录成功后）
+          if (typeof window !== 'undefined') {
+            sessionStorage.removeItem('logout_in_progress')
+          }
           setLocalAuthState('authenticated')
         } else {
           setLocalAuthState('unauthenticated')
@@ -266,7 +270,11 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
   // 关键修复：只有在确认没有 token 的情况下才重定向
   // 防止页面刷新后残留的重定向标记导致误重定向
   const hasValidToken = TokenManager.getTokens()?.accessToken
-  if ((shouldRedirect || checkRedirectFlag()) && !hasValidToken) {
+  
+  // 检查是否正在退出登录，如果是则不触发重定向（由退出登录逻辑自己处理跳转）
+  const isLoggingOut = typeof window !== 'undefined' && sessionStorage.getItem('logout_in_progress') === 'true'
+  
+  if ((shouldRedirect || checkRedirectFlag()) && !hasValidToken && !isLoggingOut) {
     return <AuthRedirect lang={locale} />
   }
 
