@@ -41,9 +41,9 @@ import tableStyles from '@core/styles/table.module.css'
 
 // 获取 API 基础地址（用于文件下载）
 const getApiBaseUrl = () => {
-  // 优先使用环境变量
-  if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-    return process.env.NEXT_PUBLIC_API_BASE_URL
+  // 优先使用环境变量（用于直接访问后端）
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL
   }
   // 根据当前环境判断
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
@@ -73,19 +73,38 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const [detailLoading, setDetailLoading] = useState(false)
 
   // 加载汇款记录
-  const loadRecords = async () => {
+  const loadRecords = async (customFilters?: typeof filters, customPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = customFilters || filters
+      const currentPage = customPage !== undefined ? customPage : page
+
+      // 转换日期为时间戳（秒级）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (currentFilters.startDate) {
+        const startDate = new Date(currentFilters.startDate)
+        startDate.setHours(0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (currentFilters.endDate) {
+        const endDate = new Date(currentFilters.endDate)
+        endDate.setHours(23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
       const res = await getUserTransferList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        status: filters.status !== '-1' ? Number(filters.status) : undefined,
-        applyNo: filters.applyNo || undefined,
-        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
-        endTime: filters.endDate ? new Date(filters.endDate + 'T23:59:59').getTime() : undefined
+        status: currentFilters.status !== '-1' ? Number(currentFilters.status) : undefined,
+        applyNo: currentFilters.applyNo || undefined,
+        startTime: startTime ? String(startTime) : undefined,
+        endTime: endTime ? String(endTime) : undefined
       })
-      setRecords(res.data?.list || [])
-      setTotal(res.data?.total || 0)
+      
+      const responseData = res.data as any
+      setRecords(responseData?.list || responseData?.data?.list || [])
+      setTotal(responseData?.total || responseData?.data?.total || 0)
     } catch (error) {
       console.error('加载汇款记录失败:', error)
       toast.error('加载汇款记录失败')
@@ -97,13 +116,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   useEffect(() => {
     loadRecords()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage, filters.status, filters.applyNo, filters.startDate, filters.endDate])
+  }, [page, rowsPerPage])
 
   const getStatusLabel = (status: number) => {
     const statusMap: Record<number, string> = {
-      0: '待审核',
+      0: '待确认',
       1: '处理中',
-      2: '已完成',
+      2: '付款成功',
       3: '已驳回',
       4: '失败'
     }
@@ -111,10 +130,10 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   }
 
   const getStatusColor = (status: number) => {
-    if (status === 2) return 'success'
-    if (status === 1) return 'warning'
-    if (status === 3 || status === 4) return 'error'
-    return 'default'
+    if (status === 2) return 'success' // 付款成功
+    if (status === 1) return 'warning' // 处理中
+    if (status === 3 || status === 4) return 'error' // 已驳回/失败
+    return 'info' // 待确认
   }
 
   const handleViewDetail = async (record: TransferDetailItem) => {
@@ -136,7 +155,8 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   }
 
   const getRemitTypeLabel = (type: number) => {
-    return type === 1 ? 'SWIFT汇款' : '本地汇款'
+    // 根据 JSON 数据，remitType: 2 表示 SWIFT
+    return type === 2 ? 'SWIFT' : type === 1 ? '本地汇款' : 'SWIFT'
   }
 
   const formatTimestamp = (timestamp?: number) => {
@@ -212,7 +232,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
             <Button 
               variant='contained' 
               startIcon={<i className='ri-add-line' />} 
-              onClick={() => router.push('/remittance/create')}
+              onClick={() => router.push(getLocalizedPath('/remittance/create', currentLang))}
               sx={{ borderRadius: '8px', px: 6 }}
             >
               发起新汇款
@@ -233,11 +253,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <CardContent>
                 <Grid container spacing={4}>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>申请单号</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入申请单号'
+                      placeholder='请输入交易ID'
                       value={filters.applyNo}
                       onChange={(e) => setFilters({ ...filters, applyNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -253,9 +273,9 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         sx={{ borderRadius: '8px' }}
                       >
                         <MenuItem value='-1'>全部</MenuItem>
-                        <MenuItem value='0'>待审核</MenuItem>
+                        <MenuItem value='0'>待确认</MenuItem>
                         <MenuItem value='1'>处理中</MenuItem>
-                        <MenuItem value='2'>已完成</MenuItem>
+                        <MenuItem value='2'>付款成功</MenuItem>
                         <MenuItem value='3'>已驳回</MenuItem>
                         <MenuItem value='4'>失败</MenuItem>
                       </Select>
@@ -273,7 +293,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>结束日期</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>订单时间</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -291,8 +311,10 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   variant='text' 
                   size='small'
                   onClick={() => {
-                    setFilters({ applyNo: '', status: '-1', startDate: '', endDate: '' })
+                    const resetFilters = { applyNo: '', status: '-1', startDate: '', endDate: '' }
+                    setFilters(resetFilters)
                     setPage(0)
+                    loadRecords(resetFilters, 0)
                   }}
                   sx={{ color: 'text.secondary' }}
                 >
@@ -302,15 +324,15 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   variant='contained' 
                   size='small' 
                   startIcon={<i className='ri-search-line' />} 
-                  onClick={loadRecords}
+                  onClick={() => loadRecords()}
                   disabled={loading}
                   sx={{ borderRadius: '8px', px: 6 }}
                 >
                   查询
                 </Button>
-                <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
+                {/* <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
                   收起
-                </Button>
+                </Button> */}
               </Box>
             </Card>
           </Grid>
@@ -330,11 +352,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                 所有汇款订单
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton size='small' onClick={loadRecords} disabled={loading}>
+                <IconButton size='small' onClick={() => loadRecords()} disabled={loading}>
                   {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
                 </IconButton>
-                <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
-                <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+                {/* <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton> */}
+                {/* <IconButton size='small'><i className='ri-settings-3-line' /></IconButton> */}
               </Box>
             </Box>
             <Box
@@ -360,12 +382,12 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ border: 'none', minWidth: '1000px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#fcfdfe' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款方信息</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款方名称</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>扣款金额</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款金额</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>汇款方式</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>申请时间</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
                   </tr>
                 </thead>
@@ -383,58 +405,70 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                       </td>
                     </tr>
                   ) : (
-                    records.map((record) => (
-                      <tr key={record.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Box>
-                            <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary' }}>
-                              {record.payeeName || `收款人 #${record.payeeId}`}
+                    records.map((record) => {
+                      // 获取收款人信息，优先使用 payeeName，如果为空则使用 payeeAccountName
+                      const payeeName = (record as any).payeeName || (record as any).payeeAccountName || `收款人 #${record.payeeId}`
+                      const payeeAccountNo = (record as any).payeeAccountNo || '-'
+                      const payeeSwiftCode = (record as any).payeeSwiftCode || ''
+                      
+                      return (
+                        <tr key={record.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Box>
+                              <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
+                                收款人: {payeeName}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>
+                                银行账号: {payeeAccountNo}
+                              </Typography>
+                              {payeeSwiftCode && (
+                                <Typography variant='caption' color='text.secondary' sx={{ display: 'block' }}>
+                                  SWIFT: {payeeSwiftCode}
+                                </Typography>
+                              )}
+                            </Box>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'text.primary' }}>
+                              {(record.transferAmount ?? 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {record.currencyCode}
                             </Typography>
-                            <Typography variant='caption' color='text.secondary'>
-                              {record.currencyCode} → {record.receiveCurrencyCode}
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'primary.main' }}>
+                              {(record.receiveAmount || (record.transferAmount ?? 0) * (record.exchangeRate ?? 1)).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 8 })} {record.receiveCurrencyCode}
                             </Typography>
-                          </Box>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'text.primary' }}>
-                            {(record.transferAmount ?? 0).toLocaleString()} {record.currencyCode}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'primary.main' }}>
-                            {(record.receiveAmount || (record.transferAmount ?? 0) * (record.exchangeRate ?? 0)).toLocaleString()} {record.receiveCurrencyCode}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Chip 
-                            label={getStatusLabel(record.status)} 
-                            size='small' 
-                            color={getStatusColor(record.status) as any} 
-                            sx={{ fontWeight: 600, borderRadius: '6px' }}
-                          />
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
-                            {record.applyNo}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Typography variant='body2' color='text.secondary'>
-                            {formatTimestamp(record.createTime || record.createdAt)}
-                          </Typography>
-                        </td>
-                        <td style={{ padding: '16px 24px' }}>
-                          <Button 
-                            size='small' 
-                            variant='text' 
-                            sx={{ fontWeight: 600 }}
-                            onClick={() => handleViewDetail(record)}
-                          >
-                            详情
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ color: 'text.primary' }}>
+                              {getRemitTypeLabel(record.remitType)}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Chip 
+                              label={getStatusLabel(record.status)} 
+                              size='small' 
+                              color={getStatusColor(record.status) as any} 
+                              sx={{ fontWeight: 600, borderRadius: '6px' }}
+                            />
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
+                              {record.applyNo}
+                            </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Button 
+                              size='small' 
+                              variant='text' 
+                              sx={{ fontWeight: 600 }}
+                              onClick={() => handleViewDetail(record)}
+                            >
+                              详情
+                            </Button>
+                          </td>
+                        </tr>
+                      )
+                    })
                   )}
                 </tbody>
               </table>
@@ -653,7 +687,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人姓名：</Typography>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontWeight: 600 }}>{selectedRecord.payeeName || '-'}</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontWeight: 600 }}>{selectedRecord.payeeInfo?.accountName || '-'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人ID：</Typography>

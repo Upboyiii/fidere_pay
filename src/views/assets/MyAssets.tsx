@@ -34,11 +34,11 @@ import type { Mode } from '@core/types'
 // API Imports
 import { 
   getUserAssetList, 
-  getUserTransactionList, 
+  getUserRechargeList, 
   getCurrencyList,
   initCurrency,
   type UserAssetListItem, 
-  type UserTransactionListItem,
+  type RechargeDetailItem,
   type CurrencyListItem
 } from '@server/otc-api'
 import { toast } from 'react-toastify'
@@ -54,10 +54,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [loading, setLoading] = useState(false)
   const [assetsLoading, setAssetsLoading] = useState(false)
-  const [transactionsLoading, setTransactionsLoading] = useState(false)
+  const [rechargesLoading, setRechargesLoading] = useState(false)
   const [filters, setFilters] = useState({
-    transactionId: '',
+    rechargeNo: '',
     currency: '',
+    status: -1, // -1-全部 0-待确认 1-已到账 2-失败 3-已取消
     startDate: '',
     endDate: ''
   })
@@ -71,8 +72,8 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   const totalFrozenBalance = assets.reduce((sum, asset) => sum + (asset.frozenBalance || 0), 0)
   const totalBalance = totalAvailableBalance + totalFrozenBalance
 
-  // 交易记录
-  const [transactions, setTransactions] = useState<UserTransactionListItem[]>([])
+  // 充值记录
+  const [recharges, setRecharges] = useState<RechargeDetailItem[]>([])
   const [total, setTotal] = useState(0)
 
   // 币种列表
@@ -105,7 +106,8 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
     setAssetsLoading(true)
     try {
       const res = await getUserAssetList()
-      const assetList = res.data?.list || []
+      const responseData = res.data as any
+      const assetList = responseData?.list || responseData?.data?.list || []
       setAssets(assetList)
     } catch (error) {
       console.error('加载资产失败:', error)
@@ -115,63 +117,72 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
     }
   }
 
-  // 加载交易记录
-  const loadTransactions = async () => {
-    setTransactionsLoading(true)
+  // 加载充值记录
+  const loadRecharges = async (customFilters?: typeof filters, customPage?: number) => {
+    setRechargesLoading(true)
     try {
+      const currentFilters = customFilters || filters
+      const currentPage = customPage !== undefined ? customPage : page
+
+      // 转换日期为时间戳（秒级）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (currentFilters.startDate) {
+        const startDate = new Date(currentFilters.startDate)
+        startDate.setHours(0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (currentFilters.endDate) {
+        const endDate = new Date(currentFilters.endDate)
+        endDate.setHours(23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
+      const res = await getUserRechargeList({
+        pageNum: currentPage + 1,
+        pageSize: rowsPerPage,
+        status: currentFilters.status !== -1 ? currentFilters.status : undefined,
+        currencyCode: currentFilters.currency || undefined,
+        rechargeNo: currentFilters.rechargeNo || undefined,
+        startTime,
+        endTime
+      })
+      
+      const responseData = res.data as any
+      const rechargeList = responseData?.list || responseData?.data?.list || []
+      setRecharges(rechargeList)
+      setTotal(responseData?.total || responseData?.data?.total || 0)
+
+      // 计算今日统计（基于充值记录）
       const today = new Date()
       today.setHours(0, 0, 0, 0)
       const tomorrow = new Date(today)
       tomorrow.setDate(tomorrow.getDate() + 1)
 
-      const res = await getUserTransactionList({
-        pageNum: page + 1,
-        pageSize: rowsPerPage,
-        currencyCode: filters.currency || undefined,
-        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
-        endTime: filters.endDate ? new Date(filters.endDate).getTime() + 86400000 - 1 : undefined
-      })
-      
-      const transactionList = res.data?.list || []
-      setTransactions(transactionList)
-      setTotal(res.data?.total || 0)
-
-      // 计算今日统计
-      const todayTransactions = transactionList.filter((tx: UserTransactionListItem) => {
-        // 兼容 createTime 和 createdAt，以及秒级/毫秒级时间戳
-        const timestamp = tx.createTime || tx.createdAt
+      const todayRecharges = rechargeList.filter((recharge: RechargeDetailItem) => {
+        const timestamp = recharge.createdAt
         if (!timestamp) return false
-        // 如果是字符串格式，尝试解析
-        let txDate: Date
-        if (typeof timestamp === 'string') {
-          txDate = new Date(timestamp)
-        } else {
-          // 判断是秒级(10位)还是毫秒级(13位)时间戳
-          const ts = Number(timestamp)
-          const msTimestamp = ts > 9999999999 ? ts : ts * 1000
-          txDate = new Date(msTimestamp)
-        }
-        return txDate >= today && txDate < tomorrow
+        // 判断是秒级(10位)还是毫秒级(13位)时间戳
+        const ts = Number(timestamp)
+        const msTimestamp = ts > 9999999999 ? ts : ts * 1000
+        const rechargeDate = new Date(msTimestamp)
+        return rechargeDate >= today && rechargeDate < tomorrow
       })
 
-      const income = todayTransactions
-        .filter((tx: UserTransactionListItem) => tx.direction === 1)
-        .reduce((sum: number, tx: UserTransactionListItem) => sum + tx.changeAmount, 0)
-      
-      const expenditure = todayTransactions
-        .filter((tx: UserTransactionListItem) => tx.direction === 2)
-        .reduce((sum: number, tx: UserTransactionListItem) => sum + tx.changeAmount, 0)
+      const income = todayRecharges
+        .filter((recharge: RechargeDetailItem) => recharge.status === 1) // 已到账
+        .reduce((sum: number, recharge: RechargeDetailItem) => sum + recharge.amount, 0)
 
       setTodayStats({
         income,
-        expenditure,
+        expenditure: 0, // 充值页面不显示支出
         totalAssets: assets.reduce((sum, asset) => sum + (asset.availableBalance || 0) + (asset.frozenBalance || 0), 0)
       })
     } catch (error) {
-      console.error('加载交易记录失败:', error)
-      toast.error('加载交易记录失败')
+      console.error('加载充值记录失败:', error)
+      toast.error('加载充值记录失败')
     } finally {
-      setTransactionsLoading(false)
+      setRechargesLoading(false)
     }
   }
 
@@ -181,8 +192,8 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   }, [])
 
   useEffect(() => {
-    loadTransactions()
-  }, [page, rowsPerPage, filters])
+    loadRecharges()
+  }, [page, rowsPerPage])
 
   return (
     <Box 
@@ -335,7 +346,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     今日支出
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#ffcc80', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    -{todayStats.expenditure.toFixed(2)}
+                    -{Math.abs(todayStats.expenditure).toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
@@ -548,29 +559,45 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               <Box sx={{ p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
                   <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                    资产记录
+                    充值记录
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
-                    <IconButton size='small' onClick={loadTransactions} disabled={transactionsLoading}>
-                      {transactionsLoading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
+                    <IconButton size='small' onClick={() => loadRecharges()} disabled={rechargesLoading}>
+                      {rechargesLoading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
                     </IconButton>
-                    <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
-                    <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+                    {/* <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton> */}
+                    {/* <IconButton size='small'><i className='ri-settings-3-line' /></IconButton> */}
                   </Box>
                 </Box>
 
                 {/* 筛选栏 */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                   <Box sx={{ flex: '1 1 200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>充值单号</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入交易ID'
-                      value={filters.transactionId}
-                      onChange={(e) => setFilters({ ...filters, transactionId: e.target.value })}
+                      placeholder='请输入充值单号'
+                      value={filters.rechargeNo}
+                      onChange={(e) => setFilters({ ...filters, rechargeNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
+                  </Box>
+                  <Box sx={{ flex: '1 1 200px' }}>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>状态</Typography>
+                    <FormControl fullWidth size='small'>
+                      <Select
+                        value={filters.status}
+                        onChange={(e) => setFilters({ ...filters, status: Number(e.target.value) })}
+                        sx={{ borderRadius: '8px' }}
+                      >
+                        <MenuItem value={-1}>全部</MenuItem>
+                        <MenuItem value={0}>待确认</MenuItem>
+                        <MenuItem value={1}>已到账</MenuItem>
+                        <MenuItem value={2}>失败</MenuItem>
+                        <MenuItem value={3}>已取消</MenuItem>
+                      </Select>
+                    </FormControl>
                   </Box>
                   <Box sx={{ flex: '1 1 200px' }}>
                     <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>币种</Typography>
@@ -616,7 +643,12 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     <Button 
                       variant='text' 
                       size='small'
-                      onClick={() => setFilters({ transactionId: '', currency: '', startDate: '', endDate: '' })}
+                      onClick={() => {
+                        const resetFilters = { rechargeNo: '', currency: '', status: -1, startDate: '', endDate: '' }
+                        setFilters(resetFilters)
+                        setPage(0)
+                        loadRecharges(resetFilters, 0)
+                      }}
                       sx={{ color: 'text.secondary' }}
                     >
                       重置
@@ -626,14 +658,14 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       size='small' 
                       startIcon={<i className='ri-search-line' />} 
                       sx={{ borderRadius: '8px', px: 6 }}
-                      onClick={loadTransactions}
-                      disabled={transactionsLoading}
+                      onClick={() => loadRecharges()}
+                      disabled={rechargesLoading}
                     >
                       查询
                     </Button>
-                    <Button variant='text' size='small' sx={{ color: 'primary.main' }}>
+                    {/* <Button variant='text' size='small' sx={{ color: 'primary.main' }}>
                       收起
-                    </Button>
+                    </Button> */}
                   </Box>
                 </Box>
               </Box>
@@ -643,68 +675,81 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <table className={tableStyles.table} style={{ border: 'none' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#fcfdfe' }}>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>订单号</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易类型</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>充值单号</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>备注</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>地址</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {transactionsLoading ? (
+                    {rechargesLoading ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
+                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
                           <CircularProgress />
                         </td>
                       </tr>
-                    ) : transactions.length === 0 ? (
+                    ) : recharges.length === 0 ? (
                       <tr>
-                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                          暂无交易记录
+                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          暂无充值记录
                         </td>
                       </tr>
                     ) : (
-                      transactions.map((tx) => (
-                        <tr key={tx.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
+                      recharges.map((recharge) => (
+                        <tr key={recharge.id} className='hover:bg-actionHover transition-colors' style={{ borderBottom: '1px solid rgba(0,0,0,0.03)' }}>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' sx={{ color: 'text.primary', fontWeight: 500, fontSize: '0.8rem' }}>
-                              {tx.orderNo}
+                              {recharge.rechargeNo}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
-                            <Typography variant='body2' sx={{ color: 'primary.main', fontWeight: 600 }}>
-                              {tx.bizType === 1 ? '充值' : tx.bizType === 2 ? '提现' : tx.bizType === 3 ? '转账' : tx.bizType === 5 ? '调整' : '其他'}
-                            </Typography>
-                          </td>
-                          <td style={{ padding: '16px 24px' }}>
-                            <Typography variant='body2'>{tx.currencyCode}</Typography>
+                            <Typography variant='body2'>{recharge.currencyCode}</Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography
                               variant='body2'
                               sx={{
                                 fontWeight: 700,
-                                color: tx.direction === 1 ? '#4caf50' : '#ff5252'
+                                color: '#4caf50'
                               }}
                             >
-                              {tx.direction === 1 ? '+' : '-'}{Math.abs(tx.changeAmount)}
+                              +{recharge.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 8 })}
                             </Typography>
+                          </td>
+                          <td style={{ padding: '16px 24px' }}>
+                            <Chip
+                              label={
+                                recharge.status === 0 ? '待确认' :
+                                recharge.status === 1 ? '已到账' :
+                                recharge.status === 2 ? '失败' :
+                                recharge.status === 3 ? '已取消' : '未知'
+                              }
+                              size='small'
+                              sx={{
+                                bgcolor: recharge.status === 1 ? 'success.lightOpacity' :
+                                         recharge.status === 2 ? 'error.lightOpacity' :
+                                         recharge.status === 3 ? 'warning.lightOpacity' :
+                                         'info.lightOpacity',
+                                color: recharge.status === 1 ? 'success.main' :
+                                       recharge.status === 2 ? 'error.main' :
+                                       recharge.status === 3 ? 'warning.main' :
+                                       'info.main',
+                                fontWeight: 600
+                              }}
+                            />
                           </td>
                           <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
                             <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {tx.remark || '-'}
+                              {recharge.address || '-'}
                             </Typography>
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' color='text.secondary'>
                               {(() => {
-                                // 兼容 createTime 和 createdAt 两个字段名
-                                const timestamp = tx.createTime || tx.createdAt
+                                const timestamp = recharge.createdAt
                                 if (!timestamp) return '-'
-                                // 如果是字符串格式的时间，直接返回
-                                if (typeof timestamp === 'string' && timestamp.includes('-')) return timestamp
                                 // 判断是秒级(10位)还是毫秒级(13位)时间戳
                                 const ts = Number(timestamp)
                                 const msTimestamp = ts > 9999999999 ? ts : ts * 1000
@@ -719,17 +764,6 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                               })()}
                             </Typography>
                           </td>
-                          {/* <td style={{ padding: '16px 24px' }}>
-                            <Button 
-                              size='small' 
-                              variant='text' 
-                              sx={{ fontWeight: 600 }}
-                              component={Link}
-                              href={getLocalizedPath('/assets/transactions', currentLang)}
-                            >
-                              详情
-                            </Button>
-                          </td> */}
                         </tr>
                       ))
                     )}

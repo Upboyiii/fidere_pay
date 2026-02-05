@@ -48,10 +48,8 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
 
   // 统计数据
   const [statistics, setStatistics] = useState({
-    totalBalance: 0,
     totalFrozen: 0,
-    totalAvailable: 0,
-    userCount: 0
+    totalAvailable: 0
   })
 
   // 调整资产弹窗状态
@@ -79,15 +77,11 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
       setTotal(res.data?.total || 0)
       
       // 计算统计数据
-      const totalBalance = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.balance || 0), 0)
       const totalFrozen = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.frozenBalance || 0), 0)
       const totalAvailable = list.reduce((sum: number, item: AdminAssetListItem) => sum + (item.availableBalance || 0), 0)
-      const uniqueUsers = new Set(list.map((item: AdminAssetListItem) => item.userId))
       setStatistics({
-        totalBalance,
         totalFrozen,
-        totalAvailable,
-        userCount: uniqueUsers.size
+        totalAvailable
       })
     } catch (error) {
       console.error('加载数据失败:', error)
@@ -149,26 +143,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
   return (
     <Grid container spacing={6}>
       {/* 统计卡片 - 简洁风格 */}
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Box sx={{ 
-                width: 44, height: 44, borderRadius: '12px', 
-                bgcolor: 'primary.lighter', color: 'primary.main',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' 
-              }}>
-                <i className='ri-wallet-3-line' style={{ fontSize: 22 }} />
-              </Box>
-            </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>总余额</Typography>
-            <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
-              {statistics.totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
         <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -187,7 +162,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
           </CardContent>
         </Card>
       </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
         <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -202,25 +177,6 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
             <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>冻结余额</Typography>
             <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
               {statistics.totalFrozen.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Grid>
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-        <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
-          <CardContent sx={{ p: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Box sx={{ 
-                width: 44, height: 44, borderRadius: '12px', 
-                bgcolor: 'info.lighter', color: 'info.main',
-                display: 'flex', alignItems: 'center', justifyContent: 'center' 
-              }}>
-                <i className='ri-team-line' style={{ fontSize: 22 }} />
-              </Box>
-            </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>用户数量</Typography>
-            <Typography variant='h5' sx={{ fontWeight: 700, color: 'info.main' }}>
-              {statistics.userCount}
             </Typography>
           </CardContent>
         </Card>

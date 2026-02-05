@@ -758,7 +758,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeName || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as any).payeeBankName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>账户类型：</Typography>

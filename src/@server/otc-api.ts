@@ -746,8 +746,8 @@ export interface UserTransactionListParams {
   currencyCode?: string
   bizType?: number // 0-全部
   direction?: number // 0-全部 1-入账 2-出账
-  startTime?: number
-  endTime?: number
+  startTime?: string // 开始时间，格式：YYYY-MM-DD
+  endTime?: string // 结束时间，格式：YYYY-MM-DD
 }
 
 export interface UserTransactionListItem {
@@ -886,8 +886,8 @@ export interface UserTransferListParams {
   pageSize?: number
   status?: number // -1-全部 0-待审核 1-处理中 2-已完成 3-已驳回 4-失败
   applyNo?: string
-  startTime?: number
-  endTime?: number
+  startTime?: string // 开始时间，格式：YYYY-MM-DD
+  endTime?: string // 结束时间，格式：YYYY-MM-DD
 }
 
 export interface UserTransferListResponse {

@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
     proxy: process.env.proxy || '',
     // API 基础地址，用于文件下载等（暴露到客户端）
     NEXT_PUBLIC_API_BASE_URL: apiBaseUrl
+
+    // proxy: process.env.proxy || '',
+    // // 后端服务器地址，用于文件下载等直接访问后端的场景（暴露到客户端）
+    // NEXT_PUBLIC_BACKEND_URL: apiBaseUrl,
+    // // API 基础地址：不设置，让 API 请求通过 Next.js rewrites 代理（自动添加 /api/v1 前缀）
+    // // NEXT_PUBLIC_API_BASE_URL: '' // 不设置，使用 '/' 通过代理
   },
   // 代理配置 - 类似 Vite 的代理方式
   // 注意：NextAuth 使用 /api/auth 路径（标准路径），不会与后端 API 代理冲突
@@ -61,6 +67,7 @@ const nextConfig: NextConfig = {
         source: '/admin-api/:path*',
         // destination: 'http://192.168.5.58:8808/admin-api/:path*' // 本地开发（可选）
         destination: `${apiBaseUrl}/:path*`
+        // destination: `${apiBaseUrl}/api/v1/:path*`
       },
       // 统一代理所有 /_api/v1/ 开头的请求（完整路径）
       // 注意：使用 /_api/v1 前缀避免与服务器其他配置冲突

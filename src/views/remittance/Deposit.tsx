@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 
 // Next Imports
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
@@ -29,10 +29,6 @@ import type { Mode } from '@core/types'
 import { getDepositAddress, getRechargeDetail } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
-// 充值地址缓存（组件外部，避免重复请求）
-const addressCache: { [key: string]: { address: string; chain: string; timestamp: number } } = {}
-const CACHE_DURATION = 5 * 60 * 1000 // 缓存5分钟
-
 const Deposit = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
@@ -43,58 +39,29 @@ const Deposit = ({ mode }: { mode: Mode }) => {
   const [loading, setLoading] = useState(false)
   const [rechargeDetail, setRechargeDetail] = useState<any>(null)
   const [network, setNetwork] = useState('Tron (TRC20)')
-  
-  // 防止重复请求的标记
-  const isLoadingRef = useRef(false)
 
-  // 获取充值地址（带缓存和防重复）
-  const loadDepositAddress = useCallback(async () => {
-    const cacheKey = 'USDT-TRC20'
-    
-    // 检查缓存
-    const cached = addressCache[cacheKey]
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      setDepositAddress(cached.address)
-      setNetwork(cached.chain === 'TRC20' ? 'Tron (TRC20)' : cached.chain)
-      return
-    }
-    
-    // 防止重复请求
-    if (isLoadingRef.current) {
-      return
-    }
-    
-    isLoadingRef.current = true
+  // 获取充值地址
+  const loadDepositAddress = async () => {
     setLoading(true)
-    
     try {
       const res = await getDepositAddress({
         currencyCode: 'USDT',
         chain: 'TRC20'
       })
-      const address = res.data?.address || ''
-      const chain = res.data?.chain || 'TRC20'
-      
-      setDepositAddress(address)
-      setNetwork(chain === 'TRC20' ? 'Tron (TRC20)' : chain)
-      
-      // 存入缓存
-      addressCache[cacheKey] = {
-        address,
-        chain,
-        timestamp: Date.now()
+      setDepositAddress(res.data?.address || '')
+      if (res.data?.chain) {
+        setNetwork(res.data.chain === 'TRC20' ? 'Tron (TRC20)' : res.data.chain)
       }
     } catch (error) {
       console.error('获取充值地址失败:', error)
       toast.error('获取充值地址失败')
     } finally {
       setLoading(false)
-      isLoadingRef.current = false
     }
-  }, [])
+  }
 
   // 获取充值详情
-  const loadRechargeDetail = useCallback(async () => {
+  const loadRechargeDetail = async () => {
     try {
       // 如果有 rechargeNo 参数，调用详情接口
       const rechargeNo = searchParams?.get('rechargeNo')
@@ -118,12 +85,12 @@ const Deposit = ({ mode }: { mode: Mode }) => {
         estimatedTime: '1-30分钟'
       })
     }
-  }, [searchParams])
+  }
 
   useEffect(() => {
     loadDepositAddress()
     loadRechargeDetail()
-  }, [loadDepositAddress, loadRechargeDetail])
+  }, [searchParams])
 
   const handleCopyAddress = () => {
     if (!depositAddress) {
@@ -153,7 +120,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
         p: 6, 
         position: 'relative', 
         minHeight: '100%',
-        bgcolor: 'background.default'
+        backgroundColor: '#f8fafc' 
       }}
     >
       {/* 现代感网格背景 */}
@@ -163,15 +130,10 @@ const Deposit = ({ mode }: { mode: Mode }) => {
           inset: 0,
           zIndex: 0,
           pointerEvents: 'none',
-          backgroundImage: (theme) => theme.palette.mode === 'dark' 
-            ? `
-              linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px)
-            `
-            : `
-              linear-gradient(to right, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(0, 0, 0, 0.02) 1px, transparent 1px)
-            `,
+          backgroundImage: `
+            linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px)
+          `,
           backgroundSize: '40px 40px',
           maskImage: 'radial-gradient(ellipse at center, black, transparent 90%)'
         }}
@@ -505,7 +467,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                         风险提醒
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                        <Box sx={{ 
+                        {/* <Box sx={{ 
                           width: 20, 
                           height: 20, 
                           borderRadius: '50%', 
@@ -517,7 +479,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                           flexShrink: 0
                         }}>
                           <i className='ri-close-line text-white' style={{ fontSize: '12px' }} />
-                        </Box>
+                        </Box> */}
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
                           请务必确认网络类型为TRC20,否则充值将丢失且无法找回!
                         </Typography>
@@ -562,7 +524,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                           1. 复制地址或扫描二维码
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                          <Box sx={{ 
+                          {/* <Box sx={{ 
                             width: 20, 
                             height: 20, 
                             borderRadius: '50%', 
@@ -574,7 +536,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                             flexShrink: 0
                           }}>
                             <i className='ri-information-line text-white' style={{ fontSize: '12px' }} />
-                          </Box>
+                          </Box> */}
                           <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
                             2. 在钱包中选择 TRC20
                           </Typography>
@@ -622,7 +584,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                         地址安全
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
-                        <Box sx={{ 
+                        {/* <Box sx={{ 
                           width: 20, 
                           height: 20, 
                           borderRadius: '50%', 
@@ -634,7 +596,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                           flexShrink: 0
                         }}>
                           <i className='ri-check-line text-white' style={{ fontSize: '12px' }} />
-                        </Box>
+                        </Box> */}
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
                           此充值地址专属于您,永久有效且不会更改。建议保存到地址簿方便使用。
                         </Typography>

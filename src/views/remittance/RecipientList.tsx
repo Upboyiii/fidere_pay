@@ -271,9 +271,9 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                 >
                   查询
                 </Button>
-                <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
+                {/* <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
                   收起
-                </Button>
+                </Button> */}
               </Box>
             </Card>
           </Grid>
@@ -297,8 +297,8 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                   <IconButton size='small' onClick={loadRecipients} disabled={loading}>
                     {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
                   </IconButton>
-                  <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
-                  <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+                  {/* <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton> */}
+                  {/* <IconButton size='small'><i className='ri-settings-3-line' /></IconButton> */}
                 </Box>
               </Box>
               <div className='overflow-x-auto'>

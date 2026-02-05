@@ -76,17 +76,20 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
   }, [])
 
   // 加载交易记录
-  const loadTransactions = async () => {
+  const loadTransactions = async (customFilters?: typeof filters, customPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = customFilters || filters
+      const currentPage = customPage !== undefined ? customPage : page
+
       const res = await getUserTransactionList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        currencyCode: filters.currency || undefined,
-        bizType: filters.transactionType ? Number(filters.transactionType) : undefined,
+        currencyCode: currentFilters.currency || undefined,
+        bizType: currentFilters.transactionType ? Number(currentFilters.transactionType) : undefined,
         direction: undefined, // 不筛选方向，显示所有
-        startTime: filters.startDate ? new Date(filters.startDate).getTime() : undefined,
-        endTime: filters.endDate ? new Date(filters.endDate).getTime() + 86400000 - 1 : undefined
+        startTime: currentFilters.startDate || undefined,
+        endTime: currentFilters.endDate || undefined
       })
       
       setTransactions(res.data?.list || [])
@@ -175,13 +178,13 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
               查看所有交易记录和流水明细
             </Typography>
           </Box>
-          <Button
+          {/* <Button
             variant='contained'
             startIcon={<i className='ri-download-line' />}
             sx={{ borderRadius: '8px', px: 6 }}
           >
             导出记录
-          </Button>
+          </Button> */}
         </Box>
 
         {/* 筛选栏 */}
@@ -272,7 +275,12 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                 <Button
                   variant='text'
                   size='small'
-                  onClick={() => setFilters({ transactionId: '', transactionType: '', currency: '', startDate: '', endDate: '' })}
+                  onClick={() => {
+                    const resetFilters = { transactionId: '', transactionType: '', currency: '', startDate: '', endDate: '' }
+                    setFilters(resetFilters)
+                    setPage(0)
+                    loadTransactions(resetFilters, 0)
+                  }}
                   sx={{ color: 'text.secondary' }}
                 >
                   重置
@@ -282,14 +290,14 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   size='small' 
                   startIcon={<i className='ri-search-line' />} 
                   sx={{ borderRadius: '8px', px: 6 }}
-                  onClick={loadTransactions}
+                  onClick={() => loadTransactions()}
                   disabled={loading}
                 >
                   查询
                 </Button>
-                <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
+                {/* <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
                   收起
-                </Button>
+                </Button> */}
               </Box>
             </Card>
           </Grid>
@@ -309,11 +317,11 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                 交易记录
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
-                <IconButton size='small' onClick={loadTransactions} disabled={loading}>
+                <IconButton size='small' onClick={() => loadTransactions()} disabled={loading}>
                   {loading ? <CircularProgress size={20} /> : <i className='ri-refresh-line' />}
                 </IconButton>
-                <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton>
-                <IconButton size='small'><i className='ri-settings-3-line' /></IconButton>
+                {/* <IconButton size='small'><i className='ri-fullscreen-line' /></IconButton> */}
+                {/* <IconButton size='small'><i className='ri-settings-3-line' /></IconButton> */}
               </Box>
             </Box>
             <div className='overflow-x-auto'>

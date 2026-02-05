@@ -170,6 +170,11 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
       toast.error('请输入详细地址')
       return false
     }
+    // 验证公司英文名称（仅公司账户）
+    if (formData.accountType === 1 && !formData.companyName?.trim()) {
+      toast.error('请输入公司英文名称')
+      return false
+    }
     if (!formData.accountName) {
       toast.error('请输入账户名称')
       return false
@@ -188,6 +193,11 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
     }
     if (formData.remitType === 1 && !formData.swiftCode) {
       toast.error('SWIFT汇款需要填写SWIFT/BIC编码')
+      return false
+    }
+    // 验证汇款用途
+    if (!formData.purpose || formData.purpose.trim() === '') {
+      toast.error('请选择汇款用途')
       return false
     }
     return true
