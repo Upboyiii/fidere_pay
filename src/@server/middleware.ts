@@ -18,8 +18,8 @@ import type { NextRequest } from 'next/server'
 export function checkAuthorization({ token, req: _req }: { token: any; req: NextRequest }): boolean {
   const { pathname } = _req.nextUrl
 
-  // 公开路径，无需认证
-  const publicPaths = [
+  // 公开路径，无需认证（支持语言前缀，如 /zh-CN/login）
+  const publicPathPatterns = [
     '/login',
     '/register',
     '/auth', // NextAuth 路径已从 /api/auth 改为 /auth
@@ -32,15 +32,15 @@ export function checkAuthorization({ token, req: _req }: { token: any; req: Next
   ]
 
   // 需要认证的路径 - 包含新增的kyc和operation路由，以及资产管理和全球汇款路由
-  const protectedPaths = ['/dashboard', '/apps', '/admin', '/profile', '/settings', '/kyc', '/operation', '/assets', '/remittance']
+  const protectedPathPatterns = ['/dashboard', '/apps', '/admin', '/profile', '/settings', '/kyc', '/operation', '/assets', '/remittance']
 
-  // 检查公开路径
-  if (publicPaths.some(path => pathname.startsWith(path))) {
+  // 检查公开路径（支持语言前缀，如 /zh-CN/login）
+  if (publicPathPatterns.some(pattern => pathname.includes(pattern))) {
     return true
   }
 
-  // 检查需要认证的路径
-  if (protectedPaths.some(path => pathname.startsWith(path))) {
+  // 检查需要认证的路径（支持语言前缀，如 /zh-CN/kyc/dashboard）
+  if (protectedPathPatterns.some(pattern => pathname.includes(pattern))) {
     return !!token
   }
 
@@ -57,6 +57,9 @@ export const middleware = withAuth(
     return NextResponse.next()
   },
   {
+    pages: {
+      signIn: '/login'
+    },
     callbacks: {
       /**
        * 优化的授权回调函数
