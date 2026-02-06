@@ -294,23 +294,13 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
               <Controller
                 name='mobile'
                 control={control}
-                rules={{
-                  required: t('admin.enterPhone'),
-                  pattern: {
-                    value: /^1[3-9]\d{9}$/,
-                    message: t('admin.enterPhone')
-                  }
-                }}
-                render={({ field, fieldState }) => (
+                render={({ field }) => (
                   <TextField
                     {...field}
                     value={field.value ?? ''}
                     fullWidth
                     label={t('admin.phone')}
-                    required
                     placeholder={t('admin.enterPhone')}
-                    error={!!fieldState.error}
-                    helperText={fieldState.error?.message}
                   />
                 )}
               />

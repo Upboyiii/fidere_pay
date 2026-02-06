@@ -1147,7 +1147,15 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             size='small'
                             variant='outlined'
                             color='warning'
-                            onClick={() => router.push(getLocalizedPath('/settings', currentLang))}
+                            onClick={() => {
+                              const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
+                              // 使用 window.location.href 确保跳转生效
+                              if (typeof window !== 'undefined') {
+                                window.location.href = settingsPath
+                              } else {
+                                router.push(settingsPath)
+                              }
+                            }}
                             sx={{ mt: 1, borderRadius: '6px', alignSelf: 'flex-start' }}
                           >
                             前往绑定
@@ -1404,7 +1412,13 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             color='primary'
             onClick={() => {
               setSecurityCheckDialogOpen(false)
-              router.push(getLocalizedPath('/settings', currentLang))
+              const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
+              // 使用 window.location.href 确保跳转生效
+              if (typeof window !== 'undefined') {
+                window.location.href = settingsPath
+              } else {
+                router.push(settingsPath)
+              }
             }}
             sx={{
               borderRadius: '8px',
