@@ -33,8 +33,11 @@ import Drawer from '@mui/material/Drawer'
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getUserTransferList, getTransferDetail, type TransferDetailItem } from '@server/otc-api'
+import { getUserTransferList, getTransferDetail, downloadTransferPdf, type TransferDetailItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
+
+// Utils Imports
+import { TokenManager } from '@/utils/tokenManager'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -169,8 +172,66 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     })
+  }
+
+  // 下载转账记录PDF
+  const handleDownloadPdf = async (applyNo: string) => {
+    try {
+      // 获取 token
+      const tokens = TokenManager.getTokens()
+      const accessToken = tokens?.accessToken || null
+      
+      // 使用 API 路径（通过 Next.js rewrites 代理），GET 请求参数通过查询字符串传递
+      const downloadUrl = `/_api/v1/biz/user/transfer/download-pdf?applyNo=${encodeURIComponent(applyNo)}`
+      
+      // 使用 fetch 下载文件
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'Authorization': accessToken ? `Bearer ${accessToken}` : '',
+          'Accept': 'application/pdf'
+        }
+      })
+      
+      if (!response.ok) {
+        // 尝试解析错误信息
+        try {
+          const errorData = await response.json()
+          throw new Error(errorData?.message || errorData?.msg || '下载失败')
+        } catch {
+          throw new Error('下载失败')
+        }
+      }
+      
+      // 检查响应类型
+      const contentType = response.headers.get('content-type')
+      if (contentType && contentType.includes('application/json')) {
+        // 如果返回的是 JSON（可能是错误信息），解析并抛出错误
+        const errorData = await response.json()
+        throw new Error(errorData?.message || errorData?.msg || '下载失败')
+      }
+      
+      // 获取文件 blob
+      const blob = await response.blob()
+      
+      // 创建下载链接
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `转账记录_${applyNo}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      toast.success('下载成功')
+    } catch (error) {
+      console.error('下载失败:', error)
+      toast.error(error instanceof Error ? error.message : '下载失败')
+    }
   }
 
   return (
@@ -794,13 +855,12 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                       variant='contained'
                       size='small'
                       startIcon={<i className='ri-download-line' />}
-                      disabled={!selectedRecord.receiptUrl}
+                      disabled={selectedRecord.status !== 2}
                       onClick={() => {
-                        if (selectedRecord.receiptUrl) {
-                          const baseUrl = getApiBaseUrl()
-                          window.open(`${baseUrl}/${selectedRecord.receiptUrl}`, '_blank')
+                        if (selectedRecord.status === 2) {
+                          handleDownloadPdf(selectedRecord.applyNo)
                         } else {
-                          toast.info('暂无回执单')
+                          toast.info('只有已完成的订单才能下载回执单')
                         }
                       }}
                       sx={{ 

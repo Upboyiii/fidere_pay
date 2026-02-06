@@ -162,21 +162,21 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
     }
   }
 
-  const handleComplete = async () => {
-    if (!currentItem) return
-    try {
-      await completeTransfer({
-        applyNo: currentItem.applyNo,
-        receiptUrl: completeForm.receiptUrl
-      })
-      toast.success('完成成功')
-      setCompleteDialogOpen(false)
-      loadData()
-    } catch (error) {
-      console.error('完成失败:', error)
-      toast.error('完成失败')
-    }
-  }
+  // const handleComplete = async () => {
+  //   if (!currentItem) return
+  //   try {
+  //     await completeTransfer({
+  //       applyNo: currentItem.applyNo,
+  //       receiptUrl: completeForm.receiptUrl
+  //     })
+  //     toast.success('完成成功')
+  //     setCompleteDialogOpen(false)
+  //     loadData()
+  //   } catch (error) {
+  //     console.error('完成失败:', error)
+  //     toast.error('完成失败')
+  //   }
+  // }
 
   // 统计待处理数量
   const pendingCount = data.filter(item => item.status === 0).length
@@ -558,7 +558,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                                 审核
                               </Button>
                             )}
-                            {item.status === 1 && (
+                            {/* {item.status === 1 && (
                               <Button
                                 size='small'
                                 variant='contained'
@@ -571,7 +571,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                               >
                                 完成
                               </Button>
-                            )}
+                            )} */}
                           </Box>
                         </td>
                       </tr>
@@ -628,7 +628,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={completeDialogOpen} onClose={() => setCompleteDialogOpen(false)} maxWidth='sm' fullWidth>
+      {/* <Dialog open={completeDialogOpen} onClose={() => setCompleteDialogOpen(false)} maxWidth='sm' fullWidth>
         <DialogTitle>完成转账</DialogTitle>
         <DialogContent>
           <Box className='flex flex-col gap-4 mt-4'>
@@ -645,7 +645,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
             提交
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* 详情抽屉 */}
       <Drawer
@@ -905,7 +905,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     审核
                   </Button>
                 )}
-                {selectedRecord.status === 1 && (
+                {/* {selectedRecord.status === 1 && (
                   <Button
                     variant='contained'
                     color='success'
@@ -930,7 +930,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   >
                     完成
                   </Button>
-                )}
+                )} */}
               </Box>
             </>
           )}
