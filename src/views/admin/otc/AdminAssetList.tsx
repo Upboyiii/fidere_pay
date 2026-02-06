@@ -62,15 +62,17 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
     remark: ''
   })
 
-  const loadData = async () => {
+  const loadData = async (customFilters?: typeof filters, customPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = customFilters || filters
+      const currentPage = customPage !== undefined ? customPage : page
       const res = await getAdminAssetList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        userName: filters.userName || undefined,
-        userNickname: filters.userNickname || undefined
+        userId: currentFilters.userId ? Number(currentFilters.userId) : undefined,
+        userName: currentFilters.userName || undefined,
+        userNickname: currentFilters.userNickname || undefined
       })
       const list: AdminAssetListItem[] = res.data?.list || []
       setData(list)
@@ -143,7 +145,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
   return (
     <Grid container spacing={6}>
       {/* 统计卡片 - 简洁风格 */}
-      <Grid size={{ xs: 12, sm: 6, md: 6 }}>
+      {/* <Grid size={{ xs: 12, sm: 6, md: 6 }}>
         <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -180,7 +182,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
             </Typography>
           </CardContent>
         </Card>
-      </Grid>
+      </Grid> */}
 
       <Grid size={12}>
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
@@ -209,6 +211,21 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
               <Button variant='contained' onClick={loadData}>
                 查询
               </Button>
+              <Button 
+                variant='outlined' 
+                onClick={() => {
+                  const resetFilters = {
+                    userId: '',
+                    userName: '',
+                    userNickname: ''
+                  }
+                  setFilters(resetFilters)
+                  setPage(0)
+                  loadData(resetFilters, 0)
+                }}
+              >
+                重置
+              </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '800px' }}>
@@ -217,9 +234,9 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                     <th>用户名</th>
                     <th>用户昵称</th>
                     <th>币种</th>
-                    <th>余额</th>
-                    <th>冻结余额</th>
+                    {/* <th>余额</th> */}
                     <th>可用余额</th>
+                    <th>冻结余额</th>
                     <th>操作</th>
                   </tr>
                 </thead>
@@ -242,9 +259,9 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                         <td>{item.userName || '-'}</td>
                         <td>{item.userNickname || '-'}</td>
                         <td>{item.currencyCode}</td>
-                        <td>{item.balance}</td>
-                        <td>{item.frozenBalance}</td>
+                        {/* <td>{item.balance}</td> */}
                         <td>{item.availableBalance}</td>
+                        <td>{item.frozenBalance}</td>
                         <td>
                           <Button
                             size='small'

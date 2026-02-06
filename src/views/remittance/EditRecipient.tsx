@@ -87,23 +87,31 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
           if (data) {
             console.log('加载的收款人详情数据:', data)
             
-            // 解析电话号码（如果有区号）
-            let phone = data.phone || ''
-            let araeCode = data.araeCode || '+86' // 默认使用 +86
-            
-            // 如果电话号码包含区号但没有单独存储，尝试分离
-            if (phone && !data.araeCode) {
-              if (phone.startsWith('+')) {
-                // 如果电话号码以+开头但没有单独的区号，尝试提取
-                const match = phone.match(/^(\+\d{1,4})(.+)$/)
-                if (match) {
-                  araeCode = match[1]
-                  phone = match[2]
+            // 解析电话号码：联系电话输入框仅显示纯数字，国家代码在独立的下拉框中
+            // 修复 "+1+111..." 重复拼接问题：后端可能存了 araeCode + phone，导致区号重复
+            let phone = (data.phone || '').trim()
+            let araeCode = data.araeCode || '+86'
+
+            // 已知区号列表（与下拉选项一致），按长度降序匹配避免 "+1" 误匹配 "+86"
+            const AREA_CODES = ['+852', '+86', '+65', '+44', '+1']
+            if (phone && phone.startsWith('+')) {
+              // 若后端有单独 araeCode，用其剥离 phone 中的前缀
+              const codeToStrip = araeCode
+              if (codeToStrip) {
+                // 移除可能重复的区号："+1+111..." -> "111..."，"+111..." -> "111..."
+                const escaped = codeToStrip.replace(/[+]/g, '\\+')
+                phone = phone.replace(new RegExp(`^${escaped}\\s*\\+?\\s*`), '').trim()
+              }
+              if (!data.araeCode && phone.startsWith('+')) {
+                // 无 araeCode 时，从号码提取（按长度降序匹配）
+                for (const code of AREA_CODES) {
+                  if (phone.startsWith(code)) {
+                    araeCode = code
+                    phone = phone.replace(new RegExp(`^${code.replace(/[+]/g, '\\+')}\\s*\\+?\\s*`), '').trim()
+                    break
+                  }
                 }
               }
-            } else if (phone && araeCode && !phone.startsWith('+')) {
-              // 如果区号和号码是分开的，确保号码不包含区号
-              phone = phone.replace(/^\+\d{1,4}/, '')
             }
 
             setFormData({
@@ -227,12 +235,17 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
       // 可选字段
       if (formData.postalCode) submitData.postalCode = formData.postalCode
       if (formData.araeCode) submitData.araeCode = formData.araeCode
-      // 电话号码：如果有区号和号码，合并；否则只传号码
+      // 电话号码：araeCode 与 phone 分开传；phone 仅传本地号码（纯数字），避免后端拼接时出现 "+1+111..." 重复
       if (formData.phone) {
+        let phoneToSend = formData.phone
         if (formData.araeCode) {
-          submitData.phone = `${formData.araeCode}${formData.phone}`
+          // 若输入中误含区号前缀，先剥离
+          const escaped = formData.araeCode.replace(/[+]/g, '\\+')
+          phoneToSend = formData.phone.replace(new RegExp(`^${escaped}\\s*\\+?\\s*`), '').trim() || formData.phone
+          submitData.phone = phoneToSend
+          // araeCode 已单独传，phone 仅传本地号码，由后端按需拼接
         } else {
-          submitData.phone = formData.phone
+          submitData.phone = phoneToSend
         }
       }
       if (formData.email) submitData.email = formData.email
@@ -948,16 +961,12 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
         {/* 重要提示 */}
         <Grid size={{ xs: 12 }}>
           <Alert 
-            severity='info' 
-            icon={<i className='ri-information-line' />}
+            severity='warning'
             sx={{ 
               borderRadius: '12px',
-              bgcolor: 'info.lightOpacity',
+              bgcolor: 'warning.lightOpacity',
               border: '1px solid',
-              borderColor: 'info.main',
-              '& .MuiAlert-icon': {
-                color: 'info.main'
-              }
+              borderColor: 'warning.main'
             }}
           >
             <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>

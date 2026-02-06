@@ -239,6 +239,13 @@ const Login = ({ mode }: { mode: Mode }) => {
     const normalizedMenuList = Array.isArray(menuList) ? menuList : []
     const menuListJson = normalizedMenuList.length > 0 ? JSON.stringify(normalizedMenuList) : '[]'
     const _selectValue = ENV_CONFIG?.IS_DEVELOPMENT ? selectValue : SITE_CONFIG?.SITE_TYPE
+    
+    // 获取菜单列表的第一个路由作为默认跳转路径
+    const firstMenuRoute = normalizedMenuList.length > 0 
+      ? getFirstMenuRoute(normalizedMenuList) 
+      : null
+    const defaultHomePage = firstMenuRoute || '/assets/my-assets'
+    
     // 存储到session中
     const signInData = {
       email: formData.email,
@@ -264,7 +271,7 @@ const Login = ({ mode }: { mode: Mode }) => {
       ...signInCredentials,
       redirect: false,
       // 添加 callbackUrl 以便 NextAuth 知道登录成功后应该去哪里（虽然我们用 redirect: false）
-      callbackUrl: '/assets/my-assets'
+      callbackUrl: defaultHomePage
     })
     
     console.log('[Login] signIn 结果', { 
@@ -301,8 +308,7 @@ const Login = ({ mode }: { mode: Mode }) => {
     toast.success(t('auth.loginSuccess'))
     // 根据用户角色更新主题设置
     updateThemeByRole(signInData)
-    // 默认跳转到"我的资产"页面，如果有 redirectTo 参数则优先使用
-    const defaultHomePage = '/assets/my-assets'
+    // 优先使用 redirectTo 参数，其次使用菜单的第一个路由，最后使用默认路径
     const redirectURL = searchParams.get('redirectTo') ?? defaultHomePage
     const finalUrl = getLocalizedUrl(redirectURL, locale as Locale)
     router.replace(finalUrl)

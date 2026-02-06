@@ -46,8 +46,8 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
         currencyCode: filters.currencyCode || undefined,
         bizType: filters.bizType ? Number(filters.bizType) : undefined,
         direction: filters.direction ? Number(filters.direction) : undefined,
-        startTime: filters.startTime ? new Date(filters.startTime).getTime() : undefined,
-        endTime: filters.endTime ? new Date(filters.endTime).getTime() : undefined
+        startTime: filters.startTime ? Math.floor(new Date(filters.startTime).getTime() / 1000) : undefined,
+        endTime: filters.endTime ? Math.floor(new Date(filters.endTime).getTime() / 1000) : undefined
       })
       setData(res.data?.list || [])
       setTotal(res.data?.total || 0)

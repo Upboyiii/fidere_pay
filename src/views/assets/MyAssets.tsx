@@ -125,16 +125,18 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       const currentPage = customPage !== undefined ? customPage : page
 
       // 转换日期为时间戳（秒级）
+      // 开始时间：当天的 00:00:00
+      // 结束时间：当天的 23:59:59（包含整天的数据）
       let startTime: number | undefined
       let endTime: number | undefined
       if (currentFilters.startDate) {
-        const startDate = new Date(currentFilters.startDate)
-        startDate.setHours(0, 0, 0, 0)
+        const [year, month, day] = currentFilters.startDate.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
         startTime = Math.floor(startDate.getTime() / 1000)
       }
       if (currentFilters.endDate) {
-        const endDate = new Date(currentFilters.endDate)
-        endDate.setHours(23, 59, 59, 999)
+        const [year, month, day] = currentFilters.endDate.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
         endTime = Math.floor(endDate.getTime() / 1000)
       }
 

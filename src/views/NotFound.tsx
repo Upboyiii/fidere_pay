@@ -25,11 +25,30 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 import { getFirstMenuRoute } from '@configs/themeConfig'
 import { getLocalizedUrl } from '@/utils/i18n'
 
+const LOGOUT_FLAG = 'logout_in_progress'
+
+function getIsLogoutRedirect() {
+  if (typeof window === 'undefined') return false
+  return sessionStorage.getItem(LOGOUT_FLAG) === 'true'
+}
+
 const NotFound = ({ mode }: { mode: Mode }) => {
+  const [isLogoutRedirect] = useState(getIsLogoutRedirect)
+
+  // 退出流程中落到 404 时只显示 loading，不展示 404 内容，避免被察觉
+  if (isLogoutRedirect) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-center'>
+          <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4' />
+        </div>
+      </div>
+    )
+  }
+
   // Vars
   const darkImg = '/images/pages/misc-mask-dark.png'
   const lightImg = '/images/pages/misc-mask-light.png'
-  const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : '/'
   // Hooks
   const { lang: locale } = useParams()
   const miscBackground = useImageVariant(mode, lightImg, darkImg)

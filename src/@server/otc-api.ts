@@ -226,7 +226,8 @@ export interface AdminRechargeListItem {
   currencyCode: string
   amount: number
   status: number
-  createdAt: number
+  createTime?: number // 创建时间（时间戳，秒级或毫秒级）
+  createdAt?: number // 创建时间（兼容字段）
   updatedAt: number
   [key: string]: any
 }
@@ -267,7 +268,7 @@ export interface AdminTransactionListItem {
   userName: string
   userNickname: string
   currencyCode: string
-  bizType: number // 业务类型 1-充值 2-提现 3-转账 5-管理员调整
+  bizType: number // 业务类型 1-充值 2-转账 3-提现 4-手续费 5-调账
   bizId: number
   direction: number // 方向 1-入账 2-出账
   changeAmount: number // 变动金额
@@ -746,8 +747,8 @@ export interface UserTransactionListParams {
   currencyCode?: string
   bizType?: number // 0-全部
   direction?: number // 0-全部 1-入账 2-出账
-  startTime?: string // 开始时间，格式：YYYY-MM-DD
-  endTime?: string // 结束时间，格式：YYYY-MM-DD
+  startTime?: number // 开始时间（秒级时间戳）
+  endTime?: number // 结束时间（秒级时间戳）
 }
 
 export interface UserTransactionListItem {
@@ -755,7 +756,7 @@ export interface UserTransactionListItem {
   orderNo: string // 订单号
   userId: number
   currencyCode: string
-  bizType: number // 业务类型 1-充值 2-提现 3-转账 5-管理员调整
+  bizType: number // 业务类型 1-充值 2-转账 3-提现 4-手续费 5-调账
   bizId: number
   direction: number // 方向 1-入账 2-出账
   changeAmount: number // 变动金额

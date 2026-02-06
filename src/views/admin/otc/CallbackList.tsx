@@ -38,21 +38,37 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
     userId: '',
     callbackType: '',
     callbackStatus: '-1',
-    startTime: '',
-    endTime: ''
+    startDate: '',
+    endDate: ''
   })
 
   const loadData = async () => {
     setLoading(true)
     try {
+      // 转换日期为秒级时间戳
+      // 开始时间：当天的 00:00:00
+      // 结束时间：当天的 23:59:59（包含整天的数据）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (filters.startDate) {
+        const [year, month, day] = filters.startDate.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (filters.endDate) {
+        const [year, month, day] = filters.endDate.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
       const res = await getCallbackList({
         pageNum: page + 1,
         pageSize: rowsPerPage,
         userId: filters.userId ? Number(filters.userId) : undefined,
         callbackType: filters.callbackType ? Number(filters.callbackType) : undefined,
         callbackStatus: filters.callbackStatus !== '-1' ? Number(filters.callbackStatus) : undefined,
-        startTime: filters.startTime ? new Date(filters.startTime).getTime() : undefined,
-        endTime: filters.endTime ? new Date(filters.endTime).getTime() : undefined
+        startTime,
+        endTime
       })
       setData(res.data?.list || [])
       setTotal(res.data?.total || 0)
@@ -110,19 +126,19 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 </Select>
               </FormControl>
               <TextField
-                label='开始时间'
-                type='datetime-local'
-                value={filters.startTime}
-                onChange={e => setFilters({ ...filters, startTime: e.target.value })}
+                label='开始日期'
+                type='date'
+                value={filters.startDate}
+                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束时间'
-                type='datetime-local'
-                value={filters.endTime}
-                onChange={e => setFilters({ ...filters, endTime: e.target.value })}
+                label='结束日期'
+                type='date'
+                value={filters.endDate}
+                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}

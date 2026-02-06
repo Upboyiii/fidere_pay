@@ -17,6 +17,8 @@ import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
+import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -39,22 +41,41 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
     status: '-1',
     currencyCode: '',
     rechargeNo: '',
-    startTime: '',
-    endTime: ''
+    startDate: '',
+    endDate: ''
   })
 
-  const loadData = async () => {
+  const loadData = async (customFilters?: typeof filters, customPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = customFilters || filters
+      const currentPage = customPage !== undefined ? customPage : page
+      
+      // 转换日期为秒级时间戳
+      // 开始时间：当天的 00:00:00
+      // 结束时间：当天的 23:59:59（包含整天的数据）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (currentFilters.startDate) {
+        const [year, month, day] = currentFilters.startDate.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (currentFilters.endDate) {
+        const [year, month, day] = currentFilters.endDate.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
       const res = await getAdminRechargeList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        status: filters.status !== '-1' ? Number(filters.status) : undefined,
-        currencyCode: filters.currencyCode || undefined,
-        rechargeNo: filters.rechargeNo || undefined,
-        startTime: filters.startTime ? new Date(filters.startTime).getTime() : undefined,
-        endTime: filters.endTime ? new Date(filters.endTime).getTime() : undefined
+        userId: currentFilters.userId ? Number(currentFilters.userId) : undefined,
+        status: currentFilters.status !== '-1' ? Number(currentFilters.status) : undefined,
+        currencyCode: currentFilters.currencyCode || undefined,
+        rechargeNo: currentFilters.rechargeNo || undefined,
+        startTime,
+        endTime
       })
       setData(res.data?.list || [])
       setTotal(res.data?.total || 0)
@@ -121,58 +142,157 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 sx={{ minWidth: 180 }}
               />
               <TextField
-                label='开始时间'
-                type='datetime-local'
-                value={filters.startTime}
-                onChange={e => setFilters({ ...filters, startTime: e.target.value })}
+                label='开始日期'
+                type='date'
+                value={filters.startDate}
+                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束时间'
-                type='datetime-local'
-                value={filters.endTime}
-                onChange={e => setFilters({ ...filters, endTime: e.target.value })}
+                label='结束日期'
+                type='date'
+                value={filters.endDate}
+                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
-              <Button variant='contained' onClick={loadData}>
+              <Button 
+                variant='contained' 
+                onClick={() => {
+                  setPage(0)
+                  loadData(undefined, 0)
+                }}
+                disabled={loading}
+              >
                 查询
+              </Button>
+              <Button 
+                variant='outlined' 
+                onClick={() => {
+                  const resetFilters = {
+                    userId: '',
+                    status: '-1',
+                    currencyCode: '',
+                    rechargeNo: '',
+                    startDate: '',
+                    endDate: ''
+                  }
+                  setFilters(resetFilters)
+                  setPage(0)
+                  loadData(resetFilters, 0)
+                }}
+              >
+                重置
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
-              <table className={tableStyles.table} style={{ width: '100%', minWidth: '900px' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1200px' }}>
                 <thead>
                   <tr>
                     <th>充值单号</th>
+                    <th>用户名</th>
                     <th>币种</th>
                     <th>金额</th>
+                    <th>充值地址</th>
+                    <th>交易哈希</th>
                     <th>状态</th>
                     <th>创建时间</th>
-                    <th>操作</th>
+                    {/* <th>操作</th> */}
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={7} className='text-center'>
+                      <td colSpan={9} className='text-center'>
                         加载中...
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className='text-center'>
+                      <td colSpan={9} className='text-center'>
                         暂无数据
                       </td>
                     </tr>
                   ) : (
                     data.map(item => (
                       <tr key={item.id}>
-                        <td>{item.rechargeNo}</td>
+                        <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{item.rechargeNo}</td>
+                        <td>{(item as any).userName || '-'}</td>
                         <td>{item.currencyCode}</td>
                         <td>{item.amount}</td>
+                        <td>
+                          {(() => {
+                            const address = (item as any).rechargeAddress
+                            if (!address) return '-'
+                            return (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title={address} arrow>
+                                  <Typography 
+                                    variant='body2' 
+                                    sx={{ 
+                                      fontSize: '0.85rem', 
+                                      fontFamily: 'monospace', 
+                                      maxWidth: '200px', 
+                                      overflow: 'hidden', 
+                                      textOverflow: 'ellipsis', 
+                                      whiteSpace: 'nowrap' 
+                                    }}
+                                  >
+                                    {address}
+                                  </Typography>
+                                </Tooltip>
+                                <IconButton 
+                                  size='small' 
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(address)
+                                    toast.success('已复制到剪贴板')
+                                  }}
+                                  sx={{ p: 0.5 }}
+                                >
+                                  <i className='ri-file-copy-line' style={{ fontSize: '14px' }} />
+                                </IconButton>
+                              </Box>
+                            )
+                          })()}
+                        </td>
+                        <td>
+                          {(() => {
+                            const txHash = (item as any).txHash
+                            if (!txHash) return '-'
+                            return (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Tooltip title={txHash} arrow>
+                                  <Typography 
+                                    variant='body2' 
+                                    sx={{ 
+                                      fontSize: '0.85rem', 
+                                      fontFamily: 'monospace', 
+                                      maxWidth: '200px', 
+                                      overflow: 'hidden', 
+                                      textOverflow: 'ellipsis', 
+                                      whiteSpace: 'nowrap' 
+                                    }}
+                                  >
+                                    {txHash}
+                                  </Typography>
+                                </Tooltip>
+                                <IconButton 
+                                  size='small' 
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(txHash)
+                                    toast.success('已复制到剪贴板')
+                                  }}
+                                  sx={{ p: 0.5 }}
+                                >
+                                  <i className='ri-file-copy-line' style={{ fontSize: '14px' }} />
+                                </IconButton>
+                              </Box>
+                            )
+                          })()}
+                        </td>
                         <td>
                           <Chip
                             label={
@@ -190,7 +310,22 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                             size='small'
                           />
                         </td>
-                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
+                        <td>
+                          {(() => {
+                            const timestamp = item.createTime || item.createdAt
+                            if (!timestamp) return '-'
+                            // 处理时间戳：如果是10位（秒级），转换为毫秒；如果是13位（毫秒级），直接使用
+                            const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
+                            return new Date(ms).toLocaleString('zh-CN', {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })
+                          })()}
+                        </td>
                         <td>
                           {item.status === 0 && (
                             <Button size='small' onClick={() => handleConfirm(item.rechargeNo)}>

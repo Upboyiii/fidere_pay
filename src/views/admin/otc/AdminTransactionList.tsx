@@ -45,23 +45,42 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
     currencyCode: '',
     bizType: '',
     direction: '',
-    startTime: '',
-    endTime: ''
+    startDate: '',
+    endDate: ''
   })
 
-  const loadData = async () => {
+  const loadData = async (targetFilters?: typeof filters, targetPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = targetFilters !== undefined ? targetFilters : filters
+      const currentPage = targetPage !== undefined ? targetPage : page
+      
+      // 转换日期为秒级时间戳
+      // 开始时间：当天的 00:00:00
+      // 结束时间：当天的 23:59:59（包含整天的数据）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (currentFilters.startDate) {
+        const [year, month, day] = currentFilters.startDate.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (currentFilters.endDate) {
+        const [year, month, day] = currentFilters.endDate.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
       const res = await getAdminTransactionList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        userName: filters.userName || undefined,
-        currencyCode: filters.currencyCode || undefined,
-        bizType: filters.bizType ? Number(filters.bizType) : undefined,
-        direction: filters.direction ? Number(filters.direction) : undefined,
-        startTime: filters.startTime ? new Date(filters.startTime).getTime() : undefined,
-        endTime: filters.endTime ? new Date(filters.endTime).getTime() : undefined
+        userId: currentFilters.userId ? Number(currentFilters.userId) : undefined,
+        userName: currentFilters.userName || undefined,
+        currencyCode: currentFilters.currencyCode || undefined,
+        bizType: currentFilters.bizType ? Number(currentFilters.bizType) : undefined,
+        direction: currentFilters.direction ? Number(currentFilters.direction) : undefined,
+        startTime,
+        endTime
       })
       const list = res.data?.list || []
       setData(list)
@@ -92,7 +111,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
   return (
     <Grid container spacing={6}>
       {/* 统计卡片 - 简洁风格 */}
-      <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+      {/* <Grid size={{ xs: 12, sm: 6, md: 4 }}>
         <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -149,7 +168,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
             </Typography>
           </CardContent>
         </Card>
-      </Grid>
+      </Grid> */}
 
       <Grid size={12}>
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
@@ -203,40 +222,50 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                 </Select>
               </FormControl>
               <TextField
-                label='开始时间'
-                type='datetime-local'
-                value={filters.startTime}
-                onChange={e => setFilters({ ...filters, startTime: e.target.value })}
+                label='开始日期'
+                type='date'
+                value={filters.startDate}
+                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束时间'
-                type='datetime-local'
-                value={filters.endTime}
-                onChange={e => setFilters({ ...filters, endTime: e.target.value })}
+                label='结束日期'
+                type='date'
+                value={filters.endDate}
+                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
-              <Button variant='contained' onClick={loadData}>
+              <Button 
+                variant='contained' 
+                onClick={() => {
+                  setPage(0)
+                  loadData(undefined, 0)
+                }}
+                disabled={loading}
+              >
                 查询
               </Button>
               <Button 
                 variant='outlined' 
                 onClick={() => {
-                  setFilters({
+                  const resetFilters = {
                     userId: '',
                     userName: '',
                     currencyCode: '',
                     bizType: '',
                     direction: '',
-                    startTime: '',
-                    endTime: ''
-                  })
+                    startDate: '',
+                    endDate: ''
+                  }
+                  setFilters(resetFilters)
                   setPage(0)
+                  loadData(resetFilters, 0)
                 }}
+                disabled={loading}
               >
                 重置
               </Button>
@@ -360,10 +389,13 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td style={{ fontSize: '0.85rem' }}>
                           {(() => {
-                            // 兼容 createTime 和 createdAt 两个字段名，支持13位毫秒时间戳
+                            // 兼容 createTime 和 createdAt 两个字段名，支持10位秒级和13位毫秒级时间戳
                             const timestamp = item.createTime || item.createdAt
                             if (!timestamp) return '-'
-                            return new Date(timestamp).toLocaleString('zh-CN', {
+                            // 判断时间戳长度：10位是秒级，需要乘以1000；13位是毫秒级，直接使用
+                            const timestampStr = String(timestamp)
+                            const ms = timestampStr.length === 10 ? timestamp * 1000 : timestamp
+                            return new Date(ms).toLocaleString('zh-CN', {
                               year: 'numeric',
                               month: '2-digit',
                               day: '2-digit',

@@ -67,18 +67,39 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<TransferDetailItem | null>(null)
 
-  const loadData = async () => {
+  const loadData = async (targetFilters?: typeof filters, targetPage?: number) => {
     setLoading(true)
     try {
+      const currentFilters = targetFilters !== undefined ? targetFilters : filters
+      const currentPage = targetPage !== undefined ? targetPage : page
+      
+      // 处理时间范围：开始时间为当天的 00:00:00，结束时间为当天的 23:59:59（包含整天的数据），转换为10位时间戳（秒级）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      
+      if (currentFilters.startTime) {
+        // 解析日期字符串 "YYYY-MM-DD"，使用本地时区创建日期对象
+        const [year, month, day] = currentFilters.startTime.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0) // 月份从0开始，所以减1，开始时间为 00:00:00
+        startTime = Math.floor(startDate.getTime() / 1000) // 转换为10位时间戳（秒级）
+      }
+      
+      if (currentFilters.endTime) {
+        // 解析日期字符串 "YYYY-MM-DD"，使用本地时区创建日期对象
+        const [year, month, day] = currentFilters.endTime.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999) // 月份从0开始，所以减1，结束时间为 23:59:59.999
+        endTime = Math.floor(endDate.getTime() / 1000) // 转换为10位时间戳（秒级）
+      }
+      
       const res = await getAdminTransferList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        userId: filters.userId ? Number(filters.userId) : undefined,
-        userName: filters.userName || undefined,
-        status: filters.status !== '-1' ? Number(filters.status) : undefined,
-        applyNo: filters.applyNo || undefined,
-        startTime: filters.startTime ? new Date(filters.startTime).getTime() : undefined,
-        endTime: filters.endTime ? new Date(filters.endTime).getTime() : undefined
+        userId: currentFilters.userId ? Number(currentFilters.userId) : undefined,
+        userName: currentFilters.userName || undefined,
+        status: currentFilters.status !== '-1' ? Number(currentFilters.status) : undefined,
+        applyNo: currentFilters.applyNo || undefined,
+        startTime,
+        endTime
       })
       const list = res.data?.list || []
       setData(list)
@@ -186,14 +207,15 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     })
   }
 
   return (
     <Grid container spacing={6}>
       {/* 统计卡片 - 简洁风格 */}
-      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+      {/* <Grid size={{ xs: 12, sm: 6, md: 3 }}>
         <Card sx={{ borderRadius: '16px', border: '1px solid rgba(0,0,0,0.05)' }}>
           <CardContent sx={{ p: 4 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -275,7 +297,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
             </Box>
           </CardContent>
         </Card>
-      </Grid>
+      </Grid> */}
 
       <Grid size={12}>
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
@@ -318,7 +340,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
               </FormControl>
               <TextField
                 label='开始时间'
-                type='datetime-local'
+                type='date'
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
                 size='small'
@@ -327,29 +349,39 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
               />
               <TextField
                 label='结束时间'
-                type='datetime-local'
+                type='date'
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
                 size='small'
                 sx={{ minWidth: 200 }}
                 InputLabelProps={{ shrink: true }}
               />
-              <Button variant='contained' onClick={loadData}>
+              <Button 
+                variant='contained' 
+                onClick={() => {
+                  setPage(0)
+                  loadData(undefined, 0)
+                }}
+                disabled={loading}
+              >
                 查询
               </Button>
               <Button 
                 variant='outlined' 
                 onClick={() => {
-                  setFilters({
+                  const resetFilters = {
                     userId: '',
                     userName: '',
                     status: '-1',
                     applyNo: '',
                     startTime: '',
                     endTime: ''
-                  })
+                  }
+                  setFilters(resetFilters)
                   setPage(0)
+                  loadData(resetFilters, 0)
                 }}
+                disabled={loading}
               >
                 重置
               </Button>
@@ -389,21 +421,20 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     <th>账户类型</th>
                     <th>状态</th>
                     <th>创建时间</th>
-                    <th>审核时间</th>
-                    <th>完成时间</th>
-                    <th>操作</th>
+                    <th>审核/完成时间</th>
+                    <th style={{ textAlign: 'center', verticalAlign: 'middle' }}>操作</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={11} className='text-center'>
+                      <td colSpan={10} className='text-center'>
                         加载中...
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
-                      <td colSpan={11} className='text-center'>
+                      <td colSpan={10} className='text-center'>
                         暂无数据
                       </td>
                     </tr>
@@ -487,24 +518,25 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                             second: '2-digit'
                           }) : '-'}
                         </td>
-                        <td style={{ fontSize: '0.85rem', color: 'var(--mui-palette-text-secondary)' }}>
-                          {item.auditTime ? new Date(item.auditTime * 1000).toLocaleString('zh-CN', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : '-'}
+                        <td style={{ fontSize: '0.85rem', color: 'var(--mui-palette-text-secondary)', verticalAlign: 'middle' }}>
+                          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                            {item.auditTime ? (
+                              <Box>
+                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>审核：</Typography>
+                                <Typography component='span' variant='caption' sx={{ fontSize: '0.75rem', ml: 0.5 }}>{formatTimestamp(item.auditTime)}</Typography>
+                              </Box>
+                            ) : null}
+                            {item.completeTime ? (
+                              <Box>
+                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>完成：</Typography>
+                                <Typography component='span' variant='caption' sx={{ fontSize: '0.75rem', ml: 0.5 }}>{formatTimestamp(item.completeTime)}</Typography>
+                              </Box>
+                            ) : null}
+                            {!item.auditTime && !item.completeTime && <Typography variant='caption'>-</Typography>}
+                          </Box>
                         </td>
-                        <td style={{ fontSize: '0.85rem', color: 'var(--mui-palette-text-secondary)' }}>
-                          {item.completeTime ? new Date(item.completeTime * 1000).toLocaleString('zh-CN', {
-                            month: '2-digit',
-                            day: '2-digit',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                          }) : '-'}
-                        </td>
-                        <td>
-                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        <td style={{ verticalAlign: 'middle' }}>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap', alignItems: 'center', justifyContent: 'space-between' }}>
                             <Button
                               size='small'
                               variant='text'
@@ -758,7 +790,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as any).payeeBankName || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>账户类型：</Typography>
@@ -777,8 +809,19 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     </Box>
                   )}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>更新时间：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{formatTimestamp(selectedRecord.updateTime || selectedRecord.updatedAt)}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>创建时间：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
+                      {selectedRecord.createTime 
+                        ? new Date(selectedRecord.createTime * 1000).toLocaleString('zh-CN', {
+                            year: 'numeric',
+                            month: '2-digit',
+                            day: '2-digit',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            second: '2-digit'
+                          })
+                        : '-'}
+                    </Typography>
                   </Box>
                 </Box>
 

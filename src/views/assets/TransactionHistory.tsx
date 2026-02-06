@@ -82,14 +82,30 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
       const currentFilters = customFilters || filters
       const currentPage = customPage !== undefined ? customPage : page
 
+      // 转换日期为秒级时间戳
+      // 开始时间：当天的 00:00:00
+      // 结束时间：当天的 23:59:59（包含整天的数据）
+      let startTime: number | undefined
+      let endTime: number | undefined
+      if (currentFilters.startDate) {
+        const [year, month, day] = currentFilters.startDate.split('-').map(Number)
+        const startDate = new Date(year, month - 1, day, 0, 0, 0, 0)
+        startTime = Math.floor(startDate.getTime() / 1000)
+      }
+      if (currentFilters.endDate) {
+        const [year, month, day] = currentFilters.endDate.split('-').map(Number)
+        const endDate = new Date(year, month - 1, day, 23, 59, 59, 999)
+        endTime = Math.floor(endDate.getTime() / 1000)
+      }
+
       const res = await getUserTransactionList({
         pageNum: currentPage + 1,
         pageSize: rowsPerPage,
         currencyCode: currentFilters.currency || undefined,
         bizType: currentFilters.transactionType ? Number(currentFilters.transactionType) : undefined,
         direction: undefined, // 不筛选方向，显示所有
-        startTime: currentFilters.startDate || undefined,
-        endTime: currentFilters.endDate || undefined
+        startTime,
+        endTime
       })
       
       setTransactions(res.data?.list || [])
@@ -113,11 +129,11 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
 
   const getTypeLabel = (bizType: number) => {
     const typeMap: Record<number, string> = {
-      1: '充值',
-      2: '提现',
-      3: '转账',
-      4: '汇款',
-      5: '调整'
+      1: '充值',   // FundBizTypeRecharge
+      2: '转账',   // FundBizTypeTransfer
+      3: '提现',   // FundBizTypeWithdraw
+      4: '手续费', // FundBizTypeFee
+      5: '调账'    // FundBizTypeAdjust
     }
     return typeMap[bizType] || '其他'
   }
@@ -199,7 +215,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
             >
               <CardContent>
                 <Grid container spacing={4} alignItems='flex-end'>
-                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  {/* <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
                     <TextField
                       fullWidth
@@ -209,7 +225,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                       onChange={(e) => setFilters({ ...filters, transactionId: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
-                  </Grid>
+                  </Grid> */}
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                     <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易类型</Typography>
                     <FormControl fullWidth size='small'>
@@ -221,10 +237,10 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                       >
                         <MenuItem value=''>全部类型</MenuItem>
                         <MenuItem value='1'>充值</MenuItem>
-                        <MenuItem value='2'>提现</MenuItem>
-                        <MenuItem value='3'>转账</MenuItem>
-                        <MenuItem value='4'>汇款</MenuItem>
-                        <MenuItem value='5'>调整</MenuItem>
+                        <MenuItem value='2'>转账</MenuItem>
+                        <MenuItem value='3'>提现</MenuItem>
+                        <MenuItem value='4'>手续费</MenuItem>
+                        <MenuItem value='5'>调账</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
@@ -290,7 +306,10 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   size='small' 
                   startIcon={<i className='ri-search-line' />} 
                   sx={{ borderRadius: '8px', px: 6 }}
-                  onClick={() => loadTransactions()}
+                  onClick={() => {
+                    setPage(0)
+                    loadTransactions(undefined, 0)
+                  }}
                   disabled={loading}
                 >
                   查询

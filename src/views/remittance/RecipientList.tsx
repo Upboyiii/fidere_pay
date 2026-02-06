@@ -63,16 +63,18 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
   const [total, setTotal] = useState(0)
 
   // 加载收款人列表
-  const loadRecipients = async () => {
+  const loadRecipients = async (targetPage?: number, targetFilters?: typeof filters) => {
     setLoading(true)
     try {
+      const currentPage = targetPage !== undefined ? targetPage : page
+      const currentFilters = targetFilters !== undefined ? targetFilters : filters
       const res = await getPayeeList({
-        pageNum: page + 1,
+        pageNum: currentPage + 1,
         pageSize: rowsPerPage,
-        remitType: filters.remittanceMethod ? Number(filters.remittanceMethod) : undefined,
-        accountType: filters.accountType ? Number(filters.accountType) : undefined,
+        remitType: currentFilters.remittanceMethod ? Number(currentFilters.remittanceMethod) : undefined,
+        accountType: currentFilters.accountType ? Number(currentFilters.accountType) : undefined,
         status: 1, // 只显示启用的
-        searchKey: filters.searchKey || undefined
+        searchKey: currentFilters.searchKey || undefined
       })
       setRecipients(res.data?.list || [])
       setTotal(res.data?.total || 0)
@@ -87,7 +89,7 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
   useEffect(() => {
     loadRecipients()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, rowsPerPage, filters.remittanceMethod, filters.accountType, filters.searchKey])
+  }, [page, rowsPerPage])
 
   const handleDelete = async () => {
     if (!deleteTarget) return
@@ -254,10 +256,13 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                   variant='text' 
                   size='small'
                   onClick={() => {
-                    setFilters({ remittanceMethod: '', accountType: '', searchKey: '' })
+                    const resetFilters = { remittanceMethod: '', accountType: '', searchKey: '' }
+                    setFilters(resetFilters)
                     setPage(0)
+                    loadRecipients(0, resetFilters)
                   }}
                   sx={{ color: 'text.secondary' }}
+                  disabled={loading}
                 >
                   重置
                 </Button>
@@ -266,7 +271,10 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                   size='small' 
                   startIcon={<i className='ri-search-line' />} 
                   sx={{ borderRadius: '8px', px: 6 }}
-                  onClick={loadRecipients}
+                  onClick={() => {
+                    setPage(0)
+                    loadRecipients(0)
+                  }}
                   disabled={loading}
                 >
                   查询
