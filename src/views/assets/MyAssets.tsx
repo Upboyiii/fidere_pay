@@ -27,6 +27,7 @@ import IconButton from '@mui/material/IconButton'
 import TablePagination from '@mui/material/TablePagination'
 import Divider from '@mui/material/Divider'
 import CircularProgress from '@mui/material/CircularProgress'
+import Tooltip from '@mui/material/Tooltip'
 
 // Type Imports
 import type { Mode } from '@core/types'
@@ -561,7 +562,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               <Box sx={{ p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
                   <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                    充值记录
+                    资产记录
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <IconButton size='small' onClick={() => loadRecharges()} disabled={rechargesLoading}>
@@ -575,11 +576,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 {/* 筛选栏 */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                   <Box sx={{ flex: '1 1 200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>充值单号</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入充值单号'
+                      placeholder='请输入交易ID'
                       value={filters.rechargeNo}
                       onChange={(e) => setFilters({ ...filters, rechargeNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
@@ -677,25 +678,26 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <table className={tableStyles.table} style={{ border: 'none' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#fcfdfe' }}>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>充值单号</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>地址</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易哈希</th>
                       <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rechargesLoading ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center' }}>
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                           <CircularProgress />
                         </td>
                       </tr>
                     ) : recharges.length === 0 ? (
                       <tr>
-                        <td colSpan={6} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                          暂无充值记录
+                        <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                          暂无资产记录
                         </td>
                       </tr>
                     ) : (
@@ -743,14 +745,81 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                             />
                           </td>
                           <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
-                            <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                              {recharge.address || '-'}
-                            </Typography>
+                            {(() => {
+                              const rechargeAddress = (recharge as any).rechargeAddress
+                              if (!rechargeAddress) return <Typography variant='body2' color='text.secondary'>-</Typography>
+                              return (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Tooltip title={rechargeAddress} arrow>
+                                    <Typography 
+                                      variant='body2' 
+                                      color='text.secondary'
+                                      sx={{ 
+                                        fontSize: '0.8rem', 
+                                        fontFamily: 'monospace', 
+                                        maxWidth: '200px', 
+                                        overflow: 'hidden', 
+                                        textOverflow: 'ellipsis', 
+                                        whiteSpace: 'nowrap' 
+                                      }}
+                                    >
+                                      {rechargeAddress}
+                                    </Typography>
+                                  </Tooltip>
+                                  <IconButton 
+                                    size='small' 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(rechargeAddress)
+                                      toast.success('已复制到剪贴板')
+                                    }}
+                                    sx={{ p: 0.5 }}
+                                  >
+                                    <i className='ri-file-copy-line' style={{ fontSize: '14px' }} />
+                                  </IconButton>
+                                </Box>
+                              )
+                            })()}
+                          </td>
+                          <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
+                            {(() => {
+                              const txHash = (recharge as any).txHash
+                              if (!txHash) return <Typography variant='body2' color='text.secondary'>-</Typography>
+                              return (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Tooltip title={txHash} arrow>
+                                    <Typography 
+                                      variant='body2' 
+                                      color='text.secondary'
+                                      sx={{ 
+                                        fontSize: '0.8rem', 
+                                        fontFamily: 'monospace', 
+                                        maxWidth: '200px', 
+                                        overflow: 'hidden', 
+                                        textOverflow: 'ellipsis', 
+                                        whiteSpace: 'nowrap' 
+                                      }}
+                                    >
+                                      {txHash}
+                                    </Typography>
+                                  </Tooltip>
+                                  <IconButton 
+                                    size='small' 
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(txHash)
+                                      toast.success('已复制到剪贴板')
+                                    }}
+                                    sx={{ p: 0.5 }}
+                                  >
+                                    <i className='ri-file-copy-line' style={{ fontSize: '14px' }} />
+                                  </IconButton>
+                                </Box>
+                              )
+                            })()}
                           </td>
                           <td style={{ padding: '16px 24px' }}>
                             <Typography variant='body2' color='text.secondary'>
                               {(() => {
-                                const timestamp = recharge.createdAt
+                                const timestamp = (recharge as any).createTime || recharge.createdAt
                                 if (!timestamp) return '-'
                                 // 判断是秒级(10位)还是毫秒级(13位)时间戳
                                 const ts = Number(timestamp)
