@@ -1,5 +1,8 @@
 'use client'
 
+// Next Imports
+import { useParams, usePathname } from 'next/navigation'
+
 // MUI Imports
 import Button from '@mui/material/Button'
 
@@ -93,9 +96,30 @@ const InnerLayoutContent = ({ children, dictionary, lang, direction }: InnerLayo
  * 使用 useDictionaryLoader hook 加载字典数据
  */
 const ClientLayout = ({ children, params }: Props) => {
-  const { lang } = params
+  // 优先从 URL 路径获取语言（确保页面跳转后语言正确）
+  const urlParams = useParams()
+  const pathname = usePathname()
+  
+  // 从路径中提取语言：/en/..., /zh-CN/..., /zh-Hant/...
+  let langFromPath: Locale | null = null
+  if (pathname) {
+    const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+    if (langMatch && langMatch[1]) {
+      const extractedLang = langMatch[1] as Locale
+      if (i18n.locales.includes(extractedLang)) {
+        langFromPath = extractedLang
+      }
+    }
+  }
+  
+  const lang = langFromPath || (urlParams?.lang as Locale) || params?.lang || i18n.defaultLocale
   const { dictionary, loading } = useDictionaryLoader(lang)
   const direction = i18n.langDirection[lang] || 'ltr'
+  
+  // 开发环境调试信息
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[ClientLayout] Pathname:', pathname, 'Lang from path:', langFromPath, 'URL params lang:', urlParams?.lang, 'Final lang:', lang)
+  }
 
   // 如果还在加载中，显示加载状态
   if (loading || !dictionary) {

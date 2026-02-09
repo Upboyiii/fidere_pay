@@ -3,6 +3,29 @@
  */
 
 import { i18n } from '@configs/i18n'
+import type { Locale } from '@configs/i18n'
+
+/**
+ * 从当前浏览器路径中提取语言代码
+ * @returns 当前语言代码
+ */
+export const getCurrentLangFromPath = (): string => {
+  if (typeof window === 'undefined') {
+    return i18n.defaultLocale
+  }
+  
+  const pathname = window.location.pathname
+  const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+  
+  if (langMatch && langMatch[1]) {
+    const extractedLang = langMatch[1] as Locale
+    if (i18n.locales.includes(extractedLang)) {
+      return extractedLang
+    }
+  }
+  
+  return i18n.defaultLocale
+}
 
 /**
  * 为路径添加语言前缀

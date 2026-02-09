@@ -1,6 +1,7 @@
 // Type Imports
 import type { VerticalMenuDataType } from '@/types/menuTypes'
 import type { MenuNode } from '@/views/admin/authRoles/components/utils'
+import type { getDictionary } from '@/utils/getDictionary'
 import { buildMenuTree } from '@/views/admin/authRoles/components/utils'
 import { i18n } from '@configs/i18n'
 
@@ -32,15 +33,62 @@ const getCurrentLocale = (): string => {
 }
 
 /**
- * 根据当前语言获取菜单标题，支持向下兼容
+ * 将 name 值转换为翻译键格式
+ * 例如：AssetsMyAssets -> assetsMyAssets
+ */
+const convertNameToTranslationKey = (name: string): string => {
+  if (!name) return ''
+  // 将首字母转为小写
+  return name.charAt(0).toLowerCase() + name.slice(1)
+}
+
+/**
+ * 根据当前语言获取菜单标题，优先使用 name 值查找翻译
  * @param node - 菜单节点
+ * @param dictionary - 字典数据（可选）
  * @returns 菜单标题
  */
-const getMenuLabel = (node: MenuNode): string => {
+const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof getDictionary>>): string => {
+  // 1. 优先使用 name 值查找翻译（如果提供了字典）
+  if (dictionary && node.name && String(node.name).trim()) {
+    const navigationDict = dictionary.navigation as any
+    
+    // 尝试多种格式的翻译键
+    const nameStr = String(node.name).trim()
+    
+    // 1.1 尝试转换后的格式：AssetsMyAssets -> assetsMyAssets
+    const translationKey = convertNameToTranslationKey(nameStr)
+    if (navigationDict && navigationDict[translationKey]) {
+      return String(navigationDict[translationKey])
+    }
+    
+    // 1.2 尝试原始 name 值
+    if (navigationDict && navigationDict[nameStr]) {
+      return String(navigationDict[nameStr])
+    }
+    
+    // 1.3 尝试全小写格式：AssetsMyAssets -> assetsmyassets
+    const lowerKey = nameStr.toLowerCase()
+    if (navigationDict && navigationDict[lowerKey]) {
+      return String(navigationDict[lowerKey])
+    }
+    
+    // 调试日志（开发环境）
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      console.log('[Menu Label] 未找到翻译:', {
+        name: nameStr,
+        translationKey,
+        lowerKey,
+        availableKeys: navigationDict ? Object.keys(navigationDict).slice(0, 20) : [],
+        metaTitle: node.meta?.title
+      })
+    }
+  }
+
   const currentLocale = getCurrentLocale()
   const currentTitleKey = TITLE_KEY[currentLocale as keyof typeof TITLE_KEY] || 'title'
 
-  // 获取当前语言对应的标题字段值
+  // 2. 获取当前语言对应的标题字段值
   const currentTitle = (node as any)?.meta?.[currentTitleKey]
 
   // 如果当前语言的标题存在且不为空，直接返回
@@ -49,32 +97,51 @@ const getMenuLabel = (node: MenuNode): string => {
   }
 
   // 向下兼容：依次尝试其他语言的标题
-  // 1. 优先使用 title (中文，作为默认)
+  // 3. 如果提供了字典，尝试根据 meta.title 查找翻译（用于父级菜单）
+  if (dictionary && node?.meta?.title && String(node?.meta?.title).trim()) {
+    const metaTitle = String(node.meta.title).trim()
+    const navigationDict = dictionary.navigation as any
+    
+    // 根据中文标题查找对应的翻译键
+    const titleToKeyMap: Record<string, string> = {
+      '资产管理': 'assetManagement',
+      '全球汇款': 'globalRemittance',
+      '开发配置': 'development',
+      '设置': 'settings'
+    }
+    
+    const translationKey = titleToKeyMap[metaTitle]
+    if (translationKey && navigationDict && navigationDict[translationKey]) {
+      return String(navigationDict[translationKey])
+    }
+  }
+  
+  // 4. 优先使用 title (中文，作为默认)
   if (node?.meta?.title && String(node?.meta?.title).trim()) {
     return String(node?.meta?.title)
   }
 
-  // 2. 尝试 titleEn (英文)
+  // 5. 尝试 titleEn (英文)
   if ((node as any)?.meta?.titleEn && String((node as any)?.meta?.titleEn).trim()) {
     return String((node as any)?.meta?.titleEn)
   }
 
-  // 3. 尝试 titleTw (繁体)
+  // 6. 尝试 titleTw (繁体)
   if ((node as any)?.meta?.titleTw && String((node as any)?.meta?.titleTw).trim()) {
     return String((node as any)?.meta?.titleTw)
   }
 
-  // 4. 尝试 meta.title
+  // 7. 尝试 meta.title
   if (node.meta?.title && String(node.meta.title).trim()) {
     return String(node.meta.title)
   }
 
-  // 5. 尝试 label
+  // 8. 尝试 label
   if (node.label && String(node.label).trim()) {
     return String(node.label)
   }
 
-  // 6. 最后尝试 name
+  // 9. 最后尝试 name（作为后备）
   if (node.name && String(node.name).trim()) {
     return String(node.name)
   }
@@ -192,9 +259,13 @@ const shouldHideMenuByPath = (path: string | undefined): boolean => {
 /**
  * 将 API 返回的 menuList 转换为 VerticalMenuDataType 格式
  * @param menuList - API 返回的菜单列表（扁平数组）
+ * @param dictionary - 字典数据（可选，用于翻译菜单标题）
  * @returns 转换后的菜单数据
  */
-export const convertMenuListToVerticalMenu = (menuList: any[]): VerticalMenuDataType[] => {
+export const convertMenuListToVerticalMenu = (
+  menuList: any[],
+  dictionary?: Awaited<ReturnType<typeof getDictionary>>
+): VerticalMenuDataType[] => {
   if (!menuList || menuList?.length === 0) {
     return []
   }
@@ -217,8 +288,22 @@ export const convertMenuListToVerticalMenu = (menuList: any[]): VerticalMenuData
       return null
     }
 
-    // 根据当前语言获取菜单标题，支持向下兼容
-    const label = getMenuLabel(node)
+    // 根据当前语言获取菜单标题，优先使用 name 值查找翻译
+    const label = getMenuLabel(node, dictionary)
+    
+    // 调试日志（开发环境）- 特别关注父级菜单
+    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+      const hasChildren = node.children && node.children.length > 0
+      if (hasChildren) {
+        console.log('[Menu Converter] 父级菜单:', {
+          name: node.name,
+          label,
+          metaTitle: node.meta?.title,
+          path: node.path || node.linkUrl,
+          childrenCount: node.children?.length
+        })
+      }
+    }
 
     // 优先使用 meta.icon，其次使用 icon，如果都不存在则返回 undefined（不显示图标）
     const icon = node.meta?.icon || node.icon || undefined

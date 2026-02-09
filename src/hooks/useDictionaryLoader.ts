@@ -24,6 +24,9 @@ export function useDictionaryLoader(lang: Locale) {
       try {
         setError(null)
         setLoading(true)
+        // 先清空字典，确保语言切换时不会显示旧内容
+        setDictionary(null)
+        
         // 动态导入字典数据 - 根据语言代码选择正确的文件
         let dictModule
         if (lang === 'zh-Hant') {
@@ -37,6 +40,12 @@ export function useDictionaryLoader(lang: Locale) {
           dictModule = await import('@/data/dictionaries/zh-CN')
         }
         const dictData = dictModule.default
+        
+        // 开发环境调试信息
+        if (process.env.NODE_ENV === 'development') {
+          console.log('[DictionaryLoader] Loaded dictionary for lang:', lang, 'remittance.addRecipient:', dictData?.remittance?.addRecipient)
+        }
+        
         setDictionary(dictData)
       } catch (error) {
         console.error('Failed to load dictionary:', error)

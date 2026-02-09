@@ -104,7 +104,18 @@ export const navigation = {
     menuLevels: 'Menu Levels',
     menuLevel2: 'Menu Level 2',
     menuLevel3: 'Menu Level 3',
-    disabledMenu: 'Disabled Menu'
+    disabledMenu: 'Disabled Menu',
+    // 菜单名称翻译（基于接口返回的 name 值）
+    assetsMyAssets: 'My Assets',
+    assetsTransactions: 'Transaction History',
+    remittanceCreate: 'Create Remittance',
+    remittanceRecipients: 'Recipients',
+    remittanceRecords: 'Remittance Records',
+    settings: 'settings',
+    development: 'development',
+    // 父级菜单翻译
+    assetManagement: 'Asset Management',
+    globalRemittance: 'Global Remittance'
   },
   zh: {
     dashboards: '仪表板',
@@ -165,7 +176,18 @@ export const navigation = {
     wizardExamples: '向导示例',
     createDeal: '创建交易',
     propertyListing: '房产列表',
-    reactTable: 'React表格'
+    reactTable: 'React表格',
+    // 菜单名称翻译（基于接口返回的 name 值）
+    assetsMyAssets: '我的资产',
+    assetsTransactions: '交易流水',
+    remittanceCreate: '创建汇款',
+    remittanceRecipients: '收款人列表',
+    remittanceRecords: '汇款记录',
+    settings: '设置',
+    development: '开发配置',
+    // 父级菜单翻译
+    assetManagement: '资产管理',
+    globalRemittance: '全球汇款'
   },
   zhTW: {
     dashboards: '儀表板',
@@ -226,6 +248,17 @@ export const navigation = {
     wizardExamples: '精靈範例',
     createDeal: '建立交易',
     propertyListing: '房產列表',
-    reactTable: 'React表格'
+    reactTable: 'React表格',
+    // 菜单名称翻译（基于接口返回的 name 值）
+    assetsMyAssets: '我的資產',
+    assetsTransactions: '交易流水',
+    remittanceCreate: '創建匯款',
+    remittanceRecipients: '收款人列表',
+    remittanceRecords: '匯款記錄',
+    settings: '設定',
+    development: '開發配置',
+    // 父級菜單翻譯
+    assetManagement: '資產管理',
+    globalRemittance: '全球匯款'
   }
 } as const

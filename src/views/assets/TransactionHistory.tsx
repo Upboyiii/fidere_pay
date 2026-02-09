@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 
 // Next Imports
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -40,8 +40,21 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const TransactionHistory = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || 'zh-CN'
+  const t = useTranslate()
+  
+  // 根据当前语言设置日期格式化的 locale
+  const getDateLocale = () => {
+    if (currentLang === 'en') return 'en-US'
+    if (currentLang === 'zh-Hant') return 'zh-TW'
+    return 'zh-CN'
+  }
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [loading, setLoading] = useState(false)
@@ -112,7 +125,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
       setTotal(res.data?.total || 0)
     } catch (error) {
       console.error('加载交易记录失败:', error)
-      toast.error('加载交易记录失败')
+      toast.error(t('assets.loadTransactionsFailed'))
     } finally {
       setLoading(false)
     }
@@ -129,13 +142,13 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
 
   const getTypeLabel = (bizType: number) => {
     const typeMap: Record<number, string> = {
-      1: '充值',   // FundBizTypeRecharge
-      2: '转账',   // FundBizTypeTransfer
-      3: '提现',   // FundBizTypeWithdraw
-      4: '手续费', // FundBizTypeFee
-      5: '调账'    // FundBizTypeAdjust
+      1: t('assets.recharge'),   // FundBizTypeRecharge
+      2: t('assets.transfer'),   // FundBizTypeTransfer
+      3: t('assets.withdraw'),   // FundBizTypeWithdraw
+      4: t('assets.fee'), // FundBizTypeFee
+      5: t('assets.adjustment')    // FundBizTypeAdjust
     }
-    return typeMap[bizType] || '其他'
+    return typeMap[bizType] || t('assets.other')
   }
 
   return (
@@ -188,10 +201,10 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
           <Box>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              交易流水
+              {t('assets.transactionHistory')}
             </Typography>
             <Typography color='text.secondary'>
-              查看所有交易记录和流水明细
+              {t('assets.viewAllTransactions')}
             </Typography>
           </Box>
           {/* <Button
@@ -227,7 +240,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     />
                   </Grid> */}
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易类型</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.transactionType')}</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
                         value={filters.transactionType}
@@ -235,17 +248,17 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>全部类型</MenuItem>
-                        <MenuItem value='1'>充值</MenuItem>
-                        <MenuItem value='2'>转账</MenuItem>
-                        <MenuItem value='3'>提现</MenuItem>
-                        <MenuItem value='4'>手续费</MenuItem>
-                        <MenuItem value='5'>调账</MenuItem>
+                        <MenuItem value=''>{t('assets.allTypes')}</MenuItem>
+                        <MenuItem value='1'>{t('assets.recharge')}</MenuItem>
+                        <MenuItem value='2'>{t('assets.transfer')}</MenuItem>
+                        <MenuItem value='3'>{t('assets.withdraw')}</MenuItem>
+                        <MenuItem value='4'>{t('assets.fee')}</MenuItem>
+                        <MenuItem value='5'>{t('assets.adjustment')}</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>币种</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.currency')}</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
                         value={filters.currency}
@@ -253,7 +266,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择币种</MenuItem>
+                        <MenuItem value=''>{t('assets.selectCurrency')}</MenuItem>
                         {currencyList.map((currency, index) => (
                           <MenuItem key={`${currency.currencyCode}-${(currency as any).chain || index}`} value={currency.currencyCode}>
                             {currency.currencyCode}{(currency as any).chain ? `(${(currency as any).chain})` : ''}
@@ -263,7 +276,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>开始日期</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.startDate')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -274,7 +287,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>结束日期</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.endDate')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -299,7 +312,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   }}
                   sx={{ color: 'text.secondary' }}
                 >
-                  重置
+                  {t('assets.reset')}
                 </Button>
                 <Button 
                   variant='contained' 
@@ -312,7 +325,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   }}
                   disabled={loading}
                 >
-                  查询
+                  {t('assets.search')}
                 </Button>
                 {/* <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
                   收起
@@ -333,7 +346,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
               <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                交易记录
+                {t('assets.transactionRecords')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <IconButton size='small' onClick={() => loadTransactions()} disabled={loading}>
@@ -347,13 +360,13 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ border: 'none' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#fcfdfe' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>订单号</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易类型</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>备注</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.orderNo')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.transactionType')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.currency')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.amount')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.remark')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.status')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.createTime')}</th>
                     {/* <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th> */}
                   </tr>
                 </thead>
@@ -367,7 +380,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                   ) : transactions.length === 0 ? (
                     <tr>
                       <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                        暂无交易记录
+                        {t('assets.noTransactionRecords')}
                       </td>
                     </tr>
                   ) : (
@@ -410,7 +423,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td style={{ padding: '16px 24px' }}>
                           <Chip 
-                            label='成功' 
+                            label={t('assets.success')} 
                             size='small' 
                             color='success' 
                             sx={{ borderRadius: '6px', fontWeight: 600 }}
@@ -427,7 +440,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                               // 判断是秒级(10位)还是毫秒级(13位)时间戳
                               const ts = Number(timestamp)
                               const msTimestamp = ts > 9999999999 ? ts : ts * 1000
-                              return new Date(msTimestamp).toLocaleString('zh-CN', {
+                              return new Date(msTimestamp).toLocaleString(getDateLocale(), {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
@@ -456,7 +469,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
             </div>
             <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant='caption' color='text.disabled'>
-                共 {total} 条记录
+                {t('assets.totalRecords', { count: total })}
               </Typography>
               <TablePagination
                 component='div'

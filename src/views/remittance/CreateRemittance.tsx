@@ -1,13 +1,13 @@
 'use client'
 
 // React Imports
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
 // Next Imports
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -61,9 +61,34 @@ import { useTranslate } from '@/contexts/DictionaryContext'
 const CreateRemittance = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
-  const currentLang = (params?.lang as string) || undefined
+  const pathname = usePathname()
+  
+  // 使用 useMemo 确保 currentLang 随着 pathname 的变化而更新
+  const currentLang = useMemo(() => {
+    // 从路径中提取语言，确保获取当前页面的语言
+    if (pathname) {
+      const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+      if (langMatch && langMatch[1]) {
+        return langMatch[1]
+      }
+    }
+    // 如果路径中没有语言，则使用 params
+    return (params?.lang as string) || undefined
+  }, [pathname, params?.lang])
+  
   const t = useTranslate()
   const [activeStep, setActiveStep] = useState(0)
+  
+  // 开发环境调试信息 - 在组件挂载时输出
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[CreateRemittance] Component mounted/updated:', { 
+        pathname, 
+        paramsLang: params?.lang, 
+        extractedLang: currentLang 
+      })
+    }
+  }, [pathname, params?.lang, currentLang])
   const [payCurrency, setPayCurrency] = useState('USDT-TRC20') // 默认 USDT-TRC20
   const [receiveCurrency, setReceiveCurrency] = useState('USD')
   const [payAmount, setPayAmount] = useState('')
@@ -441,13 +466,29 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       />
 
       <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
+        {/* 开发环境调试信息 */}
+        {process.env.NODE_ENV === 'development' && (
+          <Grid size={{ xs: 12 }}>
+            <Box sx={{ 
+              p: 2, 
+              bgcolor: 'warning.main', 
+              color: 'white', 
+              borderRadius: 2,
+              mb: 2,
+              fontSize: '0.875rem',
+              fontFamily: 'monospace'
+            }}>
+              <strong>DEBUG:</strong> pathname={pathname} | currentLang={currentLang} | params.lang={params?.lang as string}
+            </Box>
+          </Grid>
+        )}
         <Grid size={{ xs: 12 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              发起全球汇款
+              {t('remittance.createRemittance')}
             </Typography>
             <Typography color='text.secondary'>
-              安全、快捷地向全球各地发送资金
+              {t('remittance.createRemittanceDesc')}
             </Typography>
           </Box>
         </Grid>
@@ -504,7 +545,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                               <MenuItem value='USDT'>{t('remittance.loading')}</MenuItem>
                             ) : usdtAsset ? (
                               <MenuItem value={usdtAsset.currencyCode}>
-                                {usdtAsset.currencyCode} - 可用: ${usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
+                                {usdtAsset.currencyCode} - {t('remittance.available')}: ${usdtBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                               </MenuItem>
                             ) : (
                               <MenuItem value='USDT'>USDT - 0.00</MenuItem>
@@ -626,24 +667,37 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         <i className='ri-user-add-line text-4xl' />
                       </Box>
                       <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
-                        暂无收款人
+                        {t('remittance.noRecipients')}
                       </Typography>
                       <Typography variant='body2' color='text.secondary' sx={{ mb: 4 }}>
-                        您还没有添加收款人，请先添加收款人后再进行汇款
+                        {t('remittance.noRecipientsDesc')}
                       </Typography>
                       <Button
                         variant='contained'
                         startIcon={<i className='ri-add-line' />}
-                        onClick={() => router.push(getLocalizedPath('/remittance/recipients/new', currentLang))}
+                        onClick={() => {
+                          // 实时获取当前语言，避免闭包问题
+                          const realTimeLang = getCurrentLangFromPath()
+                          const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
+                          if (process.env.NODE_ENV === 'development') {
+                            console.log('[CreateRemittance] Navigate to recipients/new:', { 
+                              realTimeLang, 
+                              currentLang, 
+                              pathname, 
+                              targetPath 
+                            })
+                          }
+                          router.push(targetPath)
+                        }}
                         sx={{ borderRadius: '8px', px: 6 }}
                       >
-                        添加收款人
+                        {t('remittance.addRecipient')}
                       </Button>
                     </Box>
                   ) : (
                     <>
                       {/* 收款人选择下拉 */}
-                      <FormControl fullWidth sx={{ mb: 4 }}>
+                      <FormControl fullWidth sx={{ mb: 2 }}>
                         <Select
                           value={selectedRecipientId || ''}
                           onChange={(e) => setSelectedRecipientId(typeof e.target.value === 'number' ? e.target.value : (e.target.value ? parseInt(e.target.value) : null))}
@@ -667,6 +721,38 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           ))}
                         </Select>
                       </FormControl>
+                      
+                      {/* 添加新收款人链接 */}
+                      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                          variant='text'
+                          size='small'
+                          startIcon={<i className='ri-add-line' />}
+                          onClick={() => {
+                            // 实时获取当前语言，避免闭包问题
+                            const realTimeLang = getCurrentLangFromPath()
+                            const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
+                            if (process.env.NODE_ENV === 'development') {
+                              console.log('[CreateRemittance] Navigate to recipients/new:', { 
+                                realTimeLang, 
+                                currentLang, 
+                                pathname, 
+                                targetPath 
+                              })
+                            }
+                            router.push(targetPath)
+                          }}
+                          sx={{
+                            color: 'primary.main',
+                            textTransform: 'none',
+                            '&:hover': {
+                              bgcolor: 'primary.lightOpacity'
+                            }
+                          }}
+                        >
+                          {t('remittance.addNewRecipient')}
+                        </Button>
+                      </Box>
 
                       {/* 只有选择了收款人才显示详细信息 */}
                       {selectedRecipient && (
@@ -808,21 +894,21 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           <>
                             <CircularProgress size={48} sx={{ mb: 2 }} />
                             <Typography variant='body1' sx={{ fontWeight: 500, color: 'text.primary' }}>
-                              上传中...
+                              {t('remittance.uploading')}
                             </Typography>
                           </>
                         ) : (
                           <>
                             <i className='ri-cloud-upload-line text-5xl text-primary mb-4' />
                             <Typography variant='body1' sx={{ fontWeight: 500, mb: 3, color: 'text.primary' }}>
-                              点击或拖拽文件到此处上传
+                              {t('remittance.clickOrDragToUpload')}
                             </Typography>
                             <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.875rem' }}>
-                              支持格式:{' '}
+                              {t('remittance.supportedFormats')}{' '}
                               <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
                                 zip, pdf, doc, docx, png, jpg
                               </Typography>
-                              {' '}(最大{' '}
+                              {' '}({t('remittance.maxSize')}{' '}
                               <Typography component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>
                                 5MB
                               </Typography>
@@ -864,7 +950,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             {uploadedFile.name}
                           </Typography>
                           <Typography variant='caption' color='text.secondary'>
-                            上传成功
+                            {t('remittance.uploadSuccess')}
                           </Typography>
                         </Box>
                       </Box>
@@ -889,8 +975,8 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 <CardHeader
                   title={
                     <Box>
-                      <Typography variant='h6' sx={{ fontWeight: 700 }}>备注信息</Typography>
-                      <Typography variant='body2' color='text.secondary'>(可选)</Typography>
+                      <Typography variant='h6' sx={{ fontWeight: 700 }}>{t('remittance.memoInfo')}</Typography>
+                      <Typography variant='body2' color='text.secondary'>{t('remittance.optional')}</Typography>
                     </Box>
                   }
                   avatar={<i className='ri-file-edit-line text-primary text-xl' />}
@@ -902,7 +988,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                       fullWidth
                       multiline
                       rows={4}
-                      placeholder='请输入汇款备注,如用途说明等'
+                      placeholder={t('remittance.enterMemoPlaceholder')}
                       value={memo}
                       onChange={(e) => {
                         const value = e.target.value
@@ -929,14 +1015,14 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               {/* 手续费明细 */}
               <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)', mb: 4 }}>
                 <CardHeader
-                  title='手续费明细'
+                  title={t('remittance.feeDetails')}
                   titleTypographyProps={{ sx: { fontWeight: 700 } }}
                   avatar={<i className='ri-file-list-3-line text-primary text-xl' />}
                 />
                 <Divider sx={{ borderColor: 'rgba(0,0,0,0.05)' }} />
                 <CardContent className='flex flex-col gap-4 py-6'>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' color='text.secondary'>固定费用</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.fixedFee')}</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {feeConfigLoading ? (
                         <CircularProgress size={16} />
@@ -948,7 +1034,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' color='text.secondary'>收费比例</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.feeRate')}</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {feeConfigLoading ? (
                         <CircularProgress size={16} />
@@ -963,7 +1049,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     <>
                       <Divider sx={{ my: 2 }} />
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant='body2' sx={{ fontWeight: 600 }}>总手续费</Typography>
+                        <Typography variant='body2' sx={{ fontWeight: 600 }}>{t('remittance.totalFee')}</Typography>
                         <Typography variant='body2' sx={{ fontWeight: 700, color: 'primary.main' }}>
                           {fee.toFixed(4)} USDT
                         </Typography>
@@ -973,13 +1059,13 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <Divider sx={{ my: 2 }} />
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     <Typography variant='caption' color='text.secondary'>
-                      • 汇款手续费:基础服务费用
+                      • {t('remittance.feeDescription')}
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      • 电报费:银行间通讯费用
+                      • {t('remittance.telegramFee')}
                     </Typography>
                     <Typography variant='caption' color='text.secondary'>
-                      • 费用标准透明,无隐藏收费
+                      • {t('remittance.feeTransparent')}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -998,7 +1084,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     {t('remittance.expectedArrivalTime')}
                   </Typography>
                   <Typography variant='caption' color='text.secondary'>
-                    具体时间取决于收款银行处理速度
+                    {t('remittance.arrivalTimeNote')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -1006,7 +1092,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               {/* 费用总览 */}
               <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
                 <CardHeader
-                  title='费用总览'
+                  title={t('remittance.feeOverview')}
                   titleTypographyProps={{ sx: { fontWeight: 700 } }}
                   avatar={<i className='ri-calculator-line text-primary text-xl' />}
                 />
@@ -1019,7 +1105,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' color='text.secondary'>手续费</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.fee')}</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       {feeConfigLoading ? (
                         <CircularProgress size={16} />
@@ -1032,13 +1118,13 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Divider sx={{ my: 2 }} />
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>您需支付总额</Typography>
+                    <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>{t('remittance.totalAmountToPay')}</Typography>
                     <Typography variant='h6' sx={{ fontWeight: 800, color: 'primary.main' }}>
                       {payAmount ? (parseFloat(payAmount) + fee).toFixed(4) : '0.00'} USDT
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2 }}>
-                    <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>对方实际收到</Typography>
+                    <Typography variant='subtitle1' sx={{ fontWeight: 700 }}>{t('remittance.theyReceive')}</Typography>
                     <Typography variant='h6' sx={{ fontWeight: 800, color: 'success.main' }}>
                       {receiveAmount || '0.00'} USD
                     </Typography>
@@ -1070,11 +1156,11 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>{payAmount || '0'} {payCurrency}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-                    <Typography variant='body2' color='text.secondary'>汇率</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.exchangeRate')}</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>1 {payCurrency} = {exchangeRate.toFixed(4)} {receiveCurrency}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 4 }}>
-                    <Typography variant='body2' color='text.secondary'>收款金额</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.recipientAmount')}</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700, color: 'success.main' }}>{receiveAmount || '0.00'} {receiveCurrency}</Typography>
                   </Box>
                   {selectedRecipient && (
@@ -1084,7 +1170,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     </Box>
                   )}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography variant='body2' color='text.secondary'>手续费</Typography>
+                    <Typography variant='body2' color='text.secondary'>{t('remittance.fee')}</Typography>
                     <Typography variant='body2' sx={{ fontWeight: 700 }}>
                       {feeConfigLoading ? <CircularProgress size={16} /> : `${feeRate > 0 ? feeRate.toFixed(2) : '0'}%`}
                     </Typography>
@@ -1105,8 +1191,8 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     <Box sx={{ width: 80, height: 80, borderRadius: '50%', bgcolor: 'warning.lightOpacity', color: 'warning.main', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 3 }}>
                       <i className='ri-shield-keyhole-line text-4xl' />
                     </Box>
-                    <Typography variant='h5' sx={{ fontWeight: 700, mb: 2 }}>安全验证</Typography>
-                    <Typography color='text.secondary'>为了保护您的资金安全，请输入支付密码完成验证</Typography>
+                    <Typography variant='h5' sx={{ fontWeight: 700, mb: 2 }}>{t('remittance.stepSecurity')}</Typography>
+                    <Typography color='text.secondary'>{t('remittance.securityVerificationDesc')}</Typography>
                   </Box>
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -1162,8 +1248,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             variant='outlined'
                             color='warning'
                             onClick={() => {
-                              const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
-                              router.push(settingsPath)
+                              router.push(getLocalizedPath('/settings', currentLang))
                             }}
                             sx={{ mt: 1, borderRadius: '6px', alignSelf: 'flex-start' }}
                           >
@@ -1203,7 +1288,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               sx={{ borderRadius: '8px', px: 10, fontWeight: 700 }}
               startIcon={(submitting || stepLoading) ? <CircularProgress size={20} color='inherit' /> : null}
             >
-              {activeStep === steps.length - 1 ? (submitting ? '提交中...' : '确认提交') : (stepLoading ? '加载中...' : '下一步')}
+              {activeStep === steps.length - 1 ? (submitting ? t('remittance.submitting') : t('remittance.confirmSubmit')) : (stepLoading ? t('remittance.loading') : t('remittance.nextStep'))}
             </Button>
           </Box>
         </Grid>
@@ -1239,7 +1324,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             }}
           >
             <CircularProgress size={40} />
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>加载中...</Typography>
+            <Typography variant='body2' sx={{ fontWeight: 500 }}>{t('remittance.loading')}</Typography>
           </Box>
         </Box>
       )}
@@ -1270,7 +1355,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               <i className='ri-shield-keyhole-line' style={{ fontSize: '20px', color: 'text.secondary' }} />
             </Box>
             <Typography variant='h6' sx={{ fontWeight: 600 }}>
-              需要完成安全设置
+              {t('remittance.securityCheckTitle')}
             </Typography>
           </Box>
         </DialogTitle>
@@ -1319,17 +1404,17 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant='body2' sx={{ fontWeight: 600, mb: 0.5 }}>
-                    支付密码
+                    {t('remittance.paymentPassword')}
                   </Typography>
                   <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem' }}>
-                    {payPasswordSet ? '已设置' : '未设置 · 必需'}
+                    {payPasswordSet ? t('remittance.alreadySet') : t('remittance.notSetRequired')}
                   </Typography>
                 </Box>
                 {payPasswordSet ? (
                   <i className='ri-checkbox-circle-fill' style={{ fontSize: '20px', color: '#4CAF50' }} />
                 ) : (
                   <Chip
-                    label='必需'
+                    label={t('remittance.required')}
                     size='small'
                     sx={{
                       height: 24,
@@ -1378,10 +1463,10 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography variant='body2' sx={{ fontWeight: 600, mb: 0.5 }}>
-                    Google验证器
+                    {t('remittance.googleAuthenticator')}
                   </Typography>
                   <Typography variant='caption' color='text.secondary' sx={{ fontSize: '0.75rem' }}>
-                    {googleAuthBound ? '已绑定' : '未绑定 · 推荐'}
+                    {googleAuthBound ? t('remittance.alreadyBound') : t('remittance.notBoundRecommended')}
                   </Typography>
                 </Box>
                 {googleAuthBound ? (
@@ -1421,8 +1506,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             color='primary'
             onClick={() => {
               setSecurityCheckDialogOpen(false)
-              const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
-              router.push(settingsPath)
+              router.push(getLocalizedPath('/settings', currentLang))
             }}
             sx={{
               borderRadius: '8px',

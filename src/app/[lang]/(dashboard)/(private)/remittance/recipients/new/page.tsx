@@ -6,13 +6,26 @@ import EditRecipient from '@views/remittance/EditRecipient'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '新增收款人',
-  description: '添加新的收款人信息'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
 }
 
-const NewRecipientPage = async () => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dictionary = await getDictionary(lang)
+  
+  return {
+    title: dictionary.remittance.addRecipient,
+    description: dictionary.remittance.manageRecipientsDesc
+  }
+}
+
+const NewRecipientPage = async (props: Props) => {
   // Vars
   const mode = await getServerMode()
 

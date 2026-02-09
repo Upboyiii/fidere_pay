@@ -36,6 +36,9 @@ import type { Mode } from '@core/types'
 import { getUserTransferList, getTransferDetail, downloadTransferPdf, type TransferDetailItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 // Utils Imports
 import { TokenManager } from '@/utils/tokenManager'
 
@@ -59,6 +62,15 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
   const currentLang = (params?.lang as string) || undefined
+  const t = useTranslate()
+  
+  // 根据当前语言设置日期格式化的 locale
+  const getDateLocale = () => {
+    if (currentLang === 'en') return 'en-US'
+    if (currentLang === 'zh-Hant') return 'zh-TW'
+    return 'zh-CN'
+  }
+  
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [loading, setLoading] = useState(false)
@@ -112,7 +124,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
       setTotal(responseData?.total || responseData?.data?.total || 0)
     } catch (error) {
       console.error('加载汇款记录失败:', error)
-      toast.error('加载汇款记录失败')
+      toast.error(t('remittance.loadRecordsFailed'))
     } finally {
       setLoading(false)
     }
@@ -125,13 +137,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
 
   const getStatusLabel = (status: number) => {
     const statusMap: Record<number, string> = {
-      0: '待确认',
-      1: '处理中',
-      2: '付款成功',
-      3: '已驳回',
-      4: '失败'
+      0: t('remittance.pending'),
+      1: t('remittance.processing'),
+      2: t('remittance.paymentSuccess'),
+      3: t('remittance.rejected'),
+      4: t('remittance.failed')
     }
-    return statusMap[status] || '未知'
+    return statusMap[status] || t('common.unknown')
   }
 
   const getStatusColor = (status: number) => {
@@ -151,7 +163,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
       setSelectedRecord(detail as TransferDetailItem)
     } catch (error) {
       console.error('获取转账详情失败:', error)
-      toast.error('获取转账详情失败')
+      toast.error(t('remittance.getDetailFailed'))
       // 如果接口失败，使用列表中的数据作为兜底
       setSelectedRecord(record)
     } finally {
@@ -161,13 +173,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
 
   const getRemitTypeLabel = (type: number) => {
     // 根据 JSON 数据，remitType: 2 表示 SWIFT
-    return type === 2 ? 'SWIFT' : type === 1 ? '本地汇款' : 'SWIFT'
+    return type === 2 ? 'SWIFT' : type === 1 ? t('remittance.localRemittance') : 'SWIFT'
   }
 
   const formatTimestamp = (timestamp?: number) => {
     if (!timestamp) return '-'
     const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-    return new Date(ms).toLocaleString('zh-CN', {
+    return new Date(ms).toLocaleString(getDateLocale(), {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -221,16 +233,16 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
       const url = window.URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
-      link.download = `转账记录_${applyNo}.pdf`
+      link.download = `${t('remittance.transferRecord')}_${applyNo}.pdf`
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
       window.URL.revokeObjectURL(url)
       
-      toast.success('下载成功')
+      toast.success(t('remittance.downloadSuccess'))
     } catch (error) {
       console.error('下载失败:', error)
-      toast.error(error instanceof Error ? error.message : '下载失败')
+      toast.error(error instanceof Error ? error.message : t('remittance.downloadFailed'))
     }
   }
 
@@ -286,10 +298,10 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box>
               <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-                汇款记录
+                {t('remittance.remittanceRecords')}
               </Typography>
               <Typography color='text.secondary'>
-                查看和追踪您的所有跨境汇款订单
+                {t('remittance.viewAllRemittancesDesc')}
               </Typography>
             </Box>
             <Button 
@@ -298,7 +310,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               onClick={() => router.push(getLocalizedPath('/remittance/create', currentLang))}
               sx={{ borderRadius: '8px', px: 6 }}
             >
-              发起新汇款
+              {t('remittance.createNewRemittance')}
             </Button>
           </Box>
         </Grid>
@@ -316,18 +328,18 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <CardContent>
                 <Grid container spacing={4}>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.transactionId')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入交易ID'
+                      placeholder={t('remittance.enterTransactionId')}
                       value={filters.applyNo}
                       onChange={(e) => setFilters({ ...filters, applyNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>订单状态</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.orderStatus')}</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
                         value={filters.status}
@@ -335,17 +347,17 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value='-1'>全部</MenuItem>
-                        <MenuItem value='0'>待确认</MenuItem>
-                        <MenuItem value='1'>处理中</MenuItem>
-                        <MenuItem value='2'>付款成功</MenuItem>
-                        <MenuItem value='3'>已驳回</MenuItem>
-                        <MenuItem value='4'>失败</MenuItem>
+                        <MenuItem value='-1'>{t('remittance.allOrders')}</MenuItem>
+                        <MenuItem value='0'>{t('remittance.pending')}</MenuItem>
+                        <MenuItem value='1'>{t('remittance.processing')}</MenuItem>
+                        <MenuItem value='2'>{t('remittance.paymentSuccess')}</MenuItem>
+                        <MenuItem value='3'>{t('remittance.rejected')}</MenuItem>
+                        <MenuItem value='4'>{t('remittance.failed')}</MenuItem>
                       </Select>
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>订单时间</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.orderTime')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -356,7 +368,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>订单时间</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.orderTime')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -381,7 +393,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   }}
                   sx={{ color: 'text.secondary' }}
                 >
-                  重置
+                  {t('common.reset')}
                 </Button>
                 <Button 
                   variant='contained' 
@@ -391,7 +403,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   disabled={loading}
                   sx={{ borderRadius: '8px', px: 6 }}
                 >
-                  查询
+                  {t('common.search')}
                 </Button>
                 {/* <Button variant='text' size='small' onClick={() => setShowFilters(false)} startIcon={<i className='ri-arrow-up-line' />}>
                   收起
@@ -412,7 +424,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
               <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                所有汇款订单
+                {t('remittance.allRemittanceOrders')}
               </Typography>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <IconButton size='small' onClick={() => loadRecords()} disabled={loading}>
@@ -445,14 +457,14 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ border: 'none', minWidth: '1000px' }}>
                 <thead>
                   <tr style={{ backgroundColor: '#fcfdfe' }}>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款方名称</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>扣款金额</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>收款金额</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>汇款方式</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('remittance.payeeName')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('remittance.deductionAmount')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('remittance.receiveAmount')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('remittance.remittanceMethod')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('common.status')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('common.createTime')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('remittance.transactionId')}</th>
+                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -465,7 +477,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   ) : records.length === 0 ? (
                     <tr>
                       <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                        暂无汇款记录
+                        {t('remittance.noRemittanceRecords')}
                       </td>
                     </tr>
                   ) : (
@@ -480,14 +492,14 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                           <td style={{ padding: '16px 24px' }}>
                             <Box>
                               <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.primary', mb: 0.5 }}>
-                                收款人: {payeeName}
+                                {t('remittance.payee')}: {payeeName}
                               </Typography>
                               <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>
-                                银行账号: {payeeAccountNo}
+                                {t('remittance.bankAccount')}: {payeeAccountNo}
                               </Typography>
                               {payeeSwiftCode && (
                                 <Typography variant='caption' color='text.secondary' sx={{ display: 'block' }}>
-                                  SWIFT: {payeeSwiftCode}
+                                  {t('remittance.swiftCode')}: {payeeSwiftCode}
                                 </Typography>
                               )}
                             </Box>
@@ -532,7 +544,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                               sx={{ fontWeight: 600 }}
                               onClick={() => handleViewDetail(record)}
                             >
-                              详情
+                              {t('remittance.detail')}
                             </Button>
                           </td>
                         </tr>
@@ -544,7 +556,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
             </Box>
             <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Typography variant='caption' color='text.disabled'>
-                共 {total} 条记录
+                {t('remittance.totalRecords', { count: total })}
               </Typography>
               <TablePagination
                 component='div'
@@ -584,7 +596,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
           <Box sx={{ px: 5, py: 4, borderBottom: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant='h6' sx={{ fontWeight: 600, fontSize: '18px' }}>
-                汇款订单详情
+                {t('remittance.orderDetail')}
               </Typography>
               <IconButton 
                 onClick={() => setDrawerOpen(false)} 
@@ -651,7 +663,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               >
                 <Box sx={{ flex: 1 }}>
                   <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
-                    支付金额
+                    {t('remittance.paymentAmount')}
                   </Typography>
                   <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#000', fontFamily: 'monospace' }}>
                     {selectedRecord.currencyCode} {selectedRecord.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -674,13 +686,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     <i className='ri-arrow-right-line' style={{ color: 'white', fontSize: '24px' }} />
                   </Box>
                   <Typography variant='caption' sx={{ fontSize: '11px', color: '#8c8c8c', textAlign: 'center', lineHeight: 1.3 }}>
-                    汇率<br />{selectedRecord.exchangeRate.toFixed(4)}
+                    {t('remittance.exchangeRate')}<br />{selectedRecord.exchangeRate.toFixed(4)}
                   </Typography>
                 </Box>
 
                 <Box sx={{ flex: 1, textAlign: 'right' }}>
                   <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
-                    到账金额
+                    {t('remittance.arrivalAmount')}
                   </Typography>
                   <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#52c41a', fontFamily: 'monospace' }}>
                     {selectedRecord.receiveCurrencyCode} {(selectedRecord.receiveAmount || (selectedRecord.transferAmount * selectedRecord.exchangeRate)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -751,15 +763,15 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
 
               {/* 收款人信息 */}
               <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                收款人信息
+                {t('remittance.payeeInfo')}
               </Typography>
               <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人姓名：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.payeeNameLabel')}：</Typography>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontWeight: 600 }}>{selectedRecord.payeeInfo?.accountName || '-'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>收款人ID：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.payeeId')}：</Typography>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontFamily: 'monospace' }}>{selectedRecord.payeeId}</Typography>
                 </Box>
               </Box>
@@ -768,24 +780,24 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
                 <>
                   <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                    审核信息
+                    {t('remittance.auditInfo')}
                   </Typography>
                   <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
                     {selectedRecord.auditRemark && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核备注：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditRemark')}：</Typography>
                         <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
                       </Box>
                     )}
                     {(selectedRecord.auditTime ?? 0) > 0 && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核时间：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditTime')}：</Typography>
                         <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
                       </Box>
                     )}
                     {(selectedRecord.completeTime ?? 0) > 0 && (
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>完成时间：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.completeTime')}：</Typography>
                         <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
                       </Box>
                     )}
@@ -796,11 +808,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               {/* 交易材料 */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                  交易材料
+                  {t('remittance.transactionMaterials')}
                 </Typography>
                 <Box sx={{ bgcolor: '#fff', borderRadius: '8px', p: 3, mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>交易凭证</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{t('remittance.transactionVoucher')}</Typography>
                     <Button
                       variant='contained'
                       size='small'
@@ -832,13 +844,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         }
                       }}
                     >
-                      下载材料
+                      {t('remittance.downloadMaterial')}
                     </Button>
                   </Box>
                 </Box>
                 {!selectedRecord.transactionMaterial && (
                   <Typography variant='caption' sx={{ fontSize: '12px', color: '#8c8c8c', display: 'block', pl: 1 }}>
-                    暂无材料
+                    {t('remittance.noMaterial')}
                   </Typography>
                 )}
               </Box>
@@ -846,11 +858,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
               {/* 回执单 */}
               <Box>
                 <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                  回执单
+                  {t('remittance.receipt')}
                 </Typography>
                 <Box sx={{ bgcolor: 'background.paper', borderRadius: '8px', p: 3, mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>汇款回执单</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{t('remittance.remittanceReceipt')}</Typography>
                     <Button
                       variant='contained'
                       size='small'
@@ -860,7 +872,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         if (selectedRecord.status === 2) {
                           handleDownloadPdf(selectedRecord.applyNo)
                         } else {
-                          toast.info('只有已完成的订单才能下载回执单')
+                          toast.info(t('remittance.onlyCompletedCanDownload'))
                         }
                       }}
                       sx={{ 
@@ -883,13 +895,13 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                         }
                       }}
                     >
-                      下载回执单
+                      {t('remittance.downloadReceipt')}
                     </Button>
                   </Box>
                 </Box>
                 {!selectedRecord.receiptUrl && (
                   <Typography variant='caption' sx={{ fontSize: '12px', color: 'text.disabled', display: 'block', pl: 1 }}>
-                    回执单将在汇款完成后生成
+                    {t('remittance.receiptWillGenerate')}
                   </Typography>
                 )}
               </Box>
@@ -916,7 +928,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   }
                 }}
               >
-                取消
+                {t('common.cancel')}
               </Button>
               <Button
                 variant='contained'
@@ -936,7 +948,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   }
                 }}
               >
-                确认
+                {t('remittance.confirm')}
               </Button>
             </Box>
           </>

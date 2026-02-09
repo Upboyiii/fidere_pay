@@ -1,14 +1,14 @@
 'use client'
 
 // React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 
 // Next Imports
-import { useRouter, useParams } from 'next/navigation'
+import { useRouter, useParams, usePathname } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -53,7 +53,21 @@ import { useTranslate } from '@/contexts/DictionaryContext'
 const MyAssets = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
-  const currentLang = (params?.lang as string) || undefined
+  const pathname = usePathname()
+  
+  // 使用 useMemo 确保 currentLang 随着 pathname 的变化而更新
+  const currentLang = useMemo(() => {
+    // 从路径中提取语言，确保获取当前页面的语言
+    if (pathname) {
+      const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+      if (langMatch && langMatch[1]) {
+        return langMatch[1]
+      }
+    }
+    // 如果路径中没有语言，则使用 params
+    return (params?.lang as string) || undefined
+  }, [pathname, params?.lang])
+  
   const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -490,7 +504,20 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               },
               border: '1px solid rgba(0,0,0,0.05)'
             }}
-            onClick={() => router.push(getLocalizedPath('/remittance/recipients/new', currentLang))}
+            onClick={() => {
+              // 实时获取当前语言，避免闭包问题
+              const realTimeLang = getCurrentLangFromPath()
+              const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[MyAssets] Navigate to recipients/new:', { 
+                  realTimeLang, 
+                  currentLang, 
+                  pathname, 
+                  targetPath 
+                })
+              }
+              router.push(targetPath)
+            }}
           >
             {/* 背景装饰 - 人物连接网络图标 */}
             <Box

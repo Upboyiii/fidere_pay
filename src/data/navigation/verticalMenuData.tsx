@@ -110,33 +110,33 @@ const verticalMenuData = (
       href: '/operation/clients'
     },
     {
-      label: '资产管理',
+      label: dictionary?.navigation?.assetManagement || '资产管理',
       icon: 'ri-wallet-line',
       children: [
         {
-          label: '我的资产',
+          label: dictionary?.navigation?.assetsMyAssets || '我的资产',
           href: '/assets/my-assets'
         },
         {
-          label: '交易流水',
+          label: dictionary?.navigation?.assetsTransactions || '交易流水',
           href: '/assets/transactions'
         }
       ]
     },
     {
-      label: '全球汇款',
+      label: dictionary?.navigation?.globalRemittance || '全球汇款',
       icon: 'ri-global-line',
       children: [
         {
-          label: '创建汇款',
+          label: dictionary?.navigation?.remittanceCreate || '创建汇款',
           href: '/remittance/create'
         },
         {
-          label: '收款人列表',
+          label: dictionary?.navigation?.remittanceRecipients || '收款人列表',
           href: '/remittance/recipients'
         },
         {
-          label: '汇款记录',
+          label: dictionary?.navigation?.remittanceRecords || '汇款记录',
           href: '/remittance/records'
         }
       ]
@@ -181,39 +181,39 @@ const verticalMenuData = (
   // KYC角色的硬编码菜单
   const kycHardcodedMenu: VerticalMenuDataType[] = [
     {
-      label: '资产管理',
+      label: dictionary?.navigation?.assetManagement || '资产管理',
       icon: 'ri-wallet-line',
       children: [
         {
-          label: '我的资产',
+          label: dictionary?.navigation?.assetsMyAssets || '我的资产',
           href: '/assets/my-assets'
         },
         {
-          label: '交易流水',
+          label: dictionary?.navigation?.assetsTransactions || '交易流水',
           href: '/assets/transactions'
         }
       ]
     },
     {
-      label: '全球汇款',
+      label: dictionary?.navigation?.globalRemittance || '全球汇款',
       icon: 'ri-global-line',
       children: [
         {
-          label: '创建汇款',
+          label: dictionary?.navigation?.remittanceCreate || '创建汇款',
           href: '/remittance/create'
         },
         {
-          label: '收款人列表',
+          label: dictionary?.navigation?.remittanceRecipients || '收款人列表',
           href: '/remittance/recipients'
         },
         {
-          label: '汇款记录',
+          label: dictionary?.navigation?.remittanceRecords || '汇款记录',
           href: '/remittance/records'
         }
       ]
     },
     {
-      label: '开发配置',
+      label: dictionary?.navigation?.development || '开发配置',
       icon: 'ri-code-line',
       href: '/development'
     }
@@ -258,8 +258,8 @@ const verticalMenuData = (
       }
     }
 
-    // 转换菜单格式
-    const dynamicMenu = convertMenuListToVerticalMenu(filteredMenuList)
+    // 转换菜单格式，传递字典用于翻译
+    const dynamicMenu = convertMenuListToVerticalMenu(filteredMenuList, dictionary)
     
     // 如果动态菜单不为空，返回动态菜单
     if (dynamicMenu && dynamicMenu.length > 0) {

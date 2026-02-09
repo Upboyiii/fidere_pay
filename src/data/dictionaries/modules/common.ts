@@ -30,7 +30,10 @@ export const common = {
     info: 'Info',
     actions: 'Actions',
     close: 'Close',
-    pass: 'Pass'
+    pass: 'Pass',
+    status: 'Status',
+    createTime: 'Create Time',
+    unknown: 'Unknown'
   },
   zh: {
     search: '搜索',
@@ -59,7 +62,10 @@ export const common = {
     info: '信息',
     actions: '操作',
     close: '关闭',
-    pass: '通过'
+    pass: '通过',
+    status: '状态',
+    createTime: '创建时间',
+    unknown: '未知'
   },
   zhTW: {
     search: '搜尋',
@@ -88,6 +94,9 @@ export const common = {
     info: '資訊',
     actions: '操作',
     close: '關閉',
-    pass: '通過'
+    pass: '通過',
+    status: '狀態',
+    createTime: '創建時間',
+    unknown: '未知'
   }
 } as const
