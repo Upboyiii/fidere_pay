@@ -117,8 +117,10 @@ export const navigation = {
     assetManagement: 'Asset Management',
     globalRemittance: 'Global Remittance',
     // 管理配置页面翻译
+    adminConfiguration: 'Administrator Configuration',
     adminTransfer: 'Transfer Management',
     adminFinancial: 'Financial Records',
+    adminRecharge: 'Recharge Management',
     adminCallbackAddress: 'Callback Address'
   },
   zh: {
@@ -193,8 +195,10 @@ export const navigation = {
     assetManagement: '资产管理',
     globalRemittance: '全球汇款',
     // 管理配置页面翻译
+    adminConfiguration: '管理员配置',
     adminTransfer: '转账管理',
     adminFinancial: '资金流水',
+    adminRecharge: '充值管理',
     adminCallbackAddress: '回调地址'
   },
   zhTW: {
@@ -269,8 +273,10 @@ export const navigation = {
     assetManagement: '資產管理',
     globalRemittance: '全球匯款',
     // 管理配置頁面翻譯
+    adminConfiguration: '管理員配置',
     adminTransfer: '轉賬管理',
     adminFinancial: '資金流水',
+    adminRecharge: '充值管理',
     adminCallbackAddress: '回調地址'
   }
 } as const

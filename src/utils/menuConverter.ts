@@ -107,7 +107,12 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
       '资产管理': 'assetManagement',
       '全球汇款': 'globalRemittance',
       '开发配置': 'development',
-      '设置': 'settings'
+      '设置': 'settings',
+      '管理员配置': 'adminConfiguration',
+      '转账管理': 'adminTransfer',
+      '资金流水': 'adminFinancial',
+      '充值管理': 'adminRecharge',
+      '回调地址': 'adminCallbackAddress'
     }
     
     const translationKey = titleToKeyMap[metaTitle]
