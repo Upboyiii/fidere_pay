@@ -28,7 +28,7 @@ import Header from '@components/layout/horizontal/Header'
 import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
 import HorizontalFooter from '@components/layout/horizontal/Footer'
-import Customizer from '@core/components/customizer'
+// import Customizer from '@core/components/customizer'
 import ScrollToTop from '@core/components/scroll-to-top'
 
 // Context Imports
@@ -83,7 +83,7 @@ const InnerLayoutContent = ({ children, dictionary, lang, direction }: InnerLayo
                 <i className='ri-arrow-up-line' />
               </Button>
             </ScrollToTop>
-            <Customizer dir={direction} />
+            {/* <Customizer dir={direction} /> */}
           </RouteGuard>
         </ClientAuthGuard>
       </AuthErrorHandler>
