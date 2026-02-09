@@ -27,7 +27,10 @@ export const common = {
     error: 'Error',
     success: 'Success',
     warning: 'Warning',
-    info: 'Info'
+    info: 'Info',
+    actions: 'Actions',
+    close: 'Close',
+    pass: 'Pass'
   },
   zh: {
     search: '搜索',
@@ -53,7 +56,10 @@ export const common = {
     error: '错误',
     success: '成功',
     warning: '警告',
-    info: '信息'
+    info: '信息',
+    actions: '操作',
+    close: '关闭',
+    pass: '通过'
   },
   zhTW: {
     search: '搜尋',
@@ -79,6 +85,9 @@ export const common = {
     error: '錯誤',
     success: '成功',
     warning: '警告',
-    info: '資訊'
+    info: '資訊',
+    actions: '操作',
+    close: '關閉',
+    pass: '通過'
   }
 } as const

@@ -35,7 +35,11 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const AdminTransferList = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminTransferListItem[]>([])
@@ -112,7 +116,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
       setStatistics({ totalTransfer, totalReceive, totalFee })
     } catch (error) {
       console.error('加载数据失败:', error)
-      toast.error('加载数据失败')
+      toast.error(t('adminOtc.loadDataFailed'))
     } finally {
       setLoading(false)
     }
@@ -153,12 +157,12 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
         status: Number(auditForm.status),
         auditRemark: auditForm.auditRemark
       })
-      toast.success('审核成功')
+      toast.success(t('adminOtc.auditSuccess'))
       setAuditDialogOpen(false)
       loadData()
     } catch (error) {
       console.error('审核失败:', error)
-      toast.error('审核失败')
+      toast.error(t('adminOtc.auditFailed'))
     }
   }
 
@@ -190,13 +194,13 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
 
   const getStatusLabel = (status: number) => {
     const statusMap: Record<number, string> = {
-      0: '待审核',
-      1: '处理中',
-      2: '已完成',
-      3: '已驳回',
-      4: '失败'
+      0: t('adminOtc.pendingAuditStatus'),
+      1: t('adminOtc.processingStatus'),
+      2: t('adminOtc.completed'),
+      3: t('adminOtc.rejected'),
+      4: t('adminOtc.failed')
     }
-    return statusMap[status] || '未知'
+    return statusMap[status] || t('adminOtc.unknown')
   }
 
   const formatTimestamp = (timestamp?: number) => {
@@ -227,7 +231,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <i className='ri-send-plane-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>转账总额</Typography>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>{t('adminOtc.transferTotal')}</Typography>
             <Typography variant='h5' sx={{ fontWeight: 700, color: 'text.primary' }}>
               {statistics.totalTransfer.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
@@ -246,7 +250,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <i className='ri-download-2-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>接收总额</Typography>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>{t('adminOtc.receiveTotal')}</Typography>
             <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
               {statistics.totalReceive.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
@@ -265,7 +269,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <i className='ri-percent-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>手续费总额</Typography>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>{t('adminOtc.feeTotal')}</Typography>
             <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
               {statistics.totalFee.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </Typography>
@@ -284,16 +288,16 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <i className='ri-time-line' style={{ fontSize: 22 }} />
               </Box>
             </Box>
-            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>待处理</Typography>
+            <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>{t('adminOtc.pending')}</Typography>
             <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1 }}>
               <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
                 {pendingCount}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>待审核</Typography>
+              <Typography variant='body2' color='text.secondary'>{t('adminOtc.pendingAudit')}</Typography>
               <Typography variant='h6' sx={{ fontWeight: 600, color: 'info.main', ml: 1 }}>
                 {processingCount}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>处理中</Typography>
+              <Typography variant='body2' color='text.secondary'>{t('adminOtc.processing')}</Typography>
             </Box>
           </CardContent>
         </Card>
@@ -303,43 +307,43 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5' sx={{ fontWeight: 600 }}>转账申请列表</Typography>
-              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>{t('adminOtc.transferApplicationList')}</Typography>
+              <Chip label={t('adminOtc.totalRecords', { count: total })} size='small' variant='outlined' />
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
-                label='用户名'
+                label={t('adminOtc.username')}
                 value={filters.userName}
                 onChange={e => setFilters({ ...filters, userName: e.target.value })}
                 size='small'
                 sx={{ minWidth: 150 }}
               />
               <TextField
-                label='申请单号'
+                label={t('adminOtc.applyNo')}
                 value={filters.applyNo}
                 onChange={e => setFilters({ ...filters, applyNo: e.target.value })}
                 size='small'
                 sx={{ minWidth: 220 }}
-                placeholder='如: TR202602021751400000440001'
+                placeholder={t('adminOtc.applyNoPlaceholder')}
               />
               <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel id='transfer-status-label'>状态</InputLabel>
+                <InputLabel id='transfer-status-label'>{t('adminOtc.status')}</InputLabel>
                 <Select
                   labelId='transfer-status-label'
                   value={filters.status}
                   onChange={e => setFilters({ ...filters, status: e.target.value })}
-                  label='状态'
+                  label={t('adminOtc.status')}
                 >
-                  <MenuItem value='-1'>全部</MenuItem>
-                  <MenuItem value='0'>待审核</MenuItem>
-                  <MenuItem value='1'>处理中</MenuItem>
-                  <MenuItem value='2'>已完成</MenuItem>
-                  <MenuItem value='3'>已驳回</MenuItem>
-                  <MenuItem value='4'>失败</MenuItem>
+                  <MenuItem value='-1'>{t('adminOtc.all')}</MenuItem>
+                  <MenuItem value='0'>{t('adminOtc.pendingAuditStatus')}</MenuItem>
+                  <MenuItem value='1'>{t('adminOtc.processingStatus')}</MenuItem>
+                  <MenuItem value='2'>{t('adminOtc.completed')}</MenuItem>
+                  <MenuItem value='3'>{t('adminOtc.rejected')}</MenuItem>
+                  <MenuItem value='4'>{t('adminOtc.failed')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='开始时间'
+                label={t('adminOtc.startTime')}
                 type='date'
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
@@ -348,7 +352,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束时间'
+                label={t('adminOtc.endTime')}
                 type='date'
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
@@ -364,7 +368,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 }}
                 disabled={loading}
               >
-                查询
+                {t('adminOtc.search')}
               </Button>
               <Button 
                 variant='outlined' 
@@ -383,7 +387,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 }}
                 disabled={loading}
               >
-                重置
+                {t('adminOtc.reset')}
               </Button>
             </Box>
             <Box
@@ -409,45 +413,45 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '1200px' }}>
                 <thead>
                   <tr>
-                    <th>申请单号</th>
-                    <th>申请人</th>
+                    <th>{t('adminOtc.applyNo')}</th>
+                    <th>{t('adminOtc.username')}</th>
                     {/* <th>收款人</th> */}
                     {/* <th>转账币种</th> */}
                     {/* <th>转账金额</th> */}
-                    <th>币种</th>
-                    <th>金额</th>
+                    <th>{t('adminOtc.currency')}</th>
+                    <th>{t('adminOtc.amount')}</th>
                     {/* <th>汇率</th> */}
-                    <th>手续费</th>
-                    <th>账户类型</th>
-                    <th>状态</th>
-                    <th>创建时间</th>
-                    <th>审核/完成时间</th>
-                    <th style={{ textAlign: 'center', verticalAlign: 'middle' }}>操作</th>
+                    <th>{t('adminOtc.fee')}</th>
+                    <th>{t('adminOtc.accountType')}</th>
+                    <th>{t('adminOtc.status')}</th>
+                    <th>{t('adminOtc.createTime')}</th>
+                    <th>{t('adminOtc.auditCompleteTime')}</th>
+                    <th style={{ textAlign: 'center', verticalAlign: 'middle' }}>{t('common.actions') || '操作'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={10} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={10} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
                     data.map(item => (
                       <tr key={item.id}>
                         <td style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>
-                          <Tooltip title='点击复制' arrow>
+                          <Tooltip title={t('common.clickToCopy') || '点击复制'} arrow>
                             <span 
                               style={{ cursor: 'pointer' }}
                               onClick={() => {
                                 navigator.clipboard.writeText(item.applyNo)
-                                toast.success('已复制到剪贴板')
+                                toast.success(t('adminOtc.copiedToClipboard'))
                               }}
                             >
                               {item.applyNo}
@@ -480,7 +484,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td>
                           <Chip 
-                            label={item.remitType === 1 ? '个人' : item.remitType === 2 ? '企业' : String(item.remitType)}
+                            label={item.remitType === 1 ? t('adminOtc.personal') : item.remitType === 2 ? t('adminOtc.company') : String(item.remitType)}
                             size='small'
                             color={item.remitType === 1 ? 'info' : 'default'}
                           />
@@ -489,14 +493,14 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                           <Chip
                             label={
                               item.status === 0
-                                ? '待审核'
+                                ? t('adminOtc.pendingAuditStatus')
                                 : item.status === 1
-                                  ? '处理中'
+                                  ? t('adminOtc.processingStatus')
                                   : item.status === 2
-                                    ? '已完成'
+                                    ? t('adminOtc.completed')
                                     : item.status === 3
-                                      ? '已驳回'
-                                      : '失败'
+                                      ? t('adminOtc.rejected')
+                                      : t('adminOtc.failed')
                             }
                             color={
                               item.status === 2
@@ -522,13 +526,13 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             {item.auditTime ? (
                               <Box>
-                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>审核：</Typography>
+                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>{t('adminOtc.audit')}：</Typography>
                                 <Typography component='span' variant='caption' sx={{ fontSize: '0.75rem', ml: 0.5 }}>{formatTimestamp(item.auditTime)}</Typography>
                               </Box>
                             ) : null}
                             {item.completeTime ? (
                               <Box>
-                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>完成：</Typography>
+                                <Typography component='span' variant='caption' sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>{t('adminOtc.complete')}：</Typography>
                                 <Typography component='span' variant='caption' sx={{ fontSize: '0.75rem', ml: 0.5 }}>{formatTimestamp(item.completeTime)}</Typography>
                               </Box>
                             ) : null}
@@ -543,7 +547,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                               sx={{ fontWeight: 600 }}
                               onClick={() => handleViewDetail(item)}
                             >
-                              详情
+                              {t('adminOtc.details')}
                             </Button>
                             {item.status === 0 && (
                               <Button
@@ -555,7 +559,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                                   setAuditDialogOpen(true)
                                 }}
                               >
-                                审核
+                                {t('adminOtc.audit')}
                               </Button>
                             )}
                             {/* {item.status === 1 && (
@@ -596,34 +600,35 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
       </Grid>
 
       <Dialog open={auditDialogOpen} onClose={() => setAuditDialogOpen(false)} maxWidth='sm' fullWidth>
-        <DialogTitle>审核转账申请</DialogTitle>
+        <DialogTitle>{t('adminOtc.auditTransfer')}</DialogTitle>
         <DialogContent>
           <Box className='flex flex-col gap-4 mt-4'>
             <FormControl fullWidth>
-              <InputLabel id='audit-status-label'>审核状态</InputLabel>
+              <InputLabel id='audit-status-label'>{t('adminOtc.auditStatus')}</InputLabel>
               <Select
                 labelId='audit-status-label'
                 value={auditForm.status}
                 onChange={e => setAuditForm({ ...auditForm, status: e.target.value })}
-                label='审核状态'
+                label={t('adminOtc.auditStatus')}
               >
-                <MenuItem value='1'>通过</MenuItem>
-                <MenuItem value='3'>驳回</MenuItem>
+                <MenuItem value='1'>{t('common.pass') || '通过'}</MenuItem>
+                <MenuItem value='3'>{t('adminOtc.rejected')}</MenuItem>
               </Select>
             </FormControl>
             <TextField
-              label='审核备注'
+              label={t('adminOtc.auditRemark')}
               value={auditForm.auditRemark}
               onChange={e => setAuditForm({ ...auditForm, auditRemark: e.target.value })}
               multiline
               rows={3}
+              placeholder={t('adminOtc.enterAuditRemark')}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setAuditDialogOpen(false)}>取消</Button>
+          <Button onClick={() => setAuditDialogOpen(false)}>{t('adminOtc.cancel')}</Button>
           <Button variant='contained' onClick={handleAudit}>
-            提交
+            {t('common.submit') || '提交'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -724,7 +729,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 >
                   <Box sx={{ flex: 1 }}>
                     <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
-                      转账金额
+                      {t('adminOtc.transferAmount')}
                     </Typography>
                     <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#000', fontFamily: 'monospace' }}>
                       {selectedRecord.currencyCode} {selectedRecord.transferAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -747,13 +752,13 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                       <i className='ri-arrow-right-line' style={{ color: 'white', fontSize: '24px' }} />
                     </Box>
                     <Typography variant='caption' sx={{ fontSize: '11px', color: '#8c8c8c', textAlign: 'center', lineHeight: 1.3 }}>
-                      汇率<br />{selectedRecord.exchangeRate?.toFixed(4) || '-'}
+                      {t('adminOtc.exchangeRate')}<br />{selectedRecord.exchangeRate?.toFixed(4) || '-'}
                     </Typography>
                   </Box>
 
                   <Box sx={{ flex: 1, textAlign: 'right' }}>
                     <Typography variant='caption' sx={{ display: 'block', mb: 1.5, fontSize: '12px', color: '#8c8c8c' }}>
-                      到账金额
+                      {t('adminOtc.receiveAmount')}
                     </Typography>
                     <Typography sx={{ fontWeight: 700, fontSize: '18px', color: '#52c41a', fontFamily: 'monospace' }}>
                       {selectedRecord.receiveCurrencyCode} {(selectedRecord.receiveAmount || (selectedRecord.transferAmount * (selectedRecord.exchangeRate || 0))).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -763,11 +768,11 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
 
                 {/* 基本信息 */}
                 <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                  基本信息
+                  {t('adminOtc.basicInfo')}
                 </Typography>
                 <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易ID：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.transactionId')}：</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '12px', color: '#262626' }}>
                         {selectedRecord.applyNo}
@@ -777,7 +782,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                         sx={{ width: 24, height: 24, p: 0 }}
                         onClick={() => {
                           navigator.clipboard.writeText(selectedRecord.applyNo)
-                          toast.success('已复制')
+                          toast.success(t('adminOtc.copied'))
                         }}
                       >
                         <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
@@ -785,31 +790,31 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     </Box>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>申请人：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.applicant')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.userName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>收款人：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.recipient')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>账户类型：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.accountType')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
-                      {selectedRecord.remitType === 1 ? '个人' : selectedRecord.remitType === 2 ? '企业' : String(selectedRecord.remitType || '-')}
+                      {selectedRecord.remitType === 1 ? t('adminOtc.personal') : selectedRecord.remitType === 2 ? t('adminOtc.company') : String(selectedRecord.remitType || '-')}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>手续费：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.fee')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.feeAmount || 0} {selectedRecord.currencyCode}</Typography>
                   </Box>
                   {selectedRecord.memo && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易备注：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.transactionMemo')}：</Typography>
                       <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.memo}</Typography>
                     </Box>
                   )}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>创建时间：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.createTime')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
                       {selectedRecord.createTime 
                         ? new Date(selectedRecord.createTime * 1000).toLocaleString('zh-CN', {
@@ -829,24 +834,24 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
                   <>
                     <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                      审核信息
+                      {t('adminOtc.auditInfo')}
                     </Typography>
                     <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
                       {selectedRecord.auditRemark && (
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核备注：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditRemarkLabel')}</Typography>
                           <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
                         </Box>
                       )}
                       {(selectedRecord.auditTime ?? 0) > 0 && (
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>审核时间：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditTime')}</Typography>
                           <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
                         </Box>
                       )}
                       {(selectedRecord.completeTime ?? 0) > 0 && (
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>完成时间：</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.completeTime')}</Typography>
                           <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
                         </Box>
                       )}
@@ -876,7 +881,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     }
                   }}
                 >
-                  关闭
+                  {t('common.close') || '关闭'}
                 </Button>
                 {selectedRecord.status === 0 && (
                   <Button
@@ -902,7 +907,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                       }
                     }}
                   >
-                    审核
+                    {t('adminOtc.audit')}
                   </Button>
                 )}
                 {/* {selectedRecord.status === 1 && (

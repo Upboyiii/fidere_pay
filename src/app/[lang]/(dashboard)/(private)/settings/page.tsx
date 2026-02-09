@@ -14,9 +14,14 @@ export const metadata: Metadata = {
 
 const SettingsPage = async () => {
   // Vars
-  const mode = await getServerMode()
-
-  return <SecuritySettings mode={mode} />
+  try {
+    const mode = await getServerMode()
+    return <SecuritySettings mode={mode} />
+  } catch (error) {
+    console.error('Settings page error:', error)
+    // 如果获取 mode 失败，使用默认值
+    return <SecuritySettings mode='light' />
+  }
 }
 
 export default SettingsPage

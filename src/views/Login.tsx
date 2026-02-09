@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useState, useEffect, useCallback, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 
@@ -26,6 +26,7 @@ import { ENV_CONFIG } from '@server/config'
 // Component Imports
 import LogoSvg from '@core/svg/Logo'
 import ModeDropdown from '@components/layout/shared/ModeDropdown'
+import LanguageDropdown from '@components/layout/shared/LanguageDropdown'
 
 // MUI Theme Imports
 import { useColorScheme } from '@mui/material/styles'
@@ -104,6 +105,9 @@ const Login = ({ mode }: { mode: Mode }) => {
     )
   }
 
+  // 确保字典已加载后再创建 schema
+  const schema = createSchema(t)
+
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
   const [errorState, setErrorState] = useState<ErrorType | null>(null)
@@ -137,7 +141,7 @@ const Login = ({ mode }: { mode: Mode }) => {
     : muiMode === 'dark'
 
   // 创建 schema，使用翻译函数（确保字典已加载）
-  const schema = createSchema(t)
+  // schema 已在上面创建
 
   const {
     control,
@@ -360,7 +364,7 @@ const Login = ({ mode }: { mode: Mode }) => {
     
     const googleCode = googleAuthCode.join('')
     if (googleCode.length !== 6) {
-      toast.error('请输入6位验证码')
+      toast.error(t('auth.enter6DigitCode'))
       return
     }
 
@@ -445,9 +449,7 @@ const Login = ({ mode }: { mode: Mode }) => {
           </Typography>
         </div>
         <div className='flex items-center gap-4'>
-          <IconButton size='medium' sx={{ color: 'text.secondary' }}>
-            <i className='ri-translate-2-line' />
-          </IconButton>
+          <LanguageDropdown />
           <ModeDropdown />
         </div>
       </div>
@@ -468,7 +470,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 letterSpacing: '-0.03em'
               }}
             >
-              全球收付款平台
+              {t('auth.globalPaymentPlatform')}
             </Typography>
             
             <Typography 
@@ -480,7 +482,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 letterSpacing: '0.1em'
               }}
             >
-              安全 · 便捷 · 高效
+              {t('auth.secureConvenientEfficient')}
             </Typography>
             
             <Typography 
@@ -493,16 +495,16 @@ const Login = ({ mode }: { mode: Mode }) => {
                 maxWidth: '90%'
               }}
             >
-              连接全球200+国家和地区，支持多币种实时收款与汇款。银行级安全保障，让您的跨境资金流转更加便捷高效。
+              {t('auth.platformDescription')}
             </Typography>
             
             {/* 功能特性 - 更简洁的列表样式 */}
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-10'>
               {[
-                { icon: 'ri-time-line', title: '实时到账', desc: '7×24小时实时处理，资金秒速到账' },
-                { icon: 'ri-global-line', title: '多币种支持', desc: '支持50+主流货币，汇率实时更新' },
-                { icon: 'ri-shield-check-line', title: '安全保障', desc: '银行级加密技术，资金安全有保障' },
-                { icon: 'ri-line-chart-line', title: '低费率', desc: '行业领先的优惠费率，节省成本' }
+                { icon: 'ri-time-line', title: t('auth.realTimeArrival'), desc: t('auth.realTimeArrivalDesc') },
+                { icon: 'ri-global-line', title: t('auth.multiCurrencySupport'), desc: t('auth.multiCurrencySupportDesc') },
+                { icon: 'ri-shield-check-line', title: t('auth.securityGuarantee'), desc: t('auth.securityGuaranteeDesc') },
+                { icon: 'ri-line-chart-line', title: t('auth.lowFees'), desc: t('auth.lowFeesDesc') }
               ].map((item, index) => (
                 <div key={index} className='flex gap-4 items-start'>
                   <div className='flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center'>
@@ -549,10 +551,10 @@ const Login = ({ mode }: { mode: Mode }) => {
                     letterSpacing: '-0.02em'
                   }}
                 >
-                  欢迎回来
+                  {t('auth.welcomeBack')}
                 </Typography>
                 <Typography variant='body2' sx={{ color: 'text.secondary', fontSize: '0.95rem' }}>
-                  请输入账号信息以管理您的项目
+                  {t('auth.enterAccountInfo')}
                 </Typography>
               </div>
               
@@ -566,7 +568,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                       {...field}
                       fullWidth
                       autoFocus
-                      placeholder='账号 / 邮箱'
+                      placeholder={t('auth.accountOrEmail')}
                       variant='outlined'
                       sx={{
                         '& .MuiOutlinedInput-root': {
@@ -596,7 +598,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                     <TextField
                       {...field}
                       fullWidth
-                      placeholder='密码'
+                      placeholder={t('auth.password')}
                       type={isPasswordShown ? 'text' : 'password'}
                       variant='outlined'
                       sx={{
@@ -642,7 +644,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                       <TextField
                         {...field}
                         fullWidth
-                        placeholder='验证码'
+                        placeholder={t('auth.captchaPlaceholder')}
                         variant='outlined'
                         inputProps={{ maxLength: 6 }}
                         error={!!errors.totp}
@@ -678,7 +680,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                           <img src={`${captchaImg?.img}`} alt='captcha' className='w-full h-full object-contain' />
                         ) : (
                           <div className='w-full h-full flex items-center justify-center text-xs text-gray-400'>
-                            点击刷新
+                            {t('auth.clickToRefresh')}
                           </div>
                         )}
                       </Box>
@@ -732,7 +734,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                   }}
                   startIcon={loginLoading ? <CircularProgress size={20} color='inherit' /> : null}
                 >
-                  {loginLoading ? t('auth.loggingIn') : '立即登录'}
+                  {loginLoading ? t('auth.loggingIn') : t('auth.loginNow')}
                 </Button>
               </form>
               
@@ -805,7 +807,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 src='https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
                 sx={{ width: 20, height: 20 }}
               />
-              谷歌验证
+              {t('auth.googleAuth')}
             </Box>
             
             <IconButton
@@ -869,12 +871,20 @@ const Login = ({ mode }: { mode: Mode }) => {
 
           {/* 标题 */}
           <Typography variant='h5' sx={{ fontWeight: 800, mb: 1.5, color: '#1e293b', letterSpacing: '-0.02em' }}>
-            安全验证
+            {t('auth.securityVerification')}
           </Typography>
 
           {/* 描述 */}
           <Typography variant='body2' sx={{ mb: 5, color: '#64748b', fontSize: '0.95rem', lineHeight: 1.6 }}>
-            请输入谷歌验证器中的 <Box component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>6位数字</Box> 验证码
+            {t('auth.enterGoogleCode').includes('6位数字') ? (
+              <>
+                {t('auth.enterGoogleCode').split('6位数字')[0]}
+                <Box component='span' sx={{ color: 'primary.main', fontWeight: 600 }}>6位数字</Box>
+                {t('auth.enterGoogleCode').split('6位数字')[1]}
+              </>
+            ) : (
+              t('auth.enterGoogleCode')
+            )}
           </Typography>
 
           {/* 6位验证码输入框 - 增加交互层次感 */}
@@ -945,7 +955,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 }
               }}
             >
-              取 消
+              {t('common.cancel')}
             </Button>
             <Button
               variant='contained'
@@ -978,7 +988,7 @@ const Login = ({ mode }: { mode: Mode }) => {
               }}
               startIcon={verifyLoading ? <CircularProgress size={20} color='inherit' /> : null}
             >
-              {verifyLoading ? '验证中...' : '开始验证'}
+              {verifyLoading ? t('auth.verifying') : t('auth.startVerification')}
             </Button>
           </Box>
         </Box>

@@ -30,7 +30,11 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const AdminRechargeList = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminRechargeListItem[]>([])
@@ -92,14 +96,14 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
   }, [page, rowsPerPage])
 
   const handleConfirm = async (rechargeNo: string) => {
-    if (!confirm('确定要手动确认充值吗？')) return
+    if (!confirm(t('adminOtc.confirmRechargeConfirm'))) return
     try {
       await manualConfirmRecharge({ rechargeNo })
-      toast.success('确认成功')
+      toast.success(t('adminOtc.confirmSuccess'))
       loadData()
     } catch (error) {
       console.error('确认失败:', error)
-      toast.error('确认失败')
+      toast.error(t('adminOtc.confirmFailed') || '确认失败')
     }
   }
 
@@ -109,22 +113,22 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
         <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>充值记录列表</Typography>
+              <Typography variant='h5'>{t('adminOtc.rechargeList')}</Typography>
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel id='recharge-status-label'>状态</InputLabel>
+                <InputLabel id='recharge-status-label'>{t('adminOtc.status')}</InputLabel>
                 <Select
                   labelId='recharge-status-label'
                   value={filters.status}
                   onChange={e => setFilters({ ...filters, status: e.target.value })}
-                  label='状态'
+                  label={t('adminOtc.status')}
                 >
-                  <MenuItem value='-1'>全部</MenuItem>
-                  <MenuItem value='0'>待确认</MenuItem>
-                  <MenuItem value='1'>已到账</MenuItem>
-                  <MenuItem value='2'>失败</MenuItem>
-                  <MenuItem value='3'>已取消</MenuItem>
+                  <MenuItem value='-1'>{t('adminOtc.all')}</MenuItem>
+                  <MenuItem value='0'>{t('assets.pending')}</MenuItem>
+                  <MenuItem value='1'>{t('assets.completed')}</MenuItem>
+                  <MenuItem value='2'>{t('adminOtc.failed')}</MenuItem>
+                  <MenuItem value='3'>{t('assets.cancelled')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
@@ -135,14 +139,14 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 sx={{ minWidth: 120 }}
               />
               <TextField
-                label='充值单号'
+                label={t('adminOtc.rechargeNo')}
                 value={filters.rechargeNo}
                 onChange={e => setFilters({ ...filters, rechargeNo: e.target.value })}
                 size='small'
                 sx={{ minWidth: 180 }}
               />
               <TextField
-                label='开始日期'
+                label={t('adminOtc.startDate')}
                 type='date'
                 value={filters.startDate}
                 onChange={e => setFilters({ ...filters, startDate: e.target.value })}
@@ -151,7 +155,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束日期'
+                label={t('adminOtc.endDate')}
                 type='date'
                 value={filters.endDate}
                 onChange={e => setFilters({ ...filters, endDate: e.target.value })}
@@ -167,7 +171,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 }}
                 disabled={loading}
               >
-                查询
+                {t('adminOtc.search')}
               </Button>
               <Button 
                 variant='outlined' 
@@ -185,21 +189,21 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                   loadData(resetFilters, 0)
                 }}
               >
-                重置
+                {t('adminOtc.reset')}
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '1200px' }}>
                 <thead>
                   <tr>
-                    <th>充值单号</th>
-                    <th>用户名</th>
-                    <th>币种</th>
-                    <th>金额</th>
-                    <th>充值地址</th>
-                    <th>交易哈希</th>
-                    <th>状态</th>
-                    <th>创建时间</th>
+                    <th>{t('adminOtc.rechargeNo')}</th>
+                    <th>{t('adminOtc.username')}</th>
+                    <th>{t('adminOtc.currency')}</th>
+                    <th>{t('adminOtc.amount')}</th>
+                    <th>{t('adminOtc.rechargeAddress')}</th>
+                    <th>{t('adminOtc.txHash')}</th>
+                    <th>{t('adminOtc.status')}</th>
+                    <th>{t('adminOtc.createTime')}</th>
                     {/* <th>操作</th> */}
                   </tr>
                 </thead>
@@ -207,13 +211,13 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                   {loading ? (
                     <tr>
                       <td colSpan={9} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={9} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -248,7 +252,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                                   size='small' 
                                   onClick={() => {
                                     navigator.clipboard.writeText(address)
-                                    toast.success('已复制到剪贴板')
+                                    toast.success(t('adminOtc.copiedToClipboard'))
                                   }}
                                   sx={{ p: 0.5 }}
                                 >
@@ -283,7 +287,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                                   size='small' 
                                   onClick={() => {
                                     navigator.clipboard.writeText(txHash)
-                                    toast.success('已复制到剪贴板')
+                                    toast.success(t('adminOtc.copiedToClipboard'))
                                   }}
                                   sx={{ p: 0.5 }}
                                 >
@@ -297,12 +301,12 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                           <Chip
                             label={
                               item.status === 0
-                                ? '待确认'
+                                ? t('assets.pending')
                                 : item.status === 1
-                                  ? '已到账'
+                                  ? t('assets.completed')
                                   : item.status === 2
-                                    ? '失败'
-                                    : '已取消'
+                                    ? t('adminOtc.failed')
+                                    : t('assets.cancelled')
                             }
                             color={
                               item.status === 1 ? 'success' : item.status === 2 ? 'error' : 'warning'
@@ -329,7 +333,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                         <td>
                           {item.status === 0 && (
                             <Button size='small' onClick={() => handleConfirm(item.rechargeNo)}>
-                              确认
+                              {t('adminOtc.confirm')}
                             </Button>
                           )}
                         </td>

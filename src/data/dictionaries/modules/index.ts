@@ -19,6 +19,9 @@ export * from './userManagement'
 export * from './kycdashboard'
 export * from './auditLogs'
 export * from './admin'
+export * from './assets'
+export * from './remittance'
+export * from './adminOtc'
 // 添加新模块时，只需：
 // 1. 在 modules 目录下创建新模块文件（如 tradingOrder.ts，参考 tradingUser.ts 示例）
 // 2. 在此文件中添加 export * from './新模块名'

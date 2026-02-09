@@ -28,7 +28,11 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const CallbackList = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<CallbackListItem[]>([])
@@ -74,7 +78,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
       setTotal(res.data?.total || 0)
     } catch (error) {
       console.error('加载数据失败:', error)
-      toast.error('加载数据失败')
+      toast.error(t('adminOtc.loadDataFailed'))
     } finally {
       setLoading(false)
     }
@@ -87,11 +91,11 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
   const handleRetry = async (id: number) => {
     try {
       await retryCallback({ id })
-      toast.success('重试成功')
+      toast.success(t('adminOtc.retrySuccess') || '重试成功')
       loadData()
     } catch (error) {
       console.error('重试失败:', error)
-      toast.error('重试失败')
+      toast.error(t('adminOtc.retryFailed') || '重试失败')
     }
   }
 
@@ -105,28 +109,28 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
-                label='回调类型'
+                label={t('adminOtc.callbackType') || '回调类型'}
                 value={filters.callbackType}
                 onChange={e => setFilters({ ...filters, callbackType: e.target.value })}
                 size='small'
                 sx={{ minWidth: 120 }}
               />
               <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel id='callback-status-label'>回调状态</InputLabel>
+                <InputLabel id='callback-status-label'>{t('adminOtc.callbackStatus') || '回调状态'}</InputLabel>
                 <Select
                   labelId='callback-status-label'
                   value={filters.callbackStatus}
                   onChange={e => setFilters({ ...filters, callbackStatus: e.target.value })}
-                  label='回调状态'
+                  label={t('adminOtc.callbackStatus') || '回调状态'}
                 >
-                  <MenuItem value='-1'>全部</MenuItem>
-                  <MenuItem value='0'>待处理</MenuItem>
-                  <MenuItem value='1'>成功</MenuItem>
-                  <MenuItem value='2'>失败</MenuItem>
+                  <MenuItem value='-1'>{t('adminOtc.all')}</MenuItem>
+                  <MenuItem value='0'>{t('adminOtc.pending')}</MenuItem>
+                  <MenuItem value='1'>{t('common.success')}</MenuItem>
+                  <MenuItem value='2'>{t('adminOtc.failed')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='开始日期'
+                label={t('adminOtc.startDate')}
                 type='date'
                 value={filters.startDate}
                 onChange={e => setFilters({ ...filters, startDate: e.target.value })}
@@ -135,7 +139,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束日期'
+                label={t('adminOtc.endDate')}
                 type='date'
                 value={filters.endDate}
                 onChange={e => setFilters({ ...filters, endDate: e.target.value })}
@@ -144,7 +148,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
-                查询
+                {t('adminOtc.search')}
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
@@ -152,25 +156,25 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                 <thead>
                   <tr>
                     <th>ID</th>
-                    <th>回调类型</th>
-                    <th>回调状态</th>
-                    <th>回调URL</th>
-                    <th>重试次数</th>
-                    <th>创建时间</th>
-                    <th>操作</th>
+                    <th>{t('adminOtc.callbackType') || '回调类型'}</th>
+                    <th>{t('adminOtc.callbackStatus') || '回调状态'}</th>
+                    <th>{t('adminOtc.callbackUrl')}</th>
+                    <th>{t('adminOtc.retryCount') || '重试次数'}</th>
+                    <th>{t('adminOtc.createTime')}</th>
+                    <th>{t('common.actions') || '操作'}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={8} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={8} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -180,7 +184,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                         <td>{item.callbackType}</td>
                         <td>
                           <Chip
-                            label={item.callbackStatus === 1 ? '成功' : item.callbackStatus === 2 ? '失败' : '待处理'}
+                            label={item.callbackStatus === 1 ? t('common.success') : item.callbackStatus === 2 ? t('adminOtc.failed') : t('adminOtc.pending')}
                             color={item.callbackStatus === 1 ? 'success' : item.callbackStatus === 2 ? 'error' : 'warning'}
                             size='small'
                           />
@@ -190,7 +194,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                         <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
                         <td>
                           <Button size='small' onClick={() => handleRetry(item.id)}>
-                            重试
+                            {t('adminOtc.retry') || '重试'}
                           </Button>
                         </td>
                       </tr>

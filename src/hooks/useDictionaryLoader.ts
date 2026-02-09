@@ -24,17 +24,29 @@ export function useDictionaryLoader(lang: Locale) {
       try {
         setError(null)
         setLoading(true)
-        // 动态导入字典数据
-        const dictModule = await import(`@/data/dictionaries/${lang}`)
+        // 动态导入字典数据 - 根据语言代码选择正确的文件
+        let dictModule
+        if (lang === 'zh-Hant') {
+          dictModule = await import('@/data/dictionaries/zh-Hant')
+        } else if (lang === 'zh-CN') {
+          dictModule = await import('@/data/dictionaries/zh-CN')
+        } else if (lang === 'en') {
+          dictModule = await import('@/data/dictionaries/en')
+        } else {
+          // 默认使用中文
+          dictModule = await import('@/data/dictionaries/zh-CN')
+        }
         const dictData = dictModule.default
         setDictionary(dictData)
       } catch (error) {
-        // 如果加载失败，使用英文作为后备
+        console.error('Failed to load dictionary:', error)
+        // 如果加载失败，使用中文作为后备
         try {
           const fallbackModule = await import('@/data/dictionaries/zh-CN')
           const fallbackData = fallbackModule.default
           setDictionary(fallbackData)
         } catch (fallbackError) {
+          console.error('Failed to load fallback dictionary:', fallbackError)
           // 最后的后备方案：空字典
           const emptyDict = {
             navigation: {},
@@ -44,7 +56,10 @@ export function useDictionaryLoader(lang: Locale) {
             user: {},
             table: {},
             form: {},
-            messages: {}
+            messages: {},
+            assets: {},
+            remittance: {},
+            adminOtc: {}
           } as any
           setDictionary(emptyDict)
 

@@ -47,10 +47,14 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const MyAssets = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
   const currentLang = (params?.lang as string) || undefined
+  const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [loading, setLoading] = useState(false)
@@ -112,7 +116,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       setAssets(assetList)
     } catch (error) {
       console.error('加载资产失败:', error)
-      toast.error('加载资产失败')
+      toast.error(t('assets.loadAssetsFailed'))
     } finally {
       setAssetsLoading(false)
     }
@@ -183,7 +187,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       })
     } catch (error) {
       console.error('加载充值记录失败:', error)
-      toast.error('加载充值记录失败')
+      toast.error(t('assets.loadRechargesFailed'))
     } finally {
       setRechargesLoading(false)
     }
@@ -232,7 +236,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
         <Grid size={{ xs: 12 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              欢迎使用 Fidere Pay
+              {t('assets.welcomeTitle')}
             </Typography>
           </Box>
         </Grid>
@@ -254,7 +258,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant='body2' sx={{ mb: 1, color: 'rgba(255, 255, 255, 0.95)', fontWeight: 600, fontSize: '0.875rem' }}>
-                    账户信息
+                    {t('assets.accountInfo')}
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Box
@@ -276,7 +280,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     </Box>
                     <Box>
                       <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', fontWeight: 500, fontSize: '0.75rem' }}>
-                        总资产
+                        {t('assets.totalAssets')}
                       </Typography>
                       {assetsLoading ? (
                         <CircularProgress size={24} sx={{ color: 'white' }} />
@@ -304,7 +308,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  充值
+                  {t('assets.recharge')}
                 </Button>
               </Box>
 
@@ -318,7 +322,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  可用: {totalAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {t('assets.available')}: {totalAvailableBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
                 <Typography 
                   variant='body2' 
@@ -329,7 +333,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     fontSize: '0.875rem'
                   }}
                 >
-                  冻结: {totalFrozenBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  {t('assets.frozen')}: {totalFrozenBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </Typography>
               </Box>
 
@@ -338,7 +342,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', textAlign: 'center' }}>
                 <Box>
                   <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', mb: 1, fontWeight: 500 }}>
-                    今日收入
+                    {t('assets.todayIncome')}
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#a5f3a5', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
                     +{todayStats.income.toFixed(2)}
@@ -346,7 +350,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 </Box>
                 <Box>
                   <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', mb: 1, fontWeight: 500 }}>
-                    今日支出
+                    {t('assets.todayExpenditure')}
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#ffcc80', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
                     -{Math.abs(todayStats.expenditure).toFixed(2)}
@@ -444,24 +448,24 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               </Box>
               
               <Typography variant='h6' sx={{ fontWeight: 700, mb: 2 }}>
-                全球汇款
+                {t('assets.globalRemittance')}
               </Typography>
               
               <Box sx={{ flex: 1 }}>
                 <Typography variant='body2' color='primary' sx={{ fontWeight: 600, mb: 1 }}>
-                  美元汇款，安全可靠
+                  {t('assets.globalRemittanceDesc')}
                 </Typography>
                 <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 3 }}>
-                  ● 支持全球200+国家和地区
+                  {t('assets.globalRemittanceFeature1')}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Typography variant='caption' sx={{ color: 'success.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'success.main' }} />
-                    实时汇率
+                    {t('assets.realTimeRate')}
                   </Typography>
                   <Typography variant='caption' sx={{ color: 'info.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: 'info.main' }} />
-                    安全保障
+                    {t('assets.securityGuarantee')}
                   </Typography>
                 </Box>
               </Box>
@@ -534,15 +538,15 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               </Box>
               
               <Typography variant='h6' sx={{ fontWeight: 700, mb: 2 }}>
-                添加收款方
+                {t('assets.addRecipient')}
               </Typography>
               
               <Box sx={{ flex: 1 }}>
                 <Typography variant='body2' color='secondary' sx={{ fontWeight: 600, mb: 1 }}>
-                  一键添加，随时调用
+                  {t('assets.addRecipientDesc')}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
-                  ● 管理您的收款人信息
+                  {t('assets.addRecipientFeature')}
                 </Typography>
               </Box>
             </CardContent>
@@ -562,7 +566,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               <Box sx={{ p: 6, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 6 }}>
                   <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                    资产记录
+                    {t('assets.assetRecords')}
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2 }}>
                     <IconButton size='small' onClick={() => loadRecharges()} disabled={rechargesLoading}>
@@ -576,34 +580,34 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 {/* 筛选栏 */}
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
                   <Box sx={{ flex: '1 1 200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>交易ID</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.transactionId')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
-                      placeholder='请输入交易ID'
+                      placeholder={t('assets.enterTransactionId')}
                       value={filters.rechargeNo}
                       onChange={(e) => setFilters({ ...filters, rechargeNo: e.target.value })}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>状态</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.status')}</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
                         value={filters.status}
                         onChange={(e) => setFilters({ ...filters, status: Number(e.target.value) })}
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value={-1}>全部</MenuItem>
-                        <MenuItem value={0}>待确认</MenuItem>
-                        <MenuItem value={1}>已到账</MenuItem>
-                        <MenuItem value={2}>失败</MenuItem>
-                        <MenuItem value={3}>已取消</MenuItem>
+                        <MenuItem value={-1}>{t('assets.all')}</MenuItem>
+                        <MenuItem value={0}>{t('assets.pending')}</MenuItem>
+                        <MenuItem value={1}>{t('assets.completed')}</MenuItem>
+                        <MenuItem value={2}>{t('assets.failed')}</MenuItem>
+                        <MenuItem value={3}>{t('assets.cancelled')}</MenuItem>
                       </Select>
                     </FormControl>
                   </Box>
                   <Box sx={{ flex: '1 1 200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>币种</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.currency')}</Typography>
                     <FormControl fullWidth size='small'>
                       <Select
                         value={filters.currency}
@@ -611,7 +615,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                         displayEmpty
                         sx={{ borderRadius: '8px' }}
                       >
-                        <MenuItem value=''>请选择币种</MenuItem>
+                        <MenuItem value=''>{t('assets.selectCurrency')}</MenuItem>
                         {currencyList.map((currency, index) => (
                           <MenuItem key={`${currency.currencyCode}-${currency.chain || index}`} value={currency.currencyCode}>
                             {currency.currencyCode}{currency.chain ? `(${currency.chain})` : ''}
@@ -621,7 +625,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     </FormControl>
                   </Box>
                   <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>开始日期</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.startDate')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -632,7 +636,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     />
                   </Box>
                   <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>结束日期</Typography>
+                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.endDate')}</Typography>
                     <TextField
                       fullWidth
                       size='small'
@@ -654,7 +658,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       }}
                       sx={{ color: 'text.secondary' }}
                     >
-                      重置
+                      {t('assets.reset')}
                     </Button>
                     <Button 
                       variant='contained' 
@@ -664,7 +668,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       onClick={() => loadRecharges()}
                       disabled={rechargesLoading}
                     >
-                      查询
+                      {t('assets.search')}
                     </Button>
                     {/* <Button variant='text' size='small' sx={{ color: 'primary.main' }}>
                       收起
@@ -678,13 +682,13 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <table className={tableStyles.table} style={{ border: 'none' }}>
                   <thead>
                     <tr style={{ backgroundColor: '#fcfdfe' }}>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易ID</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>币种</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>金额</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>状态</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>地址</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>交易哈希</th>
-                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>创建时间</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.transactionId')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.currency')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.amount')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.status')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.address')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.txHash')}</th>
+                      <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.createTime')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -697,7 +701,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     ) : recharges.length === 0 ? (
                       <tr>
                         <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
-                          暂无资产记录
+                          {t('assets.noAssetRecords')}
                         </td>
                       </tr>
                     ) : (
@@ -725,10 +729,10 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                           <td style={{ padding: '16px 24px' }}>
                             <Chip
                               label={
-                                recharge.status === 0 ? '待确认' :
-                                recharge.status === 1 ? '已到账' :
-                                recharge.status === 2 ? '失败' :
-                                recharge.status === 3 ? '已取消' : '未知'
+                                recharge.status === 0 ? t('assets.pending') :
+                                recharge.status === 1 ? t('assets.completed') :
+                                recharge.status === 2 ? t('assets.failed') :
+                                recharge.status === 3 ? t('assets.cancelled') : t('assets.unknown')
                               }
                               size='small'
                               sx={{
@@ -770,7 +774,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                                     size='small' 
                                     onClick={() => {
                                       navigator.clipboard.writeText(rechargeAddress)
-                                      toast.success('已复制到剪贴板')
+                                      toast.success(t('assets.copiedToClipboard'))
                                     }}
                                     sx={{ p: 0.5 }}
                                   >
@@ -806,7 +810,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                                     size='small' 
                                     onClick={() => {
                                       navigator.clipboard.writeText(txHash)
-                                      toast.success('已复制到剪贴板')
+                                      toast.success(t('assets.copiedToClipboard'))
                                     }}
                                     sx={{ p: 0.5 }}
                                   >

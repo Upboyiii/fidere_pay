@@ -51,14 +51,16 @@ const LanguageSwitcher = ({ currentLocale }: { currentLocale: Locale }) => {
     en: 'English',
     fr: 'Français',
     ar: 'العربية',
-    'zh-CN': '简体中文'
+    'zh-CN': '简体中文',
+    'zh-Hant': '繁體中文'
   }
 
   const languageFlags = {
     en: '🇺🇸',
     fr: '🇫🇷',
     ar: '🇸🇦',
-    'zh-CN': '🇨🇳'
+    'zh-CN': '🇨🇳',
+    'zh-Hant': '🇹🇼'
   }
 
   return (

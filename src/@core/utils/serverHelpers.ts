@@ -38,10 +38,16 @@ export const getSystemMode = async (): Promise<SystemMode> => {
 }
 
 export const getServerMode = async () => {
-  const mode = await getMode()
-  const systemMode = await getSystemMode()
+  try {
+    const mode = await getMode()
+    const systemMode = await getSystemMode()
 
-  return mode === 'system' ? systemMode : mode
+    return mode === 'system' ? systemMode : mode
+  } catch (error) {
+    console.error('getServerMode error:', error)
+    // 如果出错，返回默认值
+    return 'light'
+  }
 }
 
 export const getSkin = async () => {
