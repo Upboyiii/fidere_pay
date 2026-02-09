@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -307,7 +307,11 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
             <Button 
               variant='contained' 
               startIcon={<i className='ri-add-line' />} 
-              onClick={() => router.push(getLocalizedPath('/remittance/create', currentLang))}
+              onClick={() => {
+                // 实时获取当前语言，避免闭包问题
+                const realTimeLang = getCurrentLangFromPath()
+                router.push(getLocalizedPath('/remittance/create', realTimeLang))
+              }}
               sx={{ borderRadius: '8px', px: 6 }}
             >
               {t('remittance.createNewRemittance')}

@@ -11,19 +11,32 @@ import type { Locale } from '@configs/i18n'
  */
 export const getCurrentLangFromPath = (): string => {
   if (typeof window === 'undefined') {
+    console.log('[getCurrentLangFromPath] SSR环境，返回默认语言:', i18n.defaultLocale)
     return i18n.defaultLocale
   }
   
   const pathname = window.location.pathname
   const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
   
+  console.log('[getCurrentLangFromPath] 调试信息:', {
+    'window.location.pathname': pathname,
+    'window.location.href': window.location.href,
+    'langMatch': langMatch,
+    'extractedLang': langMatch ? langMatch[1] : null,
+    'i18n.locales': i18n.locales
+  })
+  
   if (langMatch && langMatch[1]) {
     const extractedLang = langMatch[1] as Locale
     if (i18n.locales.includes(extractedLang)) {
+      console.log('[getCurrentLangFromPath] ✅ 成功提取语言:', extractedLang)
       return extractedLang
+    } else {
+      console.log('[getCurrentLangFromPath] ⚠️ 提取的语言不在配置中:', extractedLang)
     }
   }
   
+  console.log('[getCurrentLangFromPath] ⚠️ 未找到语言前缀，返回默认语言:', i18n.defaultLocale)
   return i18n.defaultLocale
 }
 

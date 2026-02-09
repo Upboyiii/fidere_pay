@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams, useSearchParams } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -104,7 +104,9 @@ const Deposit = ({ mode }: { mode: Mode }) => {
   }
 
   const handleBack = () => {
-    router.push(getLocalizedPath('/assets/my-assets', currentLang))
+    // 实时获取当前语言，避免闭包问题
+    const realTimeLang = getCurrentLangFromPath()
+    router.push(getLocalizedPath('/assets/my-assets', realTimeLang))
   }
 
   // 生成二维码（简单实现，实际应该使用二维码库）

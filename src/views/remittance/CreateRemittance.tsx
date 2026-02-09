@@ -466,22 +466,45 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       />
 
       <Grid container spacing={6} sx={{ position: 'relative', zIndex: 1 }}>
-        {/* 开发环境调试信息 */}
-        {process.env.NODE_ENV === 'development' && (
+        {/* 开发环境调试信息 - 已隐藏 */}
+        {/* {process.env.NODE_ENV === 'development' && (
           <Grid size={{ xs: 12 }}>
             <Box sx={{ 
-              p: 2, 
-              bgcolor: 'warning.main', 
+              p: 3, 
+              bgcolor: 'error.main', 
               color: 'white', 
               borderRadius: 2,
               mb: 2,
               fontSize: '0.875rem',
               fontFamily: 'monospace'
             }}>
-              <strong>DEBUG:</strong> pathname={pathname} | currentLang={currentLang} | params.lang={params?.lang as string}
+              <div style={{ marginBottom: '8px' }}><strong>🔍 调试面板 - CreateRemittance</strong></div>
+              <div>pathname (usePathname): {pathname}</div>
+              <div>currentLang (useMemo): {currentLang}</div>
+              <div>params.lang (useParams): {params?.lang as string}</div>
+              <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.3)' }}>
+                <strong>实时测试：</strong>
+                <button 
+                  onClick={() => {
+                    const realTimeLang = getCurrentLangFromPath()
+                    alert(`实时语言: ${realTimeLang}\n当前URL: ${window.location.pathname}`)
+                  }}
+                  style={{
+                    marginLeft: '10px',
+                    padding: '4px 12px',
+                    backgroundColor: 'white',
+                    color: 'black',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  测试 getCurrentLangFromPath()
+                </button>
+              </div>
             </Box>
           </Grid>
-        )}
+        )} */}
         <Grid size={{ xs: 12 }}>
           <Box sx={{ mb: 2 }}>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
@@ -1243,12 +1266,22 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           <Typography variant='body2'>
                             {t('remittance.bindGoogleAuthDesc')}
                           </Typography>
-                          <Button
+                          <Button 
                             size='small'
                             variant='outlined'
                             color='warning'
                             onClick={() => {
-                              router.push(getLocalizedPath('/settings', currentLang))
+                              // 实时获取当前语言，避免闭包问题
+                              const realTimeLang = getCurrentLangFromPath()
+                              const targetPath = getLocalizedPath('/settings', realTimeLang)
+                              if (process.env.NODE_ENV === 'development') {
+                                console.log('[CreateRemittance] Navigate to settings:', { 
+                                  realTimeLang, 
+                                  currentLang, 
+                                  targetPath 
+                                })
+                              }
+                              router.push(targetPath)
                             }}
                             sx={{ mt: 1, borderRadius: '6px', alignSelf: 'flex-start' }}
                           >
@@ -1506,7 +1539,17 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             color='primary'
             onClick={() => {
               setSecurityCheckDialogOpen(false)
-              router.push(getLocalizedPath('/settings', currentLang))
+              // 实时获取当前语言，避免闭包问题
+              const realTimeLang = getCurrentLangFromPath()
+              const targetPath = getLocalizedPath('/settings', realTimeLang)
+              if (process.env.NODE_ENV === 'development') {
+                console.log('[CreateRemittance] Navigate to settings (from dialog):', { 
+                  realTimeLang, 
+                  currentLang, 
+                  targetPath 
+                })
+              }
+              router.push(targetPath)
             }}
             sx={{
               borderRadius: '8px',
@@ -1623,7 +1666,9 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 fullWidth
                 onClick={() => {
                   setSubmitSuccess(false)
-                  router.push(getLocalizedPath('/remittance/records', currentLang))
+                  // 实时获取当前语言，避免闭包问题
+                  const realTimeLang = getCurrentLangFromPath()
+                  router.push(getLocalizedPath('/remittance/records', realTimeLang))
                 }}
                 sx={{ borderRadius: '8px', py: 1.5 }}
                 startIcon={<i className='ri-list-check' />}

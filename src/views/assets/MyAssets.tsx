@@ -309,7 +309,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                 <Button
                   variant='contained'
                   size='small'
-                  onClick={() => router.push(getLocalizedPath('/assets/deposit', currentLang))}
+                  onClick={() => {
+                    // 实时获取当前语言，避免闭包问题
+                    const realTimeLang = getCurrentLangFromPath()
+                    router.push(getLocalizedPath('/assets/deposit', realTimeLang))
+                  }}
                   startIcon={<i className='ri-add-circle-line' />}
                   sx={{
                     bgcolor: 'background.paper',
@@ -415,7 +419,11 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
               },
               border: '1px solid rgba(0,0,0,0.05)'
             }}
-            onClick={() => router.push(getLocalizedPath('/remittance/create', currentLang))}
+            onClick={() => {
+              // 实时获取当前语言，避免闭包问题
+              const realTimeLang = getCurrentLangFromPath()
+              router.push(getLocalizedPath('/remittance/create', realTimeLang))
+            }}
           >
             {/* 背景装饰 - 货币符号和地球图标 */}
             <Box
@@ -507,16 +515,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
             onClick={() => {
               // 实时获取当前语言，避免闭包问题
               const realTimeLang = getCurrentLangFromPath()
-              const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-              if (process.env.NODE_ENV === 'development') {
-                console.log('[MyAssets] Navigate to recipients/new:', { 
-                  realTimeLang, 
-                  currentLang, 
-                  pathname, 
-                  targetPath 
-                })
-              }
-              router.push(targetPath)
+              router.push(getLocalizedPath('/remittance/recipients/new', realTimeLang))
             }}
           >
             {/* 背景装饰 - 人物连接网络图标 */}

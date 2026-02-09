@@ -443,6 +443,11 @@ export const remittance = {
     supportedFormats: '支持格式:',
     maxSize: '最大',
     arrivalTimeNote: '具体时间取决于收款银行处理速度',
+    // 安全验证相关
+    required: '必需',
+    googleAuthenticator: 'Google验证器',
+    alreadyBound: '已绑定',
+    notBoundRecommended: '未绑定 · 推荐',
     // 编辑收款人页面
     editRecipient: '编辑收款人',
     addRecipient: '新增收款人',
