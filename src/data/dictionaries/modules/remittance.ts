@@ -71,7 +71,15 @@ export const remittance = {
     bindGoogleAuth: 'Bind Google Authenticator',
     bindGoogleAuthDesc: 'Binding Google Authenticator can provide additional security protection for your account',
     ensureCorrect: 'Please ensure that the payment password and Google verification code are entered correctly',
+    ensureGoogleCodeCorrect: 'Please ensure the Google verification code is entered correctly',
     expectedArrivalTitle: 'Expected Arrival Time',
+    // Page metadata
+    createTitle: 'Create Remittance',
+    createDescription: 'Create a new remittance order',
+    recipientsTitle: 'Recipient List',
+    recipientsDescription: 'Manage recipient information',
+    recordsTitle: 'Remittance Records',
+    recordsDescription: 'View remittance records',
     // Recipient List
     recipientList: 'Recipient List',
     manageRecipientsDesc: 'Manage your recipient information and initiate remittances with one click',
@@ -333,7 +341,15 @@ export const remittance = {
     bindGoogleAuth: '建议绑定Google验证器',
     bindGoogleAuthDesc: '绑定Google验证器可以为您的账户提供额外的安全保护',
     ensureCorrect: '请确保支付密码和Google验证码输入正确',
+    ensureGoogleCodeCorrect: '请确保Google验证码输入正确',
     expectedArrivalTitle: '预计到账时间',
+    // Page metadata
+    createTitle: '创建汇款',
+    createDescription: '创建新的汇款订单',
+    recipientsTitle: '收款人列表',
+    recipientsDescription: '管理收款人信息',
+    recordsTitle: '汇款记录',
+    recordsDescription: '查看汇款记录',
     // 收款人列表
     recipientList: '收款人列表',
     manageRecipientsDesc: '管理您的收款人信息，一键发起汇款',
@@ -590,7 +606,15 @@ export const remittance = {
     bindGoogleAuth: '建議綁定Google驗證器',
     bindGoogleAuthDesc: '綁定Google驗證器可以為您的賬戶提供額外的安全保護',
     ensureCorrect: '請確保支付密碼和Google驗證碼輸入正確',
+    ensureGoogleCodeCorrect: '請確保Google驗證碼輸入正確',
     expectedArrivalTitle: '預計到賬時間',
+    // Page metadata
+    createTitle: '創建匯款',
+    createDescription: '創建新的匯款訂單',
+    recipientsTitle: '收款人列表',
+    recipientsDescription: '管理收款人信息',
+    recordsTitle: '匯款記錄',
+    recordsDescription: '查看匯款記錄',
     // 收款人列表
     recipientList: '收款人列表',
     manageRecipientsDesc: '管理您的收款人信息，一鍵發起匯款',

@@ -62,11 +62,13 @@ export const assets = {
     loadTransactionsFailed: 'Failed to load transaction records',
     // Deposit page
     depositTitle: 'USDT Deposit',
+    depositPageTitle: 'Deposit',
+    depositPageDescription: 'Digital currency deposit',
     scanToDeposit: 'Scan to Deposit',
     onlyTRC20Supported: 'Only TRC20 network supported',
     depositAddress: 'Deposit Address',
     loading: 'Loading...',
-    copyAddress: 'Copy Address',
+    copyAddress: 'Copy',
     copied: 'Copied',
     addressLoading: 'Address loading, please wait',
     addressCopied: 'Address copied',
@@ -89,7 +91,13 @@ export const assets = {
     addressSecurityText: 'This deposit address belongs exclusively to you, is permanently valid and will not change. It is recommended to save it to your address book for easy use.',
     getDepositAddressFailed: 'Failed to get deposit address',
     getRechargeDetailFailed: 'Failed to get recharge details',
-    estimatedTime: '1-30 minutes'
+    estimatedTime: '1-30 minutes',
+    // My Assets page metadata
+    myAssetsTitle: 'My Assets',
+    myAssetsDescription: 'View and manage my assets',
+    // Transactions page metadata
+    transactionsTitle: 'Transaction History',
+    transactionsDescription: 'View transaction history records'
   },
   zh: {
     welcomeTitle: '欢迎使用 Fidere Pay',
@@ -151,6 +159,8 @@ export const assets = {
     loadTransactionsFailed: '加载交易记录失败',
     // Deposit page
     depositTitle: 'USDT 充值',
+    depositPageTitle: '充值',
+    depositPageDescription: '数字货币充值',
     scanToDeposit: '扫码充值',
     onlyTRC20Supported: '仅支持 TRC20 网络',
     depositAddress: '充值地址',
@@ -178,7 +188,13 @@ export const assets = {
     addressSecurityText: '此充值地址专属于您,永久有效且不会更改。建议保存到地址簿方便使用。',
     getDepositAddressFailed: '获取充值地址失败',
     getRechargeDetailFailed: '获取充值详情失败',
-    estimatedTime: '1-30分钟'
+    estimatedTime: '1-30分钟',
+    // My Assets page metadata
+    myAssetsTitle: '我的资产',
+    myAssetsDescription: '查看和管理我的资产',
+    // Transactions page metadata
+    transactionsTitle: '交易流水',
+    transactionsDescription: '查看交易流水记录'
   },
   'zh-Hant': {
     welcomeTitle: '歡迎使用 Fidere Pay',
@@ -240,6 +256,8 @@ export const assets = {
     loadTransactionsFailed: '加載交易記錄失敗',
     // Deposit page
     depositTitle: 'USDT 充值',
+    depositPageTitle: '充值',
+    depositPageDescription: '數字貨幣充值',
     scanToDeposit: '掃碼充值',
     onlyTRC20Supported: '僅支持 TRC20 網絡',
     depositAddress: '充值地址',
@@ -267,6 +285,12 @@ export const assets = {
     addressSecurityText: '此充值地址專屬於您,永久有效且不會更改。建議保存到地址簿方便使用。',
     getDepositAddressFailed: '獲取充值地址失敗',
     getRechargeDetailFailed: '獲取充值詳情失敗',
-    estimatedTime: '1-30分鐘'
+    estimatedTime: '1-30分鐘',
+    // My Assets page metadata
+    myAssetsTitle: '我的資產',
+    myAssetsDescription: '查看和管理我的資產',
+    // Transactions page metadata
+    transactionsTitle: '交易流水',
+    transactionsDescription: '查看交易流水記錄'
   }
 }

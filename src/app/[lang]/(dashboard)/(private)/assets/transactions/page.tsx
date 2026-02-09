@@ -6,13 +6,26 @@ import TransactionHistory from '@views/assets/TransactionHistory'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '交易流水',
-  description: '查看交易流水记录'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
 }
 
-const TransactionHistoryPage = async () => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dictionary = await getDictionary(lang)
+  
+  return {
+    title: dictionary.assets.transactionsTitle,
+    description: dictionary.assets.transactionsDescription
+  }
+}
+
+const TransactionHistoryPage = async (props: Props) => {
   // Vars
   const mode = await getServerMode()
 

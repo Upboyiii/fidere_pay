@@ -41,7 +41,7 @@ export interface AdjustAssetRequest {
   currencyCode: string // 币种编码
   adjustType: 1 | 2 // 调整类型 1-增加 2-扣减
   amount: number // 调整金额
-  remark?: string // 调整原因/备注
+  remark?: string // 调整原因/备注 
 }
 
 export const adjustAsset = (data: AdjustAssetRequest) =>

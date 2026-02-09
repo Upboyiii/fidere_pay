@@ -1309,9 +1309,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
                     {googleAuthBound && (
                       <Alert severity='info' sx={{ borderRadius: '8px' }}>
-                        {/* 已注释：去掉支付密码相关提示 */}
-                        {/* {t('remittance.ensureCorrect')} */}
-                        请确保Google验证码输入正确
+                        {t('remittance.ensureGoogleCodeCorrect')}
                       </Alert>
                     )}
                   </Box>

@@ -6,13 +6,26 @@ import MyAssets from '@views/assets/MyAssets'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '我的资产',
-  description: '查看和管理我的资产'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
 }
 
-const MyAssetsPage = async () => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dictionary = await getDictionary(lang)
+  
+  return {
+    title: dictionary.assets.myAssetsTitle,
+    description: dictionary.assets.myAssetsDescription
+  }
+}
+
+const MyAssetsPage = async (props: Props) => {
   // Vars
   const mode = await getServerMode()
 

@@ -6,13 +6,26 @@ import Deposit from '@views/remittance/Deposit'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '充值',
-  description: '数字货币充值'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
 }
 
-const DepositPage = async () => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dictionary = await getDictionary(lang)
+  
+  return {
+    title: dictionary.assets.depositPageTitle,
+    description: dictionary.assets.depositPageDescription
+  }
+}
+
+const DepositPage = async (props: Props) => {
   // Vars
   const mode = await getServerMode()
 
