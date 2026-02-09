@@ -1,7 +1,10 @@
 'use client'
 
 // React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+
+// Next Imports
+import { useParams, usePathname } from 'next/navigation'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -39,7 +42,27 @@ import {
 } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const SecuritySettings = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
+  const params = useParams()
+  const pathname = usePathname()
+  
+  // 使用 useMemo 确保 currentLang 随着 pathname 的变化而更新
+  const currentLang = useMemo(() => {
+    // 从路径中提取语言，确保获取当前页面的语言
+    if (pathname) {
+      const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+      if (langMatch && langMatch[1]) {
+        return langMatch[1]
+      }
+    }
+    // 如果路径中没有语言，则使用 params
+    return (params?.lang as string) || undefined
+  }, [pathname, params?.lang])
+  
   const [googleAuthBound, setGoogleAuthBound] = useState(false)
   const [payPasswordSet, setPayPasswordSet] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -79,7 +102,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       setPayPasswordSet(payPasswordData?.isSet || false)
     } catch (error) {
       console.error('加载状态失败:', error)
-      toast.error('加载状态失败')
+      toast.error(t('settings.loadStatusFailed'))
     } finally {
       setLoading(false)
     }
@@ -93,7 +116,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
   const handleGenerateGoogleAuth = async () => {
     // 如果已绑定，不允许再次生成
     if (googleAuthBound) {
-      toast.error('谷歌验证已绑定，请先解绑')
+      toast.error(t('settings.googleAuthAlreadyBound'))
       return
     }
     
@@ -109,7 +132,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
     } catch (error: any) {
       console.error('生成密钥失败:', error)
       // 显示API返回的错误信息
-      const errorMessage = error?.response?.data?.message || error?.message || '生成密钥失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('settings.generateSecretFailed')
       toast.error(errorMessage)
     } finally {
       setGenerating(false)
@@ -119,7 +142,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
   // 绑定Google验证
   const handleBindGoogleAuth = async () => {
     if (!googleAuthCode || googleAuthCode.length !== 6) {
-      toast.error('请输入6位验证码')
+      toast.error(t('settings.enter6DigitCode'))
       return
     }
     try {
@@ -127,7 +150,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         secret: googleAuthSecret,
         code: googleAuthCode
       })
-      toast.success('绑定成功')
+      toast.success(t('settings.bindSuccess'))
       setGoogleAuthDialogOpen(false)
       setGoogleAuthCode('')
       setGoogleAuthSecret('')
@@ -135,52 +158,52 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       loadStatus()
     } catch (error: any) {
       console.error('绑定失败:', error)
-      toast.error(error?.message || '绑定失败')
+      toast.error(error?.message || t('settings.bindFailed'))
     }
   }
 
   // 解绑Google验证
   const handleUnbindGoogleAuth = async () => {
     if (!googleAuthCode || googleAuthCode.length !== 6) {
-      toast.error('请输入6位验证码')
+      toast.error(t('settings.enter6DigitCode'))
       return
     }
     try {
       await unbindGoogleAuth({
         code: googleAuthCode
       })
-      toast.success('解绑成功')
+      toast.success(t('settings.unbindSuccess'))
       setUnbindGoogleAuthDialogOpen(false)
       setGoogleAuthCode('')
       loadStatus()
     } catch (error: any) {
       console.error('解绑失败:', error)
-      toast.error(error?.message || '解绑失败')
+      toast.error(error?.message || t('settings.unbindFailed'))
     }
   }
 
   // 设置支付密码
   const handleSetPayPassword = async () => {
     if (!newPayPassword || newPayPassword.length < 6) {
-      toast.error('密码长度至少6位')
+      toast.error(t('settings.passwordMinLength'))
       return
     }
     if (newPayPassword !== confirmPayPassword) {
-      toast.error('两次输入的密码不一致')
+      toast.error(t('settings.passwordsNotMatch'))
       return
     }
     try {
       await setPayPassword({
         password: newPayPassword
       })
-      toast.success('设置成功')
+      toast.success(t('settings.setSuccess'))
       setSetPayPasswordDialogOpen(false)
       setNewPayPassword('')
       setConfirmPayPassword('')
       loadStatus()
     } catch (error: any) {
       console.error('设置失败:', error)
-      toast.error(error?.message || '设置失败')
+      toast.error(error?.message || t('settings.setFailed'))
     }
   }
 
@@ -189,16 +212,16 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
     // 根据接口定义，resetPayPassword 只需要 newPassword 和可选的 googleCode
     // 如果已绑定谷歌验证，需要谷歌验证码
     if (googleAuthBound && !verificationCode) {
-      toast.error('请输入谷歌验证码')
+      toast.error(t('settings.enterGoogleCode'))
       return
     }
     
     if (!newPayPassword || newPayPassword.length < 6) {
-      toast.error('新密码长度至少6位')
+      toast.error(t('settings.newPasswordMinLength'))
       return
     }
     if (newPayPassword !== confirmPayPassword) {
-      toast.error('两次输入的密码不一致')
+      toast.error(t('settings.newPasswordsNotMatch'))
       return
     }
     
@@ -207,7 +230,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         newPassword: newPayPassword,
         googleCode: googleAuthBound ? verificationCode : undefined
       })
-      toast.success('重置成功')
+      toast.success(t('settings.resetSuccess'))
       setResetPayPasswordDialogOpen(false)
       setNewPayPassword('')
       setConfirmPayPassword('')
@@ -215,7 +238,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       loadStatus()
     } catch (error: any) {
       console.error('重置失败:', error)
-      toast.error(error?.message || '重置失败')
+      toast.error(error?.message || t('settings.resetFailed'))
     }
   }
 
@@ -268,10 +291,10 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       >
         <Box sx={{ mb: 4 }}>
           <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-            安全设置
+            {t('settings.title')}
           </Typography>
           <Typography color='text.secondary'>
-            管理您的账户安全设置，保护您的资金安全
+            {t('settings.description')}
           </Typography>
         </Box>
 
@@ -291,7 +314,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
           >
             <CardContent sx={{ p: 5, flex: 1, display: 'flex', flexDirection: 'column' }}>
               <Typography variant='h6' sx={{ fontWeight: 700, mb: 4 }}>
-                Google验证器
+                {t('settings.googleAuthenticator')}
               </Typography>
 
               {loading ? (
@@ -317,17 +340,17 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                       <i className='ri-smartphone-line text-primary' style={{ fontSize: '48px' }} />
                     </Box>
                     <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                      启用 Authenticator 应用程序
+                      {t('settings.enableAuthenticatorApp')}
                     </Typography>
                   </Box>
 
                   {/* 描述文字 */}
                   <Box sx={{ mb: 3 }}>
                     <Typography variant='body2' color='text.secondary' sx={{ mb: 1.5, lineHeight: 1.6 }}>
-                      Authenticator 应用程序是一个第三方应用程序,为您管理资金提供了额外的安全层,特别是在提款等活动期间。
+                      {t('settings.authenticatorDesc1')}
                     </Typography>
                     <Typography variant='body2' color='text.secondary' sx={{ lineHeight: 1.6 }}>
-                      通过 Authenticator 应用程序,您将被提示输入应用程序生成的代码进行验证而不是依赖短信验证码。
+                      {t('settings.authenticatorDesc2')}
                     </Typography>
                   </Box>
 
@@ -344,11 +367,11 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 1 }}>
                           <i className='ri-checkbox-circle-fill text-success' style={{ fontSize: '20px' }} />
                           <Typography variant='subtitle2' sx={{ fontWeight: 700, color: 'success.main' }}>
-                            已启用 Google 验证器
+                            {t('settings.enabled')}
                           </Typography>
                         </Box>
                         <Typography variant='caption' color='text.secondary'>
-                          您的账户已受到双重验证保护
+                          {t('settings.enabledDesc')}
                         </Typography>
                       </Box>
                     </>
@@ -357,10 +380,10 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                       {/* 未绑定状态 - 下载提示 */}
                       <Box sx={{ mb: 3 }}>
                         <Typography variant='body2' sx={{ fontWeight: 600, mb: 1.5 }}>
-                          没有 Authenticator 应用程序?
+                          {t('settings.noAuthenticatorApp')}
                         </Typography>
                         <Typography variant='body2' color='text.secondary' sx={{ mb: 2, lineHeight: 1.6 }}>
-                          通过扫描下方的二维码或在应用商店或 Google Play 上搜索下载 Google Authenticator
+                          {t('settings.downloadDesc')}
                         </Typography>
                         
                         {/* 下载按钮 */}
@@ -462,7 +485,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                         }}
                         onClick={() => setUnbindGoogleAuthDialogOpen(true)}
                       >
-                        解除绑定
+                        {t('settings.unbind')}
                       </Button>
                     ) : (
                       <Button
@@ -480,7 +503,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                         onClick={handleGenerateGoogleAuth}
                         startIcon={generating ? <CircularProgress size={20} color='inherit' /> : null}
                       >
-                        {generating ? '生成中...' : '启用'}
+                        {generating ? t('settings.generating') : t('settings.enable')}
                       </Button>
                     )}
                   </Box>
@@ -518,7 +541,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                   <i className='ri-lock-line text-white' />
                 </Box>
                 <Typography variant='h6' sx={{ fontWeight: 700 }}>
-                  支付密码
+                  {t('settings.paymentPassword')}
                 </Typography>
               </Box>
 
@@ -530,7 +553,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                 <>
                   {/* 描述文字 */}
                   <Typography variant='body2' color='text.secondary' sx={{ mb: 3, lineHeight: 1.7 }}>
-                    定期修改支付密码有助于保护您的账户安全
+                    {t('settings.paymentPasswordDesc')}
                   </Typography>
 
                   {/* 安全提示 */}
@@ -538,13 +561,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
                       <i className='ri-search-line text-primary' style={{ fontSize: '18px', marginTop: '2px' }} />
                       <Typography variant='body2' color='text.secondary' sx={{ lineHeight: 1.6 }}>
-                        使用强密码保护您的账户
+                        {t('settings.useStrongPassword')}
                       </Typography>
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                       <i className='ri-edit-line text-primary' style={{ fontSize: '18px', marginTop: '2px' }} />
                       <Typography variant='body2' color='text.secondary' sx={{ lineHeight: 1.6 }}>
-                        建议每3-6个月更换一次密码
+                        {t('settings.changePasswordRegularly')}
                       </Typography>
                     </Box>
                   </Box>
@@ -570,7 +593,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                       }
                     }}
                   >
-                    {payPasswordSet ? '修改密码' : '设置支付密码'}
+                    {payPasswordSet ? t('settings.modifyPassword') : t('settings.setPaymentPassword')}
                   </Button>
                 </>
               )}
@@ -594,7 +617,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 2 }}>
-          绑定 Google 验证器
+          {t('settings.bindGoogleAuthenticator')}
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 4 }}>
@@ -623,7 +646,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             {googleAuthSecret && (
               <Box sx={{ textAlign: 'center', width: '100%' }}>
                 <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1 }}>
-                  密钥 (如无法扫码，可手动输入):
+                  {t('settings.secretLabel')}
                 </Typography>
                 <Box sx={{ 
                   display: 'flex', 
@@ -647,7 +670,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                     size='small'
                     onClick={() => {
                       navigator.clipboard.writeText(googleAuthSecret)
-                      toast.success('密钥已复制')
+                      toast.success(t('settings.secretCopied'))
                     }}
                     sx={{ ml: 1 }}
                   >
@@ -657,18 +680,16 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               </Box>
             )}
             
-            <Typography variant='body2' color='text.secondary' sx={{ textAlign: 'center' }}>
-              1. 打开 Google Authenticator 应用<br />
-              2. 扫描上方二维码或手动输入密钥<br />
-              3. 输入应用中显示的6位验证码
+            <Typography variant='body2' color='text.secondary' sx={{ textAlign: 'center', whiteSpace: 'pre-line' }}>
+              {t('settings.bindSteps')}
             </Typography>
             
             <TextField
               fullWidth
-              label='验证码'
+              label={t('settings.verificationCode')}
               value={googleAuthCode}
               onChange={(e) => setGoogleAuthCode(e.target.value)}
-              placeholder='请输入6位验证码'
+              placeholder={t('settings.verificationCodePlaceholder')}
               inputProps={{ maxLength: 6 }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
@@ -682,7 +703,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             }}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('settings.cancel')}
           </Button>
           <Button 
             variant='contained' 
@@ -693,7 +714,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               borderRadius: '8px'
             }}
           >
-            确认绑定
+            {t('settings.confirmBind')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -712,20 +733,20 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 2 }}>
-          解绑 Google 验证器
+          {t('settings.unbindGoogleAuthenticator')}
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Typography variant='body2' color='text.secondary'>
-              请输入6位验证码以确认解绑操作
+              {t('settings.unbindDesc')}
             </Typography>
             <TextField
               fullWidth
-              label='验证码'
+              label={t('settings.verificationCode')}
               value={googleAuthCode}
               onChange={(e) => setGoogleAuthCode(e.target.value)}
-              placeholder='请输入6位验证码'
+              placeholder={t('settings.verificationCodePlaceholder')}
               inputProps={{ maxLength: 6 }}
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
@@ -739,7 +760,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             }}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('settings.cancel')}
           </Button>
           <Button 
             variant='contained' 
@@ -748,7 +769,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             disabled={!googleAuthCode || googleAuthCode.length !== 6}
             sx={{ borderRadius: '8px' }}
           >
-            确认解绑
+            {t('settings.confirmUnbind')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -782,7 +803,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             >
               <i className='ri-lock-line text-primary' />
             </Box>
-            设置支付密码
+            {t('settings.setPaymentPasswordTitle')}
           </Box>
         </DialogTitle>
         <Divider />
@@ -792,13 +813,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               fullWidth
               label={
                 <Box>
-                  新密码 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                  {t('settings.newPassword')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                 </Box>
               }
               type={showPassword.new ? 'text' : 'password'}
               value={newPayPassword}
               onChange={(e) => setNewPayPassword(e.target.value)}
-              placeholder='请输入新密码'
+              placeholder={t('settings.newPasswordPlaceholder')}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
@@ -817,13 +838,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               fullWidth
               label={
                 <Box>
-                  确认密码 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                  {t('settings.confirmPassword')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                 </Box>
               }
               type={showPassword.confirm ? 'text' : 'password'}
               value={confirmPayPassword}
               onChange={(e) => setConfirmPayPassword(e.target.value)}
-              placeholder='请输入确认密码'
+              placeholder={t('settings.confirmPasswordPlaceholder')}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
@@ -849,7 +870,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             }}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('settings.cancel')}
           </Button>
           <Button 
             variant='contained' 
@@ -860,7 +881,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               borderRadius: '8px'
             }}
           >
-            确认设置
+            {t('settings.confirmSet')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -895,7 +916,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             >
               <i className='ri-lock-line text-primary' />
             </Box>
-            修改支付密码
+            {t('settings.modifyPaymentPasswordTitle')}
           </Box>
         </DialogTitle>
         <Divider />
@@ -906,12 +927,12 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                 fullWidth
                 label={
                   <Box>
-                    谷歌验证码 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                    {t('settings.googleVerificationCode')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                   </Box>
                 }
                 value={verificationCode}
                 onChange={(e) => setVerificationCode(e.target.value)}
-                placeholder='请输入6位验证码'
+                placeholder={t('settings.googleVerificationCodePlaceholder')}
                 inputProps={{ maxLength: 6 }}
                 sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
               />
@@ -920,13 +941,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               fullWidth
               label={
                 <Box>
-                  新密码 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                  {t('settings.newPassword')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                 </Box>
               }
               type={showPassword.new ? 'text' : 'password'}
               value={newPayPassword}
               onChange={(e) => setNewPayPassword(e.target.value)}
-              placeholder='请输入新密码'
+              placeholder={t('settings.newPasswordPlaceholder')}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
@@ -945,13 +966,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               fullWidth
               label={
                 <Box>
-                  确认密码 <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                  {t('settings.confirmPassword')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                 </Box>
               }
               type={showPassword.confirm ? 'text' : 'password'}
               value={confirmPayPassword}
               onChange={(e) => setConfirmPayPassword(e.target.value)}
-              placeholder='请输入确认密码'
+              placeholder={t('settings.confirmPasswordPlaceholder')}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position='end'>
@@ -978,7 +999,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             }}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('settings.cancel')}
           </Button>
           <Button 
             variant='contained' 
@@ -989,7 +1010,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               borderRadius: '8px'
             }}
           >
-            确认修改
+            {t('settings.confirmModify')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -6,13 +6,26 @@ import SecuritySettings from '@views/settings/SecuritySettings'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '安全设置',
-  description: '管理您的账户安全设置'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
 }
 
-const SettingsPage = async () => {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dictionary = await getDictionary(lang)
+  
+  return {
+    title: dictionary.settings.title,
+    description: dictionary.settings.description
+  }
+}
+
+const SettingsPage = async (props: Props) => {
   // Vars
   try {
     const mode = await getServerMode()
