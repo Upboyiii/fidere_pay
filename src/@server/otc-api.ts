@@ -938,3 +938,41 @@ export interface CregisDepositCallbackRequest {
 
 export const cregisDepositCallback = (data: CregisDepositCallbackRequest) =>
   clientRequest.post('/_api/v1/pub/callback/cregis/deposit', data)
+
+// 47. 获取国家列表
+export interface CountryListItem {
+  id: number
+  countryAbbr: string // 国家缩写，如 'AFG', 'CHN', 'USA'
+  countryName: string // 国家名称（英文），如 'Afghanistan', 'China', 'United States'
+  countryNameCh: string // 国家名称（中文），如 '阿富汗', '中国', '美国'
+  phonePrefix: string // 电话区号（不含+），如 '93', '86', '1'
+  countryImg?: string // 国家图标文件名
+  countryImgType?: string // 图标类型，如 'svg'
+  createTime?: string // 创建时间
+  [key: string]: any
+}
+
+export interface CountryListParams {
+  name?: string // 国家名称（支持中英文模糊搜索）
+  pageNum?: number
+  pageSize?: number
+}
+
+export interface CountryListResponse {
+  list: CountryListItem[]
+  total?: number
+}
+
+export const getCountryList = (params?: CountryListParams) =>
+  clientRequest.get<CountryListResponse>('/_api/v1/biz/country/list', { params })
+
+// 48. 获取用户资产统计
+export interface UserAssetStatistics {
+  todayIncome: number // 今日收入
+  todayExpense: number // 今日支出
+  totalAsset: number // 总资产
+  [key: string]: any
+}
+
+export const getUserAssetStatistics = () =>
+  clientRequest.get<UserAssetStatistics>('/_api/v1/biz/user/asset/statistics')

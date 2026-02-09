@@ -27,12 +27,13 @@ import Divider from '@mui/material/Divider'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import CircularProgress from '@mui/material/CircularProgress'
+import Autocomplete from '@mui/material/Autocomplete'
 
 // Type Imports
 import type { Mode } from '@core/types'
 
 // API Imports
-import { addPayee, editPayee, getPayeeDetail, type PayeeItem } from '@server/otc-api'
+import { addPayee, editPayee, getPayeeDetail, getCountryList, type PayeeItem, type CountryListItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Context Imports
@@ -46,6 +47,8 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
   const isEdit = !!recipientId
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [countries, setCountries] = useState<CountryListItem[]>([])
+  const [countriesLoading, setCountriesLoading] = useState(false)
 
   // 表单数据
   const [formData, setFormData] = useState({
@@ -76,6 +79,26 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
     purposeDesc: '',
     remark: ''
   })
+
+  // 加载国家列表
+  useEffect(() => {
+    const loadCountries = async () => {
+      setCountriesLoading(true)
+      try {
+        const res = await getCountryList()
+        const data = res.data?.data || res.data
+        if (data && data.list) {
+          setCountries(data.list)
+        }
+      } catch (error) {
+        console.error('获取国家列表失败:', error)
+        toast.error('获取国家列表失败')
+      } finally {
+        setCountriesLoading(false)
+      }
+    }
+    loadCountries()
+  }, [])
 
   // 加载收款人详情（编辑模式）
   useEffect(() => {
@@ -332,17 +355,19 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
           <Box sx={{ mb: 4, display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
               <IconButton
+                size='small'
                 onClick={handleBack}
                 sx={{
                   mt: 0.5,
                   color: 'text.secondary',
+                  fontSize: '1.2rem',
                   '&:hover': {
                     bgcolor: 'action.hover',
                     color: 'text.primary'
                   }
                 }}
               >
-                <i className='ri-arrow-left-line' />
+                <i className='ri-arrow-left-line' style={{ fontSize: '1.2rem' }} />
               </IconButton>
               <Box sx={{ flex: 1 }}>
                 <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
@@ -486,28 +511,48 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
                     {t('remittance.countryRegion')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                   </Typography>
-                  <FormControl fullWidth size='small'>
-                    <Select
-                      value={formData.country}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setFormData({ 
-                          ...formData, 
-                          country: value,
-                          countryCode: value // 简化处理，实际应该根据国家名称获取国家代码
-                        })
-                      }}
-                      displayEmpty
-                      sx={{ borderRadius: '12px' }}
-                    >
-                      <MenuItem value=''>{t('remittance.selectCountryPlaceholder')}</MenuItem>
-                      <MenuItem value='香港'>香港</MenuItem>
-                      <MenuItem value='美国'>美国</MenuItem>
-                      <MenuItem value='新加坡'>新加坡</MenuItem>
-                      <MenuItem value='英国'>英国</MenuItem>
-                      <MenuItem value='中国'>中国</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Autocomplete
+                    options={countries}
+                    value={countries.find(c => c.countryNameCh === formData.country) || null}
+                    onChange={(event, newValue) => {
+                      setFormData({ 
+                        ...formData, 
+                        country: newValue?.countryNameCh || '',
+                        countryCode: newValue?.countryAbbr || ''
+                      })
+                    }}
+                    getOptionLabel={(option) => option.countryNameCh}
+                    loading={countriesLoading}
+                    disabled={countriesLoading}
+                    size='small'
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        placeholder={t('remittance.selectCountryPlaceholder')}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {countriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} key={option.id}>
+                        {option.countryNameCh}
+                      </li>
+                    )}
+                    noOptionsText={t('remittance.noCountries')}
+                    ListboxProps={{
+                      style: {
+                        maxHeight: '300px'
+                      }
+                    }}
+                  />
                 </Grid>
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
@@ -820,28 +865,48 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   <Typography variant='body2' sx={{ mb: 1.5, fontWeight: 500 }}>
                     {t('remittance.bankCountry')} <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
                   </Typography>
-                  <FormControl fullWidth size='small'>
-                    <Select
-                      value={formData.bankCountry}
-                      onChange={(e) => {
-                        const value = e.target.value
-                        setFormData({ 
-                          ...formData, 
-                          bankCountry: value,
-                          bankCountryCode: value // 简化处理
-                        })
-                      }}
-                      displayEmpty
-                      sx={{ borderRadius: '12px' }}
-                    >
-                      <MenuItem value=''>{t('remittance.selectBankCountryPlaceholder')}</MenuItem>
-                      <MenuItem value='香港'>香港</MenuItem>
-                      <MenuItem value='美国'>美国</MenuItem>
-                      <MenuItem value='新加坡'>新加坡</MenuItem>
-                      <MenuItem value='英国'>英国</MenuItem>
-                      <MenuItem value='中国'>中国</MenuItem>
-                    </Select>
-                  </FormControl>
+                  <Autocomplete
+                    options={countries}
+                    value={countries.find(c => c.countryNameCh === formData.bankCountry) || null}
+                    onChange={(event, newValue) => {
+                      setFormData({ 
+                        ...formData, 
+                        bankCountry: newValue?.countryNameCh || '',
+                        bankCountryCode: newValue?.countryAbbr || ''
+                      })
+                    }}
+                    getOptionLabel={(option) => option.countryNameCh}
+                    loading={countriesLoading}
+                    disabled={countriesLoading}
+                    size='small'
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        placeholder={t('remittance.selectBankCountryPlaceholder')}
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
+                        InputProps={{
+                          ...params.InputProps,
+                          endAdornment: (
+                            <>
+                              {countriesLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                              {params.InputProps.endAdornment}
+                            </>
+                          ),
+                        }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} key={option.id}>
+                        {option.countryNameCh}
+                      </li>
+                    )}
+                    noOptionsText={t('remittance.noCountries')}
+                    ListboxProps={{
+                      style: {
+                        maxHeight: '300px'
+                      }
+                    }}
+                  />
                 </Grid>
 
                 {/* 银行州/省 */}

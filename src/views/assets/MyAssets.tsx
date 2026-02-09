@@ -38,9 +38,11 @@ import {
   getUserRechargeList, 
   getCurrencyList,
   initCurrency,
+  getUserAssetStatistics,
   type UserAssetListItem, 
   type RechargeDetailItem,
-  type CurrencyListItem
+  type CurrencyListItem,
+  type UserAssetStatistics
 } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
@@ -74,6 +76,8 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   const [loading, setLoading] = useState(false)
   const [assetsLoading, setAssetsLoading] = useState(false)
   const [rechargesLoading, setRechargesLoading] = useState(false)
+  const [statistics, setStatistics] = useState<UserAssetStatistics | null>(null)
+  const [statisticsLoading, setStatisticsLoading] = useState(false)
   const [filters, setFilters] = useState({
     rechargeNo: '',
     currency: '',
@@ -87,9 +91,14 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   const [assets, setAssets] = useState<UserAssetListItem[]>([])
   
   // 计算汇总数据
+  // 计算总资产：优先使用统计接口数据，否则从资产列表计算
   const totalAvailableBalance = assets.reduce((sum, asset) => sum + (asset.availableBalance || 0), 0)
   const totalFrozenBalance = assets.reduce((sum, asset) => sum + (asset.frozenBalance || 0), 0)
-  const totalBalance = totalAvailableBalance + totalFrozenBalance
+  const totalBalance = statistics?.totalAsset ?? (totalAvailableBalance + totalFrozenBalance)
+  
+  // 今日收入和支出：使用统计接口数据
+  const todayIncome = statistics?.todayIncome ?? 0
+  const todayExpense = statistics?.todayExpense ?? 0
 
   // 充值记录
   const [recharges, setRecharges] = useState<RechargeDetailItem[]>([])
@@ -98,12 +107,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   // 币种列表
   const [currencyList, setCurrencyList] = useState<CurrencyListItem[]>([])
 
-  // 今日统计
-  const [todayStats, setTodayStats] = useState({
-    income: 0,
-    expenditure: 0,
-    totalAssets: 0
-  })
+  // 今日统计已移至统计接口，不再需要本地状态
 
   // 初始化币种并加载币种列表
   const loadCurrencyList = async () => {
@@ -117,6 +121,21 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       setCurrencyList(list)
     } catch (error) {
       console.error('加载币种列表失败:', error)
+    }
+  }
+
+  // 加载资产统计
+  const loadStatistics = async () => {
+    setStatisticsLoading(true)
+    try {
+      const res = await getUserAssetStatistics()
+      const responseData = res.data as any
+      const stats = responseData?.data || responseData || {}
+      setStatistics(stats)
+    } catch (error) {
+      console.error('加载资产统计失败:', error)
+    } finally {
+      setStatisticsLoading(false)
     }
   }
 
@@ -173,32 +192,6 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
       const rechargeList = responseData?.list || responseData?.data?.list || []
       setRecharges(rechargeList)
       setTotal(responseData?.total || responseData?.data?.total || 0)
-
-      // 计算今日统计（基于充值记录）
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      const tomorrow = new Date(today)
-      tomorrow.setDate(tomorrow.getDate() + 1)
-
-      const todayRecharges = rechargeList.filter((recharge: RechargeDetailItem) => {
-        const timestamp = recharge.createdAt
-        if (!timestamp) return false
-        // 判断是秒级(10位)还是毫秒级(13位)时间戳
-        const ts = Number(timestamp)
-        const msTimestamp = ts > 9999999999 ? ts : ts * 1000
-        const rechargeDate = new Date(msTimestamp)
-        return rechargeDate >= today && rechargeDate < tomorrow
-      })
-
-      const income = todayRecharges
-        .filter((recharge: RechargeDetailItem) => recharge.status === 1) // 已到账
-        .reduce((sum: number, recharge: RechargeDetailItem) => sum + recharge.amount, 0)
-
-      setTodayStats({
-        income,
-        expenditure: 0, // 充值页面不显示支出
-        totalAssets: assets.reduce((sum, asset) => sum + (asset.availableBalance || 0) + (asset.frozenBalance || 0), 0)
-      })
     } catch (error) {
       console.error('加载充值记录失败:', error)
       toast.error(t('assets.loadRechargesFailed'))
@@ -208,6 +201,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
   }
 
   useEffect(() => {
+    loadStatistics()
     loadAssets()
     loadCurrencyList()
   }, [])
@@ -296,7 +290,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', fontWeight: 500, fontSize: '0.75rem' }}>
                         {t('assets.totalAssets')}
                       </Typography>
-                      {assetsLoading ? (
+                      {(assetsLoading || statisticsLoading) ? (
                         <CircularProgress size={24} sx={{ color: 'white' }} />
                       ) : (
                         <Typography variant='h4' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.1)' }}>
@@ -363,7 +357,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     {t('assets.todayIncome')}
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#a5f3a5', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    +{todayStats.income.toFixed(2)}
+                    +{todayIncome.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
@@ -371,15 +365,15 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                     {t('assets.todayExpenditure')}
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: '#ffcc80', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    -{Math.abs(todayStats.expenditure).toFixed(2)}
+                    -{todayExpense.toFixed(2)}
                   </Typography>
                 </Box>
                 <Box>
                   <Typography variant='caption' sx={{ color: 'rgba(255, 255, 255, 0.9)', display: 'block', mb: 1, fontWeight: 500 }}>
-                    总资产
+                    {t('assets.totalAssets')}
                   </Typography>
                   <Typography variant='body2' sx={{ fontWeight: 700, color: 'white', textShadow: '0 1px 2px rgba(0, 0, 0, 0.2)' }}>
-                    {todayStats.totalAssets.toFixed(2)}
+                    {totalBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </Typography>
                 </Box>
               </Box>

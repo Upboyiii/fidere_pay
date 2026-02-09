@@ -48,24 +48,36 @@ export const getCurrentLangFromPath = (): string => {
  */
 export const getLocalizedPath = (path: string, lang?: string): string => {
   if (!path || typeof path !== 'string') {
+    console.log('[getLocalizedPath] ⚠️ Invalid path:', path)
     return path || '/'
   }
 
   const targetLang = lang || i18n.defaultLocale
+  
+  console.log('[getLocalizedPath] 输入:', { path, lang, targetLang })
 
   // 如果是外部链接（http/https）或锚点链接，直接返回
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('#')) {
+    console.log('[getLocalizedPath] 外部链接，直接返回:', path)
     return path
   }
 
   // 检查是否已经包含语言前缀
-  const langPattern = /^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/
-  if (langPattern.test(path)) {
-    return path
+  // 先提取可能的语言代码，然后验证它是否在配置的语言列表中
+  const langMatch = path.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)(\/|$)/)
+  if (langMatch && langMatch[1]) {
+    const extractedLang = langMatch[1] as Locale
+    // 只有当提取的语言代码在配置的语言列表中，且后面跟 / 或路径结束时，才认为已包含语言前缀
+    if (i18n.locales.includes(extractedLang) && (langMatch[2] === '/' || langMatch[2] === '')) {
+      console.log('[getLocalizedPath] 已包含语言前缀，直接返回:', path)
+      return path
+    }
   }
 
   // 添加语言前缀
-  return `/${targetLang}${path.startsWith('/') ? path : `/${path}`}`
+  const result = `/${targetLang}${path.startsWith('/') ? path : `/${path}`}`
+  console.log('[getLocalizedPath] ✅ 结果:', result)
+  return result
 }
 
 /**
