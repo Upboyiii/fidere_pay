@@ -511,7 +511,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               {t('remittance.createRemittance')}
             </Typography>
             <Typography color='text.secondary'>
-              {t('remittance.createRemittanceDesc')}1
+              {t('remittance.createRemittanceDesc')}
             </Typography>
           </Box>
         </Grid>

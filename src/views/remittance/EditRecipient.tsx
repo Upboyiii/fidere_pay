@@ -45,6 +45,23 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const recipientId = params?.id ? Number(params.id) : null
   const isEdit = !!recipientId
+  
+  // 获取当前语言，用于显示对应的国家名称字段
+  const currentLang = (params?.lang as string) || 'zh-CN'
+  const isEnglish = currentLang === 'en'
+  
+  // 根据语言返回对应的国家名称字段
+  const getCountryDisplayName = (country: CountryListItem) => {
+    return isEnglish ? country.countryName : country.countryNameCh
+  }
+  
+  // 根据语言和国家名称查找国家（支持中英文）
+  const findCountryByName = (name: string) => {
+    if (!name) return null
+    return countries.find(c => 
+      c.countryNameCh === name || c.countryName === name
+    ) || null
+  }
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [countries, setCountries] = useState<CountryListItem[]>([])
@@ -513,15 +530,15 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <Autocomplete
                     options={countries}
-                    value={countries.find(c => c.countryNameCh === formData.country) || null}
+                    value={findCountryByName(formData.country) || null}
                     onChange={(event, newValue) => {
                       setFormData({ 
                         ...formData, 
-                        country: newValue?.countryNameCh || '',
+                        country: isEnglish ? (newValue?.countryName || '') : (newValue?.countryNameCh || ''),
                         countryCode: newValue?.countryAbbr || ''
                       })
                     }}
-                    getOptionLabel={(option) => option.countryNameCh}
+                    getOptionLabel={(option) => getCountryDisplayName(option)}
                     loading={countriesLoading}
                     disabled={countriesLoading}
                     size='small'
@@ -543,7 +560,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     )}
                     renderOption={(props, option) => (
                       <li {...props} key={option.id}>
-                        {option.countryNameCh}
+                        {getCountryDisplayName(option)}
                       </li>
                     )}
                     noOptionsText={t('remittance.noCountries')}
@@ -867,15 +884,15 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <Autocomplete
                     options={countries}
-                    value={countries.find(c => c.countryNameCh === formData.bankCountry) || null}
+                    value={findCountryByName(formData.bankCountry) || null}
                     onChange={(event, newValue) => {
                       setFormData({ 
                         ...formData, 
-                        bankCountry: newValue?.countryNameCh || '',
+                        bankCountry: isEnglish ? (newValue?.countryName || '') : (newValue?.countryNameCh || ''),
                         bankCountryCode: newValue?.countryAbbr || ''
                       })
                     }}
-                    getOptionLabel={(option) => option.countryNameCh}
+                    getOptionLabel={(option) => getCountryDisplayName(option)}
                     loading={countriesLoading}
                     disabled={countriesLoading}
                     size='small'
@@ -897,7 +914,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     )}
                     renderOption={(props, option) => (
                       <li {...props} key={option.id}>
-                        {option.countryNameCh}
+                        {getCountryDisplayName(option)}
                       </li>
                     )}
                     noOptionsText={t('remittance.noCountries')}

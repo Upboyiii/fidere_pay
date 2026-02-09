@@ -115,7 +115,11 @@ export const navigation = {
     development: 'development',
     // 父级菜单翻译
     assetManagement: 'Asset Management',
-    globalRemittance: 'Global Remittance'
+    globalRemittance: 'Global Remittance',
+    // 管理配置页面翻译
+    adminTransfer: 'Transfer Management',
+    adminFinancial: 'Financial Records',
+    adminCallbackAddress: 'Callback Address'
   },
   zh: {
     dashboards: '仪表板',
@@ -187,7 +191,11 @@ export const navigation = {
     development: '开发配置',
     // 父级菜单翻译
     assetManagement: '资产管理',
-    globalRemittance: '全球汇款'
+    globalRemittance: '全球汇款',
+    // 管理配置页面翻译
+    adminTransfer: '转账管理',
+    adminFinancial: '资金流水',
+    adminCallbackAddress: '回调地址'
   },
   zhTW: {
     dashboards: '儀表板',
@@ -259,6 +267,10 @@ export const navigation = {
     development: '開發配置',
     // 父級菜單翻譯
     assetManagement: '資產管理',
-    globalRemittance: '全球匯款'
+    globalRemittance: '全球匯款',
+    // 管理配置頁面翻譯
+    adminTransfer: '轉賬管理',
+    adminFinancial: '資金流水',
+    adminCallbackAddress: '回調地址'
   }
 } as const

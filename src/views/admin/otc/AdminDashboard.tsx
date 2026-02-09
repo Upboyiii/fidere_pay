@@ -24,6 +24,9 @@ import type { Mode } from '@core/types'
 // Util Imports
 import { getLocalizedPath } from '@/utils/routeUtils'
 
+// Context Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 // API Imports
 import {
   getAdminAssetList,
@@ -39,6 +42,7 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
   const currentLang = (params?.lang as string) || undefined
+  const t = useTranslate()
 
   // 统计数据
   const [loading, setLoading] = useState(true)
@@ -132,8 +136,8 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
 
   const menuItems = [
     {
-      title: '转账管理',
-      description: '管理转账申请和审核',
+      title: t('navigation.adminTransfer') || '转账管理',
+      description: t('navigation.adminTransfer') || '管理转账申请和审核',
       href: '/Adminconfiguration/transfer',
       icon: 'ri-exchange-line',
       color: '#6366f1',
@@ -142,8 +146,8 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
       badgeColor: 'warning' as const
     },
     {
-      title: '资金流水',
-      description: '查看资金流水记录',
+      title: t('navigation.adminFinancial') || '资金流水',
+      description: t('navigation.adminFinancial') || '查看资金流水记录',
       href: '/Adminconfiguration/financial',
       icon: 'ri-money-dollar-circle-line',
       color: '#10b981',
@@ -168,8 +172,8 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
       bgColor: 'rgba(139, 92, 246, 0.1)'
     },
     {
-      title: '回调地址',
-      description: '管理回调地址配置',
+      title: t('navigation.adminCallbackAddress') || '回调地址',
+      description: t('navigation.adminCallbackAddress') || '管理回调地址配置',
       href: '/Adminconfiguration/Callbackaddress',
       icon: 'ri-links-line',
       color: '#06b6d4',
