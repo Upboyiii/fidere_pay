@@ -511,11 +511,10 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               {t('remittance.createRemittance')}
             </Typography>
             <Typography color='text.secondary'>
-              {t('remittance.createRemittanceDesc')}
+              {t('remittance.createRemittanceDesc')}1
             </Typography>
           </Box>
         </Grid>
-
         {/* 步骤指示器 */}
         <Grid size={{ xs: 12 }}>
           <Card sx={{ borderRadius: '16px', boxShadow: '0 4px 20px rgba(0,0,0,0.03)', border: '1px solid rgba(0,0,0,0.05)' }}>
@@ -699,18 +698,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         variant='contained'
                         startIcon={<i className='ri-add-line' />}
                         onClick={() => {
-                          // 实时获取当前语言，避免闭包问题
-                          const realTimeLang = getCurrentLangFromPath()
-                          const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-                          if (process.env.NODE_ENV === 'development') {
-                            console.log('[CreateRemittance] Navigate to recipients/new:', { 
-                              realTimeLang, 
-                              currentLang, 
-                              pathname, 
-                              targetPath 
-                            })
-                          }
-                          router.push(targetPath)
+                          router.push('/remittance/recipients/new')
                         }}
                         sx={{ borderRadius: '8px', px: 6 }}
                       >
@@ -752,18 +740,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           size='small'
                           startIcon={<i className='ri-add-line' />}
                           onClick={() => {
-                            // 实时获取当前语言，避免闭包问题
-                            const realTimeLang = getCurrentLangFromPath()
-                            const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-                            if (process.env.NODE_ENV === 'development') {
-                              console.log('[CreateRemittance] Navigate to recipients/new:', { 
-                                realTimeLang, 
-                                currentLang, 
-                                pathname, 
-                                targetPath 
-                              })
-                            }
-                            router.push(targetPath)
+                            router.push('/remittance/recipients/new')
                           }}
                           sx={{
                             color: 'primary.main',
@@ -1666,9 +1643,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 fullWidth
                 onClick={() => {
                   setSubmitSuccess(false)
-                  // 实时获取当前语言，避免闭包问题
-                  const realTimeLang = getCurrentLangFromPath()
-                  router.push(getLocalizedPath('/remittance/records', realTimeLang))
+                  router.push('/remittance/records')
                 }}
                 sx={{ borderRadius: '8px', py: 1.5 }}
                 startIcon={<i className='ri-list-check' />}
