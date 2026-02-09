@@ -1,7 +1,10 @@
 'use client'
 
 // React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+
+// Next Imports
+import { useParams, usePathname } from 'next/navigation'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -38,6 +41,9 @@ import {
 } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 interface TabPanelProps {
   children?: React.ReactNode
   index: number
@@ -61,6 +67,30 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
+  const params = useParams()
+  const pathname = usePathname()
+  
+  // 使用 useMemo 确保 currentLang 随着 pathname 的变化而更新
+  const currentLang = useMemo(() => {
+    // 从路径中提取语言，确保获取当前页面的语言
+    if (pathname) {
+      const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+      if (langMatch && langMatch[1]) {
+        return langMatch[1]
+      }
+    }
+    // 如果路径中没有语言，则使用 params
+    return (params?.lang as string) || undefined
+  }, [pathname, params?.lang])
+  
+  // 根据当前语言设置日期格式化的 locale
+  const getDateLocale = () => {
+    if (currentLang === 'en') return 'en-US'
+    if (currentLang === 'zh-Hant') return 'zh-TW'
+    return 'zh-CN'
+  }
+  
   const [data, setData] = useState<ApiKeyItem[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -69,7 +99,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text)
-        toast.success('已复制')
+        toast.success(t('development.copied'))
       } else {
         // 降级方案：使用传统的复制方法
         const textArea = document.createElement('textarea')
@@ -82,15 +112,15 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         textArea.select()
         try {
           document.execCommand('copy')
-          toast.success('已复制')
+          toast.success(t('development.copied'))
         } catch (err) {
-          toast.error('复制失败')
+          toast.error(t('development.copyFailed'))
         }
         document.body.removeChild(textArea)
       }
     } catch (error) {
       console.error('复制失败:', error)
-      toast.error('复制失败')
+      toast.error(t('development.copyFailed'))
     }
   }
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -116,7 +146,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
       setData(apiData?.list || [])
     } catch (error) {
       console.error('加载数据失败:', error)
-      toast.error('加载数据失败')
+      toast.error(t('development.loadDataFailed'))
     } finally {
       setLoading(false)
     }
@@ -128,18 +158,18 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
 
   const handleCreate = async () => {
     if (!formData.apiName) {
-      toast.error('请输入API名称')
+      toast.error(t('development.enterApiName'))
       return
     }
     try {
       await createApiKey(formData)
-      toast.success('创建成功')
+      toast.success(t('development.createSuccess'))
       setCreateDialogOpen(false)
       setFormData({ apiName: '', ipWhitelist: '', callbackUrl: '', remark: '' })
       loadData()
     } catch (error: any) {
       console.error('创建失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '创建失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('development.createFailed')
       toast.error(errorMessage)
     }
   }
@@ -157,14 +187,14 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         id,
         status: currentStatus === 1 ? 0 : 1
       })
-      toast.success('状态更新成功')
+      toast.success(t('development.statusUpdateSuccess'))
       loadData()
       if (selectedItem && selectedItem.id === id) {
         setSelectedItem({ ...selectedItem, status: currentStatus === 1 ? 0 : 1 })
       }
     } catch (error: any) {
       console.error('状态更新失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '状态更新失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('development.statusUpdateFailed')
       toast.error(errorMessage)
     }
   }
@@ -184,11 +214,11 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
       const newSecret = responseData?.apiSecret
       
       if (!newSecret) {
-        toast.error('获取新密钥失败')
+        toast.error(t('development.getNewSecretFailed'))
         return
       }
       
-      toast.success('重新生成成功，请保存新的Secret')
+      toast.success(t('development.regenerateSuccess'))
       setShowSecret(true)
       setRegenerateSecretDialogOpen(false)
       
@@ -204,7 +234,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
       loadData()
     } catch (error: any) {
       console.error('重新生成失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '重新生成失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('development.regenerateFailed')
       toast.error(errorMessage)
     }
   }
@@ -216,11 +246,11 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         id: selectedItem.id,
         callbackUrl: selectedItem.callbackUrl
       })
-      toast.success('保存成功')
+      toast.success(t('development.updateSuccess'))
       loadData()
     } catch (error: any) {
       console.error('保存失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '保存失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('development.updateFailed')
       toast.error(errorMessage)
     }
   }
@@ -235,7 +265,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
     if (!itemToDelete) return
     try {
       await deleteApiKey({ id: itemToDelete.id })
-      toast.success('删除成功')
+      toast.success(t('development.deleteSuccess'))
       setDeleteDialogOpen(false)
       setItemToDelete(null)
       // 如果删除的是当前查看的详情，关闭详情对话框
@@ -246,7 +276,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
       loadData()
     } catch (error: any) {
       console.error('删除失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || '删除失败'
+      const errorMessage = error?.response?.data?.message || error?.message || t('development.deleteFailed')
       toast.error(errorMessage)
     }
   }
@@ -257,10 +287,10 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         <Grid size={{ xs: 12 }}>
           <Box sx={{ mb: 4 }}>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary', mb: 1 }}>
-              开发配置
+              {t('development.title')}
             </Typography>
             <Typography color='text.secondary'>
-              管理您的API Key，用于系统集成和接口调用
+              {t('development.description')}
             </Typography>
           </Box>
         </Grid>
@@ -268,7 +298,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         <Grid size={{ xs: 12 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
             <Typography variant='h6' sx={{ fontWeight: 600 }}>
-              API Key 列表
+              {t('development.apiKeyList')}
             </Typography>
             <Button
               variant='contained'
@@ -276,7 +306,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
               onClick={() => setCreateDialogOpen(true)}
               startIcon={<i className='ri-add-line' />}
             >
-              创建 API Key
+              {t('development.createApiKey')}
             </Button>
           </Box>
 
@@ -289,13 +319,13 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
               <CardContent sx={{ py: 8, textAlign: 'center' }}>
                 <i className='ri-key-line text-6xl text-textDisabled mb-4' />
                 <Typography variant='h6' color='text.secondary' sx={{ mb: 2 }}>
-                  暂无 API Key
+                  {t('development.noApiKey')}
                 </Typography>
                 <Typography variant='body2' color='text.secondary' sx={{ mb: 4 }}>
-                  创建您的第一个 API Key 以开始使用我们的API服务
+                  {t('development.noApiKeyDesc')}
                 </Typography>
                 <Button variant='contained' onClick={() => setCreateDialogOpen(true)}>
-                  创建 API Key
+                  {t('development.createApiKey')}
                 </Button>
               </CardContent>
             </Card>
@@ -334,7 +364,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                           <i className='ri-key-line text-primary' style={{ fontSize: '24px' }} />
                         </Box>
                         <Chip
-                          label={item.status === 1 ? '启用' : '禁用'}
+                          label={item.status === 1 ? t('development.enabled') : t('development.disabled')}
                           color={item.status === 1 ? 'success' : 'default'}
                           size='small'
                           sx={{ fontWeight: 600 }}
@@ -372,14 +402,14 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       {(item as any).createTime || item.createdAt ? (
                         <Box sx={{ mb: 2 }}>
                           <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 0.5 }}>
-                            创建时间:
+                            {t('development.createTime')}:
                           </Typography>
                           <Typography variant='body2' color='text.secondary'>
                             {(() => {
                               const timestamp = (item as any).createTime || item.createdAt
                               // 处理 10 位时间戳（秒）转换为 13 位（毫秒）
                               const timestampMs = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-                              return new Date(timestampMs).toLocaleString('zh-CN', {
+                              return new Date(timestampMs).toLocaleString(getDateLocale(), {
                                 year: 'numeric',
                                 month: '2-digit',
                                 day: '2-digit',
@@ -433,41 +463,41 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         }}
       >
         <DialogTitle sx={{ fontWeight: 700, pb: 2 }}>
-          创建 API Key
+          {t('development.createApiKeyTitle')}
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 4 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <TextField
-              label='API名称'
+              label={t('development.apiName')}
               value={formData.apiName}
               onChange={e => setFormData({ ...formData, apiName: e.target.value })}
-              placeholder='请输入API名称'
+              placeholder={t('development.apiNamePlaceholder')}
               required
               fullWidth
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <TextField
-              label='IP白名单'
+              label={t('development.ipWhitelist')}
               value={formData.ipWhitelist}
               onChange={e => setFormData({ ...formData, ipWhitelist: e.target.value })}
-              placeholder='多个IP用逗号分隔，留空不限制'
+              placeholder={t('development.ipWhitelistPlaceholder')}
               fullWidth
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <TextField
-              label='回调地址'
+              label={t('development.callbackUrl')}
               value={formData.callbackUrl}
               onChange={e => setFormData({ ...formData, callbackUrl: e.target.value })}
-              placeholder='https://example.com/webhook'
+              placeholder={t('development.callbackUrlPlaceholder')}
               fullWidth
               sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
             />
             <TextField
-              label='备注'
+              label={t('development.remark')}
               value={formData.remark}
               onChange={e => setFormData({ ...formData, remark: e.target.value })}
-              placeholder='请输入备注信息'
+              placeholder={t('development.remarkPlaceholder')}
               multiline
               rows={3}
               fullWidth
@@ -477,10 +507,10 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
           <Button onClick={() => setCreateDialogOpen(false)} sx={{ borderRadius: '8px' }}>
-            取消
+            {t('development.cancel')}
           </Button>
           <Button variant='contained' color='primary' onClick={handleCreate} sx={{ borderRadius: '8px' }}>
-            创建
+            {t('development.create')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -509,7 +539,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
             </DialogTitle>
             <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 3 }}>
               <Tabs value={tabValue} onChange={(e, newValue) => setTabValue(newValue)}>
-                <Tab label='接口配置' icon={<i className='ri-key-line' />} iconPosition='start' />
+                <Tab label={t('development.apiConfig')} icon={<i className='ri-key-line' />} iconPosition='start' />
                 {/* <Tab label='通知推送' icon={<i className='ri-notification-line' />} iconPosition='start' /> */}
               </Tabs>
             </Box>
@@ -518,7 +548,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
               <TabPanel value={tabValue} index={0}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   <Typography variant='body2' color='text.secondary'>
-                    以下信息将用于您的API请求进行身份验证
+                    {t('development.apiConfigDesc')}
                   </Typography>
 
                   {/* Client ID */}
@@ -603,10 +633,10 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                   {/* 状态 */}
                   <Box>
                     <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1 }}>
-                      状态:
+                      {t('development.status')}:
                     </Typography>
                     <Chip
-                      label={selectedItem.status === 1 ? '启用' : '禁用'}
+                      label={selectedItem.status === 1 ? t('development.enabled') : t('development.disabled')}
                       color={selectedItem.status === 1 ? 'success' : 'default'}
                       sx={{ fontWeight: 600 }}
                     />
@@ -615,14 +645,14 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                   {/* 创建时间 */}
                   <Box>
                     <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1 }}>
-                      创建时间:
+                      {t('development.createTime')}:
                     </Typography>
                     <Typography variant='body2'>
                       {(() => {
                         const timestamp = (selectedItem as any).createTime || selectedItem.createdAt
                         // 处理 10 位时间戳（秒）转换为 13 位（毫秒）
                         const timestampMs = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-                        return new Date(timestampMs).toLocaleString('zh-CN', {
+                        return new Date(timestampMs).toLocaleString(getDateLocale(), {
                           year: 'numeric',
                           month: '2-digit',
                           day: '2-digit',
@@ -638,7 +668,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                   {selectedItem.remark && (
                     <Box>
                       <Typography variant='caption' color='text.secondary' sx={{ display: 'block', mb: 1 }}>
-                        备注:
+                        {t('development.remark')}:
                       </Typography>
                       <Typography variant='body2'>{selectedItem.remark}</Typography>
                     </Box>
@@ -654,7 +684,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       onClick={() => handleToggleStatus(selectedItem.id, selectedItem.status)}
                       sx={{ borderRadius: '8px', flex: 1, minWidth: '120px' }}
                     >
-                      {selectedItem.status === 1 ? '禁用' : '启用'}
+                      {selectedItem.status === 1 ? t('development.disabled') : t('development.enabled')}
                     </Button>
                     <Button
                       variant='contained'
@@ -662,7 +692,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
                       onClick={handleRegenerateSecretClick}
                       sx={{ borderRadius: '8px', flex: 1, minWidth: '120px' }}
                     >
-                      重置密钥
+                      {t('development.regenerateSecret')}
                     </Button>
                   </Box>
                 </Box>
@@ -741,17 +771,17 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
               <i className='ri-error-warning-line text-error' style={{ fontSize: '24px' }} />
             </Box>
             <Typography variant='h6' sx={{ fontWeight: 700 }}>
-              确认删除
+              {t('development.confirmDelete')}
             </Typography>
           </Box>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 4 }}>
           <Typography variant='body1' sx={{ mb: 2 }}>
-            确定要删除 API Key <strong>"{itemToDelete?.apiName}"</strong> 吗？
+            {t('development.confirmDeleteMessage', { name: itemToDelete?.apiName || '' })}
           </Typography>
           <Typography variant='body2' color='text.secondary'>
-            此操作不可恢复，删除后该 API Key 将无法继续使用。
+            {t('development.confirmDeleteDesc')}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
@@ -762,7 +792,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
             }}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('development.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -771,7 +801,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
             sx={{ borderRadius: '8px' }}
             startIcon={<i className='ri-delete-bin-line' />}
           >
-            确认删除
+            {t('development.confirmDeleteButton')}
           </Button>
         </DialogActions>
       </Dialog>
@@ -802,17 +832,17 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
               <i className='ri-refresh-line text-warning' style={{ fontSize: '24px' }} />
             </Box>
             <Typography variant='h6' sx={{ fontWeight: 700 }}>
-              重置密钥
+              {t('development.regenerateSecretTitle')}
             </Typography>
           </Box>
         </DialogTitle>
         <Divider />
         <DialogContent sx={{ pt: 4 }}>
           <Typography variant='body1' sx={{ mb: 2 }}>
-            确定要重新生成 API Key <strong>"{selectedItem?.apiName}"</strong> 的 Secret 吗？
+            {t('development.regenerateSecretMessage', { name: selectedItem?.apiName || '' })}
           </Typography>
           <Typography variant='body2' color='text.secondary'>
-            旧的 Secret 将立即失效，请确保已保存新的 Secret 后再进行此操作。
+            {t('development.regenerateSecretDesc')}
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 2 }}>
@@ -820,7 +850,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
             onClick={() => setRegenerateSecretDialogOpen(false)}
             sx={{ borderRadius: '8px' }}
           >
-            取消
+            {t('development.cancel')}
           </Button>
           <Button
             variant='contained'
@@ -829,7 +859,7 @@ const ApiKeyManagement = ({ mode }: { mode: Mode }) => {
             sx={{ borderRadius: '8px' }}
             startIcon={<i className='ri-refresh-line' />}
           >
-            确认重置
+            {t('development.confirmRegenerate')}
           </Button>
         </DialogActions>
       </Dialog>

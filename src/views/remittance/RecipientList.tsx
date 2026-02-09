@@ -29,16 +29,12 @@ import Box from '@mui/material/Box'
 import Checkbox from '@mui/material/Checkbox'
 import Divider from '@mui/material/Divider'
 import CircularProgress from '@mui/material/CircularProgress'
-import Dialog from '@mui/material/Dialog'
-import DialogTitle from '@mui/material/DialogTitle'
-import DialogContent from '@mui/material/DialogContent'
-import DialogActions from '@mui/material/DialogActions'
 
 // Type Imports
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getPayeeList, deletePayee, type PayeeItem } from '@server/otc-api'
+import { getPayeeList, type PayeeItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Hook Imports
@@ -76,8 +72,6 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [loading, setLoading] = useState(false)
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<PayeeItem | null>(null)
   const [filters, setFilters] = useState({
     remittanceMethod: '',
     accountType: '',
@@ -116,20 +110,6 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
     loadRecipients()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage])
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deletePayee({ id: deleteTarget.id })
-      toast.success(t('remittance.deleteSuccess'))
-      setDeleteDialogOpen(false)
-      setDeleteTarget(null)
-      loadRecipients()
-    } catch (error) {
-      console.error('删除失败:', error)
-      toast.error(t('remittance.deleteFailed'))
-    }
-  }
 
   const handleCopyAccount = (account: string) => {
     navigator.clipboard.writeText(account)
@@ -364,13 +344,13 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center' }}>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center' }}>
                         <CircularProgress />
                       </td>
                     </tr>
                   ) : recipients.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
+                      <td colSpan={7} style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>
                         {t('remittance.noRecipients')}
                       </td>
                     </tr>
@@ -436,29 +416,15 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                           </Typography>
                         </td>
                         <td style={{ padding: '16px 24px' }}>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
-                            <Button
-                              size='small'
-                              variant='text'
-                              component={Link}
-                              href={getLocalizedPath(`/remittance/recipients/${recipient.id}/edit`, currentLang)}
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {t('remittance.edit')}
-                            </Button>
-                            <Button
-                              size='small'
-                              variant='text'
-                              color='error'
-                              onClick={() => {
-                                setDeleteTarget(recipient)
-                                setDeleteDialogOpen(true)
-                              }}
-                              sx={{ fontWeight: 600 }}
-                            >
-                              {t('remittance.delete')}
-                            </Button>
-                          </Box>
+                          <Button
+                            size='small'
+                            variant='text'
+                            component={Link}
+                            href={getLocalizedPath(`/remittance/recipients/${recipient.id}/edit`, currentLang)}
+                            sx={{ fontWeight: 600 }}
+                          >
+                            {t('remittance.edit')}
+                          </Button>
                         </td>
                       </tr>
                     ))
@@ -490,22 +456,6 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
         </Grid>
       </Grid>
       </Card>
-
-      {/* 删除确认对话框 */}
-      <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-        <DialogTitle>{t('remittance.confirmDelete')}</DialogTitle>
-        <DialogContent>
-          <Typography>
-            {t('remittance.confirmDeleteMessage', { name: deleteTarget ? getRecipientName(deleteTarget) : '' })}
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>{t('common.cancel')}</Button>
-          <Button onClick={handleDelete} color='error' variant='contained'>
-            {t('remittance.delete')}
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Box>
   )
 }

@@ -1,10 +1,10 @@
 'use client'
 
 // React Imports
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // Next Imports
-import { useRouter, useParams, useSearchParams } from 'next/navigation'
+import { useRouter, useParams, usePathname, useSearchParams } from 'next/navigation'
 
 // Util Imports
 import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
@@ -29,16 +29,45 @@ import type { Mode } from '@core/types'
 import { getDepositAddress, getRechargeDetail } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const Deposit = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
   const params = useParams()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
-  const currentLang = (params?.lang as string) || undefined
+  
+  // 使用 useMemo 确保 currentLang 随着 pathname 的变化而更新
+  const currentLang = useMemo(() => {
+    // 从路径中提取语言，确保获取当前页面的语言
+    if (pathname) {
+      const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
+      if (langMatch && langMatch[1]) {
+        return langMatch[1]
+      }
+    }
+    // 如果路径中没有语言，则使用 params
+    return (params?.lang as string) || undefined
+  }, [pathname, params?.lang])
+  
+  const t = useTranslate()
   const [depositAddress, setDepositAddress] = useState('')
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(false)
   const [rechargeDetail, setRechargeDetail] = useState<any>(null)
   const [network, setNetwork] = useState('Tron (TRC20)')
+
+  // 开发环境调试信息 - 在组件挂载时输出
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Deposit] Component mounted/updated:', { 
+        pathname, 
+        paramsLang: params?.lang, 
+        extractedLang: currentLang 
+      })
+    }
+  }, [pathname, params?.lang, currentLang])
 
   // 获取充值地址
   const loadDepositAddress = async () => {
@@ -54,7 +83,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
       }
     } catch (error) {
       console.error('获取充值地址失败:', error)
-      toast.error('获取充值地址失败')
+      toast.error(t('assets.getDepositAddressFailed'))
     } finally {
       setLoading(false)
     }
@@ -73,7 +102,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
         setRechargeDetail({
           minAmount: 0,
           fee: 0,
-          estimatedTime: '1-30分钟'
+          estimatedTime: t('assets.estimatedTime')
         })
       }
     } catch (error) {
@@ -82,7 +111,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
       setRechargeDetail({
         minAmount: 0,
         fee: 0,
-        estimatedTime: '1-30分钟'
+        estimatedTime: t('assets.estimatedTime')
       })
     }
   }
@@ -94,13 +123,13 @@ const Deposit = ({ mode }: { mode: Mode }) => {
 
   const handleCopyAddress = () => {
     if (!depositAddress) {
-      toast.warning('地址加载中，请稍候')
+      toast.warning(t('assets.addressLoading'))
       return
     }
     navigator.clipboard.writeText(depositAddress)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-    toast.success('地址已复制')
+    toast.success(t('assets.addressCopied'))
   }
 
   const handleBack = () => {
@@ -158,7 +187,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
               <i className='ri-arrow-left-line' />
             </IconButton>
             <Typography variant='h4' sx={{ fontWeight: 700, color: 'text.primary' }}>
-              USDT 充值
+              {t('assets.depositTitle')}
             </Typography>
             <Chip 
               label={network} 
@@ -224,7 +253,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                       </Box>
                     )}
                     <Typography variant='body2' color='text.secondary' sx={{ fontWeight: 600 }}>
-                      扫码充值
+                      {t('assets.scanToDeposit')}
                     </Typography>
                     <Box sx={{ 
                       display: 'flex', 
@@ -240,7 +269,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                     }}>
                       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
                       <Typography variant='caption' sx={{ fontWeight: 600, color: 'success.main' }}>
-                        仅支持 TRC20 网络
+                        {t('assets.onlyTRC20Supported')}
                       </Typography>
                     </Box>
                   </Box>
@@ -251,13 +280,13 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <Box>
                       <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 2 }}>
-                        充值地址
+                        {t('assets.depositAddress')}
                       </Typography>
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <TextField
                           fullWidth
                           size='small'
-                          value={loading ? '加载中...' : depositAddress || ''}
+                          value={loading ? t('assets.loading') : depositAddress || ''}
                           readOnly
                           disabled={loading}
                           sx={{
@@ -283,7 +312,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                             fontWeight: 600
                           }}
                         >
-                          {copied ? '已复制' : '复制地址'}
+                          {copied ? t('assets.copied') : t('assets.copyAddress')}
                         </Button>
                       </Box>
                     </Box>
@@ -293,18 +322,18 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                         <i className='ri-information-line text-primary' />
                         <Typography variant='subtitle2' sx={{ fontWeight: 700 }}>
-                          安全提示
+                          {t('assets.securityTips')}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                         <Typography variant='body2' color='text.secondary'>
-                          • 此地址永久有效, 可重复充值
+                          {t('assets.securityTip1')}
                         </Typography>
                         <Typography variant='body2' color='text.secondary'>
-                          • 仅支持 TRC20 网络的 USDT
+                          {t('assets.securityTip2')}
                         </Typography>
                         <Typography variant='body2' color='text.secondary'>
-                          • 转错网络或币种将导致资产丢失
+                          {t('assets.securityTip3')}
                         </Typography>
                       </Box>
                     </Box>
@@ -321,7 +350,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                     }}>
                       <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
                       <Typography variant='body2' sx={{ fontWeight: 600, color: 'success.main' }}>
-                        当前网络: {network}
+                        {t('assets.currentNetwork')}: {network}
                       </Typography>
                     </Box>
                   </Box>
@@ -358,7 +387,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                       <i className='ri-information-line text-primary text-lg' />
                     </Box>
                     <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                      最低充值额
+                      {t('assets.minDepositAmount')}
                     </Typography>
                   </Box>
                   <Typography variant='h5' sx={{ fontWeight: 700, mt: 3 }}>
@@ -391,7 +420,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                       <i className='ri-money-dollar-circle-line text-warning text-lg' />
                     </Box>
                     <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                      手续费
+                      {t('assets.fee')}
                     </Typography>
                   </Box>
                   <Typography variant='h5' sx={{ fontWeight: 700, mt: 3 }}>
@@ -424,11 +453,11 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                       <i className='ri-time-line text-success text-lg' />
                     </Box>
                     <Typography variant='subtitle1' sx={{ fontWeight: 600, color: 'text.secondary' }}>
-                      预计到账
+                      {t('assets.estimatedArrival')}
                     </Typography>
                   </Box>
                   <Typography variant='h5' sx={{ fontWeight: 700, mt: 3 }}>
-                    {rechargeDetail?.estimatedTime ?? '1-30分钟'}
+                    {rechargeDetail?.estimatedTime ?? t('assets.estimatedTime')}
                   </Typography>
                 </CardContent>
               </Card>
@@ -466,7 +495,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 2 }}>
-                        风险提醒
+                        {t('assets.riskWarning')}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                         {/* <Box sx={{ 
@@ -483,7 +512,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                           <i className='ri-close-line text-white' style={{ fontSize: '12px' }} />
                         </Box> */}
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                          请务必确认网络类型为TRC20,否则充值将丢失且无法找回!
+                          {t('assets.riskWarningText')}
                         </Typography>
                       </Box>
                     </Box>
@@ -519,11 +548,11 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 2 }}>
-                        充值步骤
+                        {t('assets.depositSteps')}
                       </Typography>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                          1. 复制地址或扫描二维码
+                          {t('assets.depositStep1')}
                         </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                           {/* <Box sx={{ 
@@ -540,14 +569,14 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                             <i className='ri-information-line text-white' style={{ fontSize: '12px' }} />
                           </Box> */}
                           <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                            2. 在钱包中选择 TRC20
+                            {t('assets.depositStep2')}
                           </Typography>
                         </Box>
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                          3. 粘贴地址并发送 USDT
+                          {t('assets.depositStep3')}
                         </Typography>
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                          4. 等待区块链确认到账
+                          {t('assets.depositStep4')}
                         </Typography>
                       </Box>
                     </Box>
@@ -583,7 +612,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography variant='subtitle1' sx={{ fontWeight: 700, mb: 2 }}>
-                        地址安全
+                        {t('assets.addressSecurity')}
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
                         {/* <Box sx={{ 
@@ -600,7 +629,7 @@ const Deposit = ({ mode }: { mode: Mode }) => {
                           <i className='ri-check-line text-white' style={{ fontSize: '12px' }} />
                         </Box> */}
                         <Typography variant='body1' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-                          此充值地址专属于您,永久有效且不会更改。建议保存到地址簿方便使用。
+                          {t('assets.addressSecurityText')}
                         </Typography>
                       </Box>
                     </Box>

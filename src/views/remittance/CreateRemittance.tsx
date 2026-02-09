@@ -698,7 +698,18 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         variant='contained'
                         startIcon={<i className='ri-add-line' />}
                         onClick={() => {
-                          router.push('/remittance/recipients/new')
+                          // 实时获取当前语言，避免闭包问题
+                          const realTimeLang = getCurrentLangFromPath()
+                          const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
+                          if (process.env.NODE_ENV === 'development') {
+                            console.log('[CreateRemittance] Navigate to recipients/new:', { 
+                              realTimeLang, 
+                              currentLang, 
+                              pathname, 
+                              targetPath 
+                            })
+                          }
+                          router.push(targetPath)
                         }}
                         sx={{ borderRadius: '8px', px: 6 }}
                       >
@@ -740,7 +751,18 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           size='small'
                           startIcon={<i className='ri-add-line' />}
                           onClick={() => {
-                            router.push('/remittance/recipients/new')
+                            // 实时获取当前语言，避免闭包问题
+                            const realTimeLang = getCurrentLangFromPath()
+                            const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
+                            if (process.env.NODE_ENV === 'development') {
+                              console.log('[CreateRemittance] Navigate to recipients/new:', { 
+                                realTimeLang, 
+                                currentLang, 
+                                pathname, 
+                                targetPath 
+                              })
+                            }
+                            router.push(targetPath)
                           }}
                           sx={{
                             color: 'primary.main',
@@ -1643,7 +1665,18 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 fullWidth
                 onClick={() => {
                   setSubmitSuccess(false)
-                  router.push('/remittance/records')
+                  // 实时获取当前语言，避免闭包问题
+                  const realTimeLang = getCurrentLangFromPath()
+                  const targetPath = getLocalizedPath('/remittance/records', realTimeLang)
+                  if (process.env.NODE_ENV === 'development') {
+                    console.log('[CreateRemittance] Navigate to remittance/records:', { 
+                      realTimeLang, 
+                      currentLang, 
+                      pathname, 
+                      targetPath 
+                    })
+                  }
+                  router.push(targetPath)
                 }}
                 sx={{ borderRadius: '8px', py: 1.5 }}
                 startIcon={<i className='ri-list-check' />}
