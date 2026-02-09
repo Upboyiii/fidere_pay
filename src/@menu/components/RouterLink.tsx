@@ -42,6 +42,7 @@ export const RouterLink = forwardRef((props: RouterLinkProps, ref: any) => {
   }, [pathname, params?.lang])
 
   // 处理href，自动添加语言前缀
+  // 注意：getLocalizedPath 会检查路径是否已包含语言前缀，如果已包含则直接返回
   const processedHref = typeof href === 'string' ? getLocalizedPath(href, currentLang) : href
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {

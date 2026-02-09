@@ -63,13 +63,20 @@ export const getLocalizedPath = (path: string, lang?: string): string => {
   }
 
   // 检查是否已经包含语言前缀
-  // 方法：检查路径是否以 /[lang]/ 或 /[lang] 开头，其中 [lang] 是配置的语言代码
-  const pathSegments = path.split('/').filter(Boolean) // 分割路径，过滤空字符串
-  if (pathSegments.length > 0) {
-    const firstSegment = pathSegments[0]
-    // 检查第一个段是否是有效的语言代码
-    if (i18n.locales.includes(firstSegment as Locale)) {
-      // 如果第一个段是语言代码，说明已包含语言前缀
+  // 方法：使用正则表达式检查路径是否以 /[lang]/ 或 /[lang] 开头
+  // 确保路径以 / 开头，且第一个段是有效的语言代码
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const langPrefixPattern = /^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)(\/|$)/
+  const langMatch = normalizedPath.match(langPrefixPattern)
+  
+  if (langMatch && langMatch[1]) {
+    const extractedLang = langMatch[1]
+    // 检查提取的语言代码是否在配置的语言列表中（不区分大小写）
+    const normalizedExtractedLang = extractedLang.toLowerCase()
+    const isLangPrefix = i18n.locales.some(locale => locale.toLowerCase() === normalizedExtractedLang)
+    
+    if (isLangPrefix) {
+      // 如果第一个段是语言代码，说明已包含语言前缀，直接返回原路径
       console.log('[getLocalizedPath] 已包含语言前缀，直接返回:', path)
       return path
     }
