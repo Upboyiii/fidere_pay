@@ -49,7 +49,7 @@ import {
   uploadSingleFile,
   getUserAssetList,
   getGoogleAuthStatus,
-  getPayPasswordStatus,
+  // getPayPasswordStatus, // 已注释：去掉支付密码验证，只需要Google验证
   type PayeeItem,
   type UserAssetListItem
 } from '@server/otc-api'
@@ -100,9 +100,9 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
   const [purposeType, setPurposeType] = useState('FAMILY_SUPPORT')
   const [purposeDesc, setPurposeDesc] = useState('')
   const [memo, setMemo] = useState('')
-  const [payPassword, setPayPassword] = useState('')
+  // const [payPassword, setPayPassword] = useState('') // 已注释：去掉支付密码验证，只需要Google验证
   const [googleCode, setGoogleCode] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
+  // const [showPassword, setShowPassword] = useState(false) // 已注释：去掉支付密码验证，只需要Google验证
   const [selectedRecipientId, setSelectedRecipientId] = useState<number | null>(null)
   const [recipientList, setRecipientList] = useState<PayeeItem[]>([])
   const [loading, setLoading] = useState(false)
@@ -118,7 +118,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
   // 安全设置状态
   const [googleAuthBound, setGoogleAuthBound] = useState(false)
-  const [payPasswordSet, setPayPasswordSet] = useState(false)
+  // const [payPasswordSet, setPayPasswordSet] = useState(false) // 已注释：去掉支付密码验证，只需要Google验证
   const [securityCheckDialogOpen, setSecurityCheckDialogOpen] = useState(false)
 
   // 提交成功状态
@@ -210,31 +210,34 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
   // 加载安全验证状态
   const loadSecurityStatus = async () => {
     try {
-      const [googleStatus, payPasswordStatus] = await Promise.all([
-        getGoogleAuthStatus(),
-        getPayPasswordStatus()
-      ])
+      // 已注释：去掉支付密码验证，只需要Google验证
+      // const [googleStatus, payPasswordStatus] = await Promise.all([
+      //   getGoogleAuthStatus(),
+      //   getPayPasswordStatus()
+      // ])
+      const googleStatus = await getGoogleAuthStatus()
 
       console.log('=== 安全验证状态响应 ===')
       console.log('Google验证状态:', googleStatus)
-      console.log('支付密码状态:', payPasswordStatus)
+      // console.log('支付密码状态:', payPasswordStatus) // 已注释
 
       const googleData = googleStatus.data?.data || googleStatus.data
-      const payPasswordData = payPasswordStatus.data?.data || payPasswordStatus.data
+      // const payPasswordData = payPasswordStatus.data?.data || payPasswordStatus.data // 已注释
 
       console.log('Google验证数据:', googleData)
-      console.log('支付密码数据:', payPasswordData)
+      // console.log('支付密码数据:', payPasswordData) // 已注释
 
       setGoogleAuthBound(googleData?.bound || false)
-      // 尝试多种可能的字段名
-      const isPasswordSet = payPasswordData?.isSet ||
-        payPasswordData?.hasPassword ||
-        payPasswordData?.set ||
-        payPasswordData?.enabled ||
-        false
+      // 已注释：去掉支付密码验证，只需要Google验证
+      // // 尝试多种可能的字段名
+      // const isPasswordSet = payPasswordData?.isSet ||
+      //   payPasswordData?.hasPassword ||
+      //   payPasswordData?.set ||
+      //   payPasswordData?.enabled ||
+      //   false
 
-      console.log('支付密码是否已设置:', isPasswordSet)
-      setPayPasswordSet(isPasswordSet)
+      // console.log('支付密码是否已设置:', isPasswordSet)
+      // setPayPasswordSet(isPasswordSet)
     } catch (error) {
       console.error('加载安全验证状态失败:', error)
     }
@@ -324,15 +327,22 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       toast.error(t('remittance.enterValidAmount'))
       return
     }
-    // 检查是否已设置支付密码和谷歌验证（两个都必须设置）
-    if (!payPasswordSet || !googleAuthBound) {
+    // 已注释：去掉支付密码验证，只需要Google验证
+    // // 检查是否已设置支付密码和谷歌验证（两个都必须设置）
+    // if (!payPasswordSet || !googleAuthBound) {
+    //   setSecurityCheckDialogOpen(true)
+    //   return
+    // }
+    // 检查是否已设置谷歌验证
+    if (!googleAuthBound) {
       setSecurityCheckDialogOpen(true)
       return
     }
-    if (!payPassword) {
-      toast.error(t('remittance.enterPayPassword'))
-      return
-    }
+    // 已注释：去掉支付密码验证
+    // if (!payPassword) {
+    //   toast.error(t('remittance.enterPayPassword'))
+    //   return
+    // }
     // 如果已绑定谷歌验证，必须输入谷歌验证码
     if (googleAuthBound && !googleCode) {
       toast.error(t('remittance.enterGoogleCode') || '请输入谷歌验证码')
@@ -351,7 +361,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         purposeDesc: purposeDesc || undefined,
         memo: memo || undefined,
         transactionMaterial: uploadedFile?.path || undefined,
-        payPassword,
+        // payPassword, // 已注释：去掉支付密码验证，只需要Google验证
         googleCode: googleCode || undefined
       })
 
@@ -400,8 +410,14 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
     // 如果是从确认信息步骤进入安全验证步骤，检查安全设置
     if (direction === 'next' && activeStep === 1) {
-      // 检查是否已设置支付密码和谷歌验证（两个都必须设置）
-      if (!payPasswordSet || !googleAuthBound) {
+      // 已注释：去掉支付密码验证，只需要Google验证
+      // // 检查是否已设置支付密码和谷歌验证（两个都必须设置）
+      // if (!payPasswordSet || !googleAuthBound) {
+      //   setSecurityCheckDialogOpen(true)
+      //   return
+      // }
+      // 检查是否已设置谷歌验证
+      if (!googleAuthBound) {
         setSecurityCheckDialogOpen(true)
         return
       }
@@ -413,20 +429,20 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
     await new Promise(resolve => setTimeout(resolve, 300))
 
     if (direction === 'next') {
-      // 每次进入安全验证步骤前，清空支付密码与谷歌验证码
+      // 每次进入安全验证步骤前，清空谷歌验证码
       if (activeStep === 1) {
-        setPayPassword('')
+        // setPayPassword('') // 已注释：去掉支付密码验证
         setGoogleCode('')
-        setShowPassword(false)
+        // setShowPassword(false) // 已注释：去掉支付密码验证
       }
 
       setActiveStep(prev => prev + 1)
     } else {
-      // 从安全验证步骤返回时，清空支付密码与谷歌验证码
+      // 从安全验证步骤返回时，清空谷歌验证码
       if (activeStep === 2) {
-        setPayPassword('')
+        // setPayPassword('') // 已注释：去掉支付密码验证
         setGoogleCode('')
-        setShowPassword(false)
+        // setShowPassword(false) // 已注释：去掉支付密码验证
       }
 
       setActiveStep(prev => prev - 1)
@@ -1218,8 +1234,9 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   </Box>
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {/* 已注释：去掉支付密码验证，只需要Google验证 */}
                     {/* 支付密码 */}
-                    <TextField
+                    {/* <TextField
                       fullWidth
                       label={t('remittance.paymentPassword')}
                       type={showPassword ? 'text' : 'password'}
@@ -1240,7 +1257,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                         )
                       }}
                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-                    />
+                    /> */}
 
                     {/* Google验证码 */}
                     {googleAuthBound && (
@@ -1292,7 +1309,9 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
                     {googleAuthBound && (
                       <Alert severity='info' sx={{ borderRadius: '8px' }}>
-                        {t('remittance.ensureCorrect')}
+                        {/* 已注释：去掉支付密码相关提示 */}
+                        {/* {t('remittance.ensureCorrect')} */}
+                        请确保Google验证码输入正确
                       </Alert>
                     )}
                   </Box>
@@ -1316,7 +1335,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             <Button
               variant='contained'
               onClick={activeStep === steps.length - 1 ? handleSubmit : () => handleStepChange('next')}
-              disabled={submitting || stepLoading || (activeStep === steps.length - 1 && (!payPasswordSet || !googleAuthBound))}
+              disabled={submitting || stepLoading || (activeStep === steps.length - 1 && !googleAuthBound)}
               sx={{ borderRadius: '8px', px: 10, fontWeight: 700 }}
               startIcon={(submitting || stepLoading) ? <CircularProgress size={20} color='inherit' /> : null}
             >
@@ -1395,13 +1414,16 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         <DialogContent sx={{ pt: 4, pb: 3 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Typography variant='body2' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-              {t('remittance.securitySettingsRequired') || '为了保障您的资金安全，在进行汇款操作前，请先完成以下安全设置（支付密码和谷歌验证都必须设置）'}
+              {/* 已注释：去掉支付密码相关提示 */}
+              {/* {t('remittance.securitySettingsRequired') || '为了保障您的资金安全，在进行汇款操作前，请先完成以下安全设置（支付密码和谷歌验证都必须设置）'} */}
+              为了保障您的资金安全，在进行汇款操作前，请先完成Google验证设置
             </Typography>
 
             {/* 安全设置项列表 */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
+              {/* 已注释：去掉支付密码验证，只需要Google验证 */}
               {/* 支付密码 */}
-              <Box
+              {/* <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
@@ -1457,7 +1479,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                     }}
                   />
                 )}
-              </Box>
+              </Box> */}
 
               {/* Google验证器 */}
               <Box
@@ -1650,7 +1672,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   setActiveStep(0)
                   setPayAmount('')
                   setSelectedRecipientId(null)
-                  setPayPassword('')
+                  // setPayPassword('') // 已注释：去掉支付密码验证
                   setGoogleCode('')
                   setUploadedFile(null)
                   setMemo('')

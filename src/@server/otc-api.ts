@@ -817,7 +817,7 @@ export interface CreateTransferRequest {
   purposeDesc?: string
   memo?: string
   transactionMaterial?: string
-  payPassword: string
+  // payPassword: string // 已注释：去掉支付密码验证，只需要Google验证
   googleCode?: string
 }
 

@@ -35,10 +35,10 @@ import {
   generateGoogleAuth,
   bindGoogleAuth,
   unbindGoogleAuth,
-  getPayPasswordStatus,
-  setPayPassword,
-  resetPayPassword,
-  verifyPayPassword
+  // getPayPasswordStatus, // 已注释：去掉支付密码验证，只需要Google验证
+  // setPayPassword, // 已注释：去掉支付密码验证，只需要Google验证
+  // resetPayPassword, // 已注释：去掉支付密码验证，只需要Google验证
+  // verifyPayPassword // 已注释：去掉支付密码验证，只需要Google验证
 } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
@@ -64,7 +64,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
   }, [pathname, params?.lang])
   
   const [googleAuthBound, setGoogleAuthBound] = useState(false)
-  const [payPasswordSet, setPayPasswordSet] = useState(false)
+  // const [payPasswordSet, setPayPasswordSet] = useState(false) // 已注释：去掉支付密码验证，只需要Google验证
   const [loading, setLoading] = useState(false)
   
   // Google验证相关
@@ -75,31 +75,34 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
   const [googleAuthCode, setGoogleAuthCode] = useState('')
   const [generating, setGenerating] = useState(false)
   
+  // 已注释：去掉支付密码验证，只需要Google验证
   // 支付密码相关
-  const [setPayPasswordDialogOpen, setSetPayPasswordDialogOpen] = useState(false)
-  const [resetPayPasswordDialogOpen, setResetPayPasswordDialogOpen] = useState(false)
-  const [newPayPassword, setNewPayPassword] = useState('')
-  const [confirmPayPassword, setConfirmPayPassword] = useState('')
-  const [verificationCode, setVerificationCode] = useState('')
-  const [showPassword, setShowPassword] = useState({
-    new: false,
-    confirm: false
-  })
+  // const [setPayPasswordDialogOpen, setSetPayPasswordDialogOpen] = useState(false)
+  // const [resetPayPasswordDialogOpen, setResetPayPasswordDialogOpen] = useState(false)
+  // const [newPayPassword, setNewPayPassword] = useState('')
+  // const [confirmPayPassword, setConfirmPayPassword] = useState('')
+  // const [verificationCode, setVerificationCode] = useState('')
+  // const [showPassword, setShowPassword] = useState({
+  //   new: false,
+  //   confirm: false
+  // })
 
   // 加载状态
   const loadStatus = async () => {
     setLoading(true)
     try {
-      const [googleStatus, payPasswordStatus] = await Promise.all([
-        getGoogleAuthStatus(),
-        getPayPasswordStatus()
-      ])
+      // 已注释：去掉支付密码验证，只需要Google验证
+      // const [googleStatus, payPasswordStatus] = await Promise.all([
+      //   getGoogleAuthStatus(),
+      //   getPayPasswordStatus()
+      // ])
+      const googleStatus = await getGoogleAuthStatus()
       // API 返回结构：{ code: 0, message: "", data: { bound: boolean } }
       // clientRequest 返回：{ data: { code: 0, message: "", data: { bound: boolean } } }
       const googleData = googleStatus.data?.data || googleStatus.data
-      const payPasswordData = payPasswordStatus.data?.data || payPasswordStatus.data
+      // const payPasswordData = payPasswordStatus.data?.data || payPasswordStatus.data // 已注释
       setGoogleAuthBound(googleData?.bound || false)
-      setPayPasswordSet(payPasswordData?.isSet || false)
+      // setPayPasswordSet(payPasswordData?.isSet || false) // 已注释
     } catch (error) {
       console.error('加载状态失败:', error)
       toast.error(t('settings.loadStatusFailed'))
@@ -182,65 +185,66 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
     }
   }
 
+  // 已注释：去掉支付密码验证，只需要Google验证
   // 设置支付密码
-  const handleSetPayPassword = async () => {
-    if (!newPayPassword || newPayPassword.length < 6) {
-      toast.error(t('settings.passwordMinLength'))
-      return
-    }
-    if (newPayPassword !== confirmPayPassword) {
-      toast.error(t('settings.passwordsNotMatch'))
-      return
-    }
-    try {
-      await setPayPassword({
-        password: newPayPassword
-      })
-      toast.success(t('settings.setSuccess'))
-      setSetPayPasswordDialogOpen(false)
-      setNewPayPassword('')
-      setConfirmPayPassword('')
-      loadStatus()
-    } catch (error: any) {
-      console.error('设置失败:', error)
-      toast.error(error?.message || t('settings.setFailed'))
-    }
-  }
+  // const handleSetPayPassword = async () => {
+  //   if (!newPayPassword || newPayPassword.length < 6) {
+  //     toast.error(t('settings.passwordMinLength'))
+  //     return
+  //   }
+  //   if (newPayPassword !== confirmPayPassword) {
+  //     toast.error(t('settings.passwordsNotMatch'))
+  //     return
+  //   }
+  //   try {
+  //     await setPayPassword({
+  //       password: newPayPassword
+  //     })
+  //     toast.success(t('settings.setSuccess'))
+  //     setSetPayPasswordDialogOpen(false)
+  //     setNewPayPassword('')
+  //     setConfirmPayPassword('')
+  //     loadStatus()
+  //   } catch (error: any) {
+  //     console.error('设置失败:', error)
+  //     toast.error(error?.message || t('settings.setFailed'))
+  //   }
+  // }
 
   // 重置支付密码
-  const handleResetPayPassword = async () => {
-    // 根据接口定义，resetPayPassword 只需要 newPassword 和可选的 googleCode
-    // 如果已绑定谷歌验证，需要谷歌验证码
-    if (googleAuthBound && !verificationCode) {
-      toast.error(t('settings.enterGoogleCode'))
-      return
-    }
-    
-    if (!newPayPassword || newPayPassword.length < 6) {
-      toast.error(t('settings.newPasswordMinLength'))
-      return
-    }
-    if (newPayPassword !== confirmPayPassword) {
-      toast.error(t('settings.newPasswordsNotMatch'))
-      return
-    }
-    
-    try {
-      await resetPayPassword({
-        newPassword: newPayPassword,
-        googleCode: googleAuthBound ? verificationCode : undefined
-      })
-      toast.success(t('settings.resetSuccess'))
-      setResetPayPasswordDialogOpen(false)
-      setNewPayPassword('')
-      setConfirmPayPassword('')
-      setVerificationCode('')
-      loadStatus()
-    } catch (error: any) {
-      console.error('重置失败:', error)
-      toast.error(error?.message || t('settings.resetFailed'))
-    }
-  }
+  // const handleResetPayPassword = async () => {
+  //   // 根据接口定义，resetPayPassword 只需要 newPassword 和可选的 googleCode
+  //   // 如果已绑定谷歌验证，需要谷歌验证码
+  //   if (googleAuthBound && !verificationCode) {
+  //     toast.error(t('settings.enterGoogleCode'))
+  //     return
+  //   }
+  //   
+  //   if (!newPayPassword || newPayPassword.length < 6) {
+  //     toast.error(t('settings.newPasswordMinLength'))
+  //     return
+  //   }
+  //   if (newPayPassword !== confirmPayPassword) {
+  //     toast.error(t('settings.newPasswordsNotMatch'))
+  //     return
+  //   }
+  //   
+  //   try {
+  //     await resetPayPassword({
+  //       newPassword: newPayPassword,
+  //       googleCode: googleAuthBound ? verificationCode : undefined
+  //     })
+  //     toast.success(t('settings.resetSuccess'))
+  //     setResetPayPasswordDialogOpen(false)
+  //     setNewPayPassword('')
+  //     setConfirmPayPassword('')
+  //     setVerificationCode('')
+  //     loadStatus()
+  //   } catch (error: any) {
+  //     console.error('重置失败:', error)
+  //     toast.error(error?.message || t('settings.resetFailed'))
+  //   }
+  // }
 
   return (
     <Box 
@@ -301,7 +305,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         <Grid container spacing={6}>
 
         {/* Google验证器卡片 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        <Grid size={{ xs: 12, md: 12 }}>
           <Card 
             sx={{ 
               borderRadius: '16px', 
@@ -513,8 +517,9 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
           </Card>
         </Grid>
 
+        {/* 已注释：去掉支付密码验证，只需要Google验证 */}
         {/* 修改密码卡片 */}
-        <Grid size={{ xs: 12, md: 6 }}>
+        {/* <Grid size={{ xs: 12, md: 6 }}>
           <Card 
             sx={{ 
               borderRadius: '16px', 
@@ -551,12 +556,10 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                 </Box>
               ) : (
                 <>
-                  {/* 描述文字 */}
                   <Typography variant='body2' color='text.secondary' sx={{ mb: 3, lineHeight: 1.7 }}>
                     {t('settings.paymentPasswordDesc')}
                   </Typography>
 
-                  {/* 安全提示 */}
                   <Box sx={{ mb: 3 }}>
                     <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1.5 }}>
                       <i className='ri-search-line text-primary' style={{ fontSize: '18px', marginTop: '2px' }} />
@@ -572,7 +575,6 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
                     </Box>
                   </Box>
 
-                  {/* 操作按钮 */}
                   <Button
                     variant='contained'
                     color='primary'
@@ -599,7 +601,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
               )}
             </CardContent>
           </Card>
-        </Grid>
+        </Grid> */}
       </Grid>
       </Card>
 
@@ -774,8 +776,9 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
         </DialogActions>
       </Dialog>
 
+      {/* 已注释：去掉支付密码验证，只需要Google验证 */}
       {/* 设置支付密码对话框 */}
-      <Dialog 
+      {/* <Dialog 
         open={setPayPasswordDialogOpen} 
         onClose={() => {
           setSetPayPasswordDialogOpen(false)
@@ -884,10 +887,10 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             {t('settings.confirmSet')}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* 重置支付密码对话框 */}
-      <Dialog
+      {/* <Dialog
         open={resetPayPasswordDialogOpen}
         onClose={() => {
           setResetPayPasswordDialogOpen(false)
@@ -1013,7 +1016,7 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
             {t('settings.confirmModify')}
           </Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
     </Box>
   )
 }
