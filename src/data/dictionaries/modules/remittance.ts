@@ -176,6 +176,7 @@ export const remittance = {
     maxSize: 'max',
     arrivalTimeNote: 'Specific time depends on the processing speed of the recipient bank',
     required: 'Required',
+    recommended: 'Recommended',
     googleAuthenticator: 'Google Authenticator',
     alreadyBound: 'Already Bound',
     notBoundRecommended: 'Not Bound · Recommended',
@@ -439,6 +440,7 @@ export const remittance = {
     arrivalTimeNote: '具体时间取决于收款银行处理速度',
     // 安全验证相关
     required: '必需',
+    recommended: '推荐',
     googleAuthenticator: 'Google验证器',
     alreadyBound: '已绑定',
     notBoundRecommended: '未绑定 · 推荐',
@@ -695,6 +697,7 @@ export const remittance = {
     maxSize: '最大',
     arrivalTimeNote: '具體時間取決於收款銀行處理速度',
     required: '必需',
+    recommended: '推薦',
     googleAuthenticator: 'Google驗證器',
     alreadyBound: '已綁定',
     notBoundRecommended: '未綁定 · 推薦',

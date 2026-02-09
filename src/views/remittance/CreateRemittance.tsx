@@ -1311,7 +1311,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               disabled={activeStep === 0 || submitting || stepLoading}
               sx={{ borderRadius: '8px', px: 8 }}
             >
-              返回
+              {t('remittance.back')}
             </Button>
             <Button
               variant='contained'
@@ -1505,7 +1505,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   <i className='ri-checkbox-circle-fill' style={{ fontSize: '20px', color: '#4CAF50' }} />
                 ) : (
                   <Chip
-                    label='推荐'
+                    label={t('remittance.recommended')}
                     size='small'
                     sx={{
                       height: 24,
