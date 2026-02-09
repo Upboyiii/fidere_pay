@@ -12,6 +12,7 @@ import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
 import ListItemText from '@mui/material/ListItemText'
+import FormHelperText from '@mui/material/FormHelperText'
 
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
@@ -28,23 +29,35 @@ interface PositionSelectProps {
   control: Control<any>
   /** 岗位列表 */
   positions: PositionOption[]
+  /** 是否必填 */
+  required?: boolean
 }
 
 /**
  * 岗位选择器组件
  * @param control - 表单控制对象
  * @param positions - 岗位列表
+ * @param required - 是否必填
  */
-const PositionSelect = ({ control, positions }: PositionSelectProps) => {
+const PositionSelect = ({ control, positions, required = false }: PositionSelectProps) => {
   const t = useTranslate()
   return (
     <Controller
       name='position'
       control={control}
-      render={({ field }) => {
+      rules={{
+        required: required ? t('admin.positionRequired') || '请选择岗位' : false,
+        validate: (value) => {
+          if (required && (!Array.isArray(value) || value.length === 0)) {
+            return t('admin.positionRequired') || '请选择岗位'
+          }
+          return true
+        }
+      }}
+      render={({ field, fieldState }) => {
         const value = Array.isArray(field.value) ? field.value : []
         return (
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!fieldState.error} required={required}>
             <InputLabel>{t('admin.position')}</InputLabel>
             <Select
               multiple
@@ -81,6 +94,7 @@ const PositionSelect = ({ control, positions }: PositionSelectProps) => {
                 </MenuItem>
               ))}
             </Select>
+            {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
           </FormControl>
         )
       }}

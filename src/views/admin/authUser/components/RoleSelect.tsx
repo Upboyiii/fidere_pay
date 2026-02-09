@@ -11,6 +11,7 @@ import Box from '@mui/material/Box'
 import Chip from '@mui/material/Chip'
 import Checkbox from '@mui/material/Checkbox'
 import Typography from '@mui/material/Typography'
+import FormHelperText from '@mui/material/FormHelperText'
 import { Controller, Control } from 'react-hook-form'
 import classnames from 'classnames'
 import { ChevronRight, ChevronDown } from 'lucide-react'
@@ -26,14 +27,17 @@ interface RoleSelectProps {
   control: Control<any>
   /** 角色树 */
   roleTree: RoleTreeNode[]
+  /** 是否必填 */
+  required?: boolean
 }
 
 /**
  * 角色选择器组件
  * @param control - 表单控制对象
  * @param roleTree - 角色树
+ * @param required - 是否必填
  */
-const RoleSelect = ({ control, roleTree }: RoleSelectProps) => {
+const RoleSelect = ({ control, roleTree, required = false }: RoleSelectProps) => {
   const t = useTranslate()
   const [selectOpen, setSelectOpen] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -53,7 +57,16 @@ const RoleSelect = ({ control, roleTree }: RoleSelectProps) => {
     <Controller
       name='role'
       control={control}
-      render={({ field }) => {
+      rules={{
+        required: required ? t('admin.roleRequired') || '请选择关联角色' : false,
+        validate: (value) => {
+          if (required && (!Array.isArray(value) || value.length === 0)) {
+            return t('admin.roleRequired') || '请选择关联角色'
+          }
+          return true
+        }
+      }}
+      render={({ field, fieldState }) => {
         const value = Array.isArray(field.value) ? field.value : []
         
         /**
@@ -123,7 +136,7 @@ const RoleSelect = ({ control, roleTree }: RoleSelectProps) => {
         }
 
         return (
-          <FormControl fullWidth>
+          <FormControl fullWidth error={!!fieldState.error} required={required}>
             <InputLabel>{t('admin.relatedRole')}</InputLabel>
             <Select
               open={selectOpen}
@@ -163,6 +176,7 @@ const RoleSelect = ({ control, roleTree }: RoleSelectProps) => {
             >
               <Box className='p-2'>{roleTree.map(role => renderRoleNode(role))}</Box>
             </Select>
+            {fieldState.error && <FormHelperText>{fieldState.error.message}</FormHelperText>}
           </FormControl>
         )
       }}

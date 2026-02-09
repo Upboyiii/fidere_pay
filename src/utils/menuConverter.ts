@@ -118,7 +118,8 @@ const ROUTE_MAPPING: Record<string, string> = {
   '/api/v1/biz/user/api-key/list': '/otc/api-keys',
   '/api/v1/biz/user/payee/list': '/remittance/recipients',
   '/api/v1/biz/user/recharge/list': '/otc/recharges',
-  '/api/v1/biz/user/security': '/otc/security',
+  '/api/v1/biz/user/security': '/settings',
+  '/api/v1/biz/user/security/settings': '/settings',
   '/api/v1/biz/user/transaction/list': '/otc/transactions',
   '/api/v1/biz/user/transfer/list': '/otc/transfers',
   

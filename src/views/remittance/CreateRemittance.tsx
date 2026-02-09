@@ -1149,12 +1149,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             color='warning'
                             onClick={() => {
                               const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
-                              // 使用 window.location.href 确保跳转生效
-                              if (typeof window !== 'undefined') {
-                                window.location.href = settingsPath
-                              } else {
-                                router.push(settingsPath)
-                              }
+                              router.push(settingsPath)
                             }}
                             sx={{ mt: 1, borderRadius: '6px', alignSelf: 'flex-start' }}
                           >
@@ -1413,12 +1408,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
             onClick={() => {
               setSecurityCheckDialogOpen(false)
               const settingsPath = getLocalizedPath('/settings', currentLang || 'zh-CN')
-              // 使用 window.location.href 确保跳转生效
-              if (typeof window !== 'undefined') {
-                window.location.href = settingsPath
-              } else {
-                router.push(settingsPath)
-              }
+              router.push(settingsPath)
             }}
             sx={{
               borderRadius: '8px',

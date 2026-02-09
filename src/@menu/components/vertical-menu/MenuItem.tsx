@@ -118,7 +118,10 @@ const MenuItem: ForwardRefRenderFunction<HTMLLIElement, MenuItemProps> = (props,
         // Non-exact match: use activeUrl if provided, otherwise use href
         const matchUrl = activeUrl || href
         // Use startsWith for better matching (e.g., /assets/my-assets matches /assets/my-assets/deposit)
-        setActive(matchUrl && matchUrl !== '/' && pathname.startsWith(matchUrl))
+        // Normalize both paths for comparison (remove trailing slashes)
+        const normalizedPathname = pathname.replace(/\/$/, '')
+        const normalizedMatchUrl = matchUrl.replace(/\/$/, '')
+        setActive(normalizedMatchUrl && normalizedMatchUrl !== '/' && normalizedPathname.startsWith(normalizedMatchUrl))
       }
     } else {
       setActive(false)

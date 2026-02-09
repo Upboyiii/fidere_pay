@@ -277,7 +277,7 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <PositionSelect control={control} positions={allOptions.posts || []} />
+              <PositionSelect control={control} positions={allOptions.posts || []} required />
             </Grid>
 
             {/* 右列 */}
@@ -288,7 +288,7 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
             )}
 
             <Grid size={{ xs: 12, sm: 6 }}>
-              <RoleSelect control={control} roleTree={roleTree} />
+              <RoleSelect control={control} roleTree={roleTree} required />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Controller
