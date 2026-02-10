@@ -12,11 +12,15 @@ import * as modules from './modules'
 
 /**
  * 合併所有模組的繁體中文翻譯
- * 自動從 modules 中提取所有模組的 zhTW 屬性
+ * 自動從 modules 中提取 zhTW 或 zh-Hant 屬性
  */
 type ModuleKeys = keyof typeof modules
 type MergedDictionary = {
-  [K in ModuleKeys]: (typeof modules)[K] extends { zhTW: infer Z } ? Z : never
+  [K in ModuleKeys]: (typeof modules)[K] extends { zhTW: infer Z }
+    ? Z
+    : (typeof modules)[K] extends { 'zh-Hant': infer H }
+      ? H
+      : never
 }
 
 /**
@@ -29,9 +33,13 @@ const mergeModules = (): MergedDictionary => {
   // 遍歷所有導出的模組
   Object.keys(modules).forEach(moduleName => {
     const module = (modules as any)[moduleName]
-    // 提取 zhTW 屬性
-    if (module && typeof module === 'object' && 'zhTW' in module) {
-      result[moduleName] = module.zhTW
+    // 提取 zhTW 或 zh-Hant 屬性（修復：assets、remittance 等模組使用 zh-Hant 而非 zhTW）
+    if (module && typeof module === 'object') {
+      if ('zhTW' in module) {
+        result[moduleName] = module.zhTW
+      } else if ('zh-Hant' in module) {
+        result[moduleName] = module['zh-Hant']
+      }
     }
   })
 

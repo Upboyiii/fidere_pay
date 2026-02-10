@@ -1,6 +1,9 @@
 // Next Imports
 import { useParams } from 'next/navigation'
 
+// Third-party Imports
+import { useSession } from 'next-auth/react'
+
 // MUI Imports
 import Chip from '@mui/material/Chip'
 import { useTheme } from '@mui/material/styles'
@@ -58,9 +61,14 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   // Vars
   const { isBreakpointReached, transitionDuration } = verticalNavOptions
   const { lang: locale } = params
+  const { data: session } = useSession()
 
-  // 获取用户角色（从 localStorage 或其他地方）
-  const userRole = typeof window !== 'undefined' ? localStorage.getItem('userRole') : undefined
+  // 获取用户角色：优先 localStorage，其次 session（修复：避免登录后刷新或初次加载时角色未同步导致菜单不可见）
+  const userRole =
+    (typeof window !== 'undefined' ? localStorage.getItem('userRole') : null) ||
+    (session as any)?.role ||
+    (session as any)?.user?.role ||
+    undefined
 
   // 获取动态菜单列表
   const { menuList } = useMenu()

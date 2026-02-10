@@ -295,9 +295,13 @@ const verticalMenuData = (
   }
 
   // 默认菜单（管理员或其他角色，如果没有动态菜单）
-  return [
-    ...horizontalMenuData(dictionary)
-  ]
+  // 修复：horizontalMenuData 所有项已注释，会返回空数组导致登录后左侧菜单栏不可见
+  // 使用 operationHardcodedMenu 作为默认后备，确保登录后始终可见菜单
+  const defaultMenu = horizontalMenuData(dictionary)
+  if (defaultMenu && defaultMenu.length > 0) {
+    return defaultMenu
+  }
+  return operationHardcodedMenu
 }
 // This is how you will normally render submenu
 // {
