@@ -340,9 +340,14 @@ const Login = ({ mode }: { mode: Mode }) => {
           await handleLoginSuccess(res, data)
         }
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
-      toast.error(errorMessage)
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || (error instanceof Error ? error.message : '')
+      const isInputWrong =
+        typeof msg === 'string' && (msg.includes('输入错误') || msg.includes('輸入錯誤'))
+      const isCodeError =
+        typeof msg === 'string' && (msg.includes('验证码') || msg.includes('时间同步') || msg.includes('驗證碼') || msg.includes('時間同步'))
+      const i18nMsg = isInputWrong ? t('settings.googleAuthCodeWrong') : isCodeError ? t('settings.googleAuthCodeError') : null
+      toast.error(i18nMsg || msg || t('auth.loginFailed'))
       requestCaptchaImg()
     } finally {
       setLoginLoading(false)
@@ -370,9 +375,14 @@ const Login = ({ mode }: { mode: Mode }) => {
       if (res?.data) {
         await handleLoginSuccess(res, pendingLoginData)
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t('auth.loginFailed')
-      toast.error(errorMessage)
+    } catch (error: any) {
+      const msg = error?.response?.data?.message || (error instanceof Error ? error.message : '')
+      const isInputWrong =
+        typeof msg === 'string' && (msg.includes('输入错误') || msg.includes('輸入錯誤'))
+      const isCodeError =
+        typeof msg === 'string' && (msg.includes('验证码') || msg.includes('时间同步') || msg.includes('驗證碼') || msg.includes('時間同步'))
+      const i18nMsg = isInputWrong ? t('settings.googleAuthCodeWrong') : isCodeError ? t('settings.googleAuthCodeError') : null
+      toast.error(i18nMsg || msg || t('auth.loginFailed'))
       // 清空验证码输入
       setGoogleAuthCode(['', '', '', '', '', ''])
       googleAuthInputRefs.current[0]?.focus()

@@ -48,7 +48,7 @@ const convertNameToTranslationKey = (name: string): string => {
  * @param dictionary - 字典数据（可选）
  * @returns 菜单标题
  */
-const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof getDictionary>>): string => {
+export const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof getDictionary>>): string => {
   // 1. 优先使用 name 值查找翻译（如果提供了字典）
   if (dictionary && node.name && String(node.name).trim()) {
     const navigationDict = dictionary.navigation as any
@@ -87,17 +87,18 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
   }
 
   // 向下兼容：依次尝试其他语言的标题
-  // 3. 如果提供了字典，尝试根据 meta.title 查找翻译（用于父级菜单）
-  if (dictionary && node?.meta?.title && String(node?.meta?.title).trim()) {
-    const metaTitle = String(node.meta.title).trim()
+  // 3. 如果提供了字典，尝试根据 title（API 返回 meta.title 或 title）查找翻译
+  const rawTitle = (node?.meta?.title ?? (node as any)?.title ?? '').trim()
+  if (dictionary && rawTitle) {
     const navigationDict = dictionary.navigation as any
-    
-    // 根据中文标题查找对应的翻译键
+
+    // 根据中文标题查找对应的翻译键（与 API menu.title 对应）
     const titleToKeyMap: Record<string, string> = {
       '资产管理': 'assetManagement',
       '全球汇款': 'globalRemittance',
       '开发配置': 'development',
       '设置': 'settings',
+      '安全设置': 'securitySettings',
       '管理员配置': 'adminConfiguration',
       '转账管理': 'adminTransfer',
       '收款人列表': 'adminPayees',
@@ -106,27 +107,80 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
       '资金流水': 'adminFinancial',
       '充值管理': 'adminRecharge',
       '回调地址': 'adminCallbackAddress',
-      // 权限管理
+      '我的资产': 'assetsMyAssets',
+      '交易流水': 'assetsTransactions',
+      '创建汇款': 'remittanceCreate',
+      '汇款记录': 'remittanceRecords',
       '权限管理': 'permissionManagement',
       '菜单管理': 'authMenu',
       '角色管理': 'authRoles',
       '部门管理': 'authDept',
       '岗位管理': 'authPost',
       '用户管理': 'authUser',
+      '添加菜单': 'adminAddMenu',
+      '修改菜单': 'adminEditMenu',
+      '删除菜单': 'adminDeleteMenu',
+      '添加角色': 'adminAddRole',
+      '修改角色': 'adminEditRole',
+      '删除角色': 'adminDeleteRole',
+      '授权数据权限': 'adminDataScope',
+      '授权用户权限': 'adminUserAuth',
+      '添加部门': 'adminAddDept',
+      '修改部门': 'adminEditDept',
+      '删除部门': 'adminDeleteDept',
+      '添加岗位': 'adminAddPost',
+      '修改岗位': 'adminEditPost',
+      '删除岗位': 'adminDeletePost',
+      '新增用户': 'adminAddUser',
+      '修改用户': 'adminEditUser',
+      '用户信息': 'adminUserInfo',
+      '删除用户': 'adminDeleteUser',
+      '管理所有': 'adminManageAll',
       '用户资产列表': 'userAssetList',
       '回调记录列表': 'callbackRecordList',
-      '资金流水列表': 'financialList'
+      '资金流水列表': 'financialList',
+      '系统配置': 'systemConfig',
+      '系统工具': 'systemTools',
+      '系统监控': 'systemMonitor',
+      '外链测试': 'outLinkTest',
+      '字典管理': 'dictManagement',
+      '字典数据管理': 'dictDataManagement',
+      '参数管理': 'configManagement',
+      '服务监控': 'serverMonitor',
+      '登录日志': 'loginLog',
+      '操作日志': 'operLog',
+      '在线用户': 'onlineUser',
+      'api文档': 'apiDoc',
+      '代码生成': 'codeGen',
+      '代码生成配置': 'codeGenConfig',
+      '定时任务': 'scheduledTask',
+      '定时任务查询': 'scheduledTaskQuery',
+      '定时任务添加': 'scheduledTaskAdd',
+      '定时任务修改': 'scheduledTaskEdit',
+      '定时任务删除': 'scheduledTaskDelete',
+      '执行一次': 'scheduledTaskRun',
+      '附件管理': 'attachmentManagement',
+      '附件管理删除': 'attachmentDelete',
+      '通知公告': 'notification',
+      '通知公告管理': 'notificationManage',
+      '通知公告查询': 'notificationQuery',
+      '通知公告添加': 'notificationAdd',
+      '通知公告修改': 'notificationEdit',
+      '通知公告删除': 'notificationDelete',
+      '通知公告展示': 'notificationShow',
+      '阿里云-iframe': 'aliyunIframe',
+      '腾讯云-外链': 'tencentLink'
     }
-    
-    const translationKey = titleToKeyMap[metaTitle]
+
+    const translationKey = titleToKeyMap[rawTitle]
     if (translationKey && navigationDict && navigationDict[translationKey]) {
       return String(navigationDict[translationKey])
     }
   }
   
-  // 4. 优先使用 title (中文，作为默认)
-  if (node?.meta?.title && String(node?.meta?.title).trim()) {
-    return String(node?.meta?.title)
+  // 4. 使用 title（API 返回的 meta.title 或 title）
+  if (rawTitle) {
+    return rawTitle
   }
 
   // 5. 尝试 titleEn (英文)

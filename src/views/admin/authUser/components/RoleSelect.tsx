@@ -92,10 +92,17 @@ const RoleSelect = ({ control, roleTree, required = false }: RoleSelectProps) =>
           return (
             <Box key={role.id}>
               <Box
-                className={classnames('flex items-center gap-2 p-2 hover:bg-actionHover transition-colors', {
-                  'bg-actionHover': false
+                className={classnames('flex items-center gap-2 p-2 hover:bg-actionHover transition-colors cursor-pointer', {
+                  'bg-actionHover': isChecked
                 })}
                 style={{ paddingLeft: `${level * 16 + 8}px` }}
+                onClick={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  if (!(e.target as HTMLElement).closest('[data-role-expand]')) {
+                    toggleRole(role.name)
+                  }
+                }}
               >
                 <Checkbox
                   checked={isChecked}
@@ -105,9 +112,12 @@ const RoleSelect = ({ control, roleTree, required = false }: RoleSelectProps) =>
                 />
                 {hasChildren ? (
                   <Box
-                    className='cursor-pointer'
-                    onClick={() => toggleExpand(role.id)}
-                    onMouseDown={e => e.stopPropagation()}
+                    data-role-expand
+                    className='cursor-pointer shrink-0'
+                    onClick={e => {
+                      e.stopPropagation()
+                      toggleExpand(role.id)
+                    }}
                   >
                     {isExpanded ? (
                       <ChevronDown size={16} className='text-textSecondary' />
@@ -116,13 +126,12 @@ const RoleSelect = ({ control, roleTree, required = false }: RoleSelectProps) =>
                     )}
                   </Box>
                 ) : (
-                  <Box className='w-4' />
+                  <Box className='w-4 shrink-0' />
                 )}
                 <Typography
-                  className={classnames('flex-1 cursor-pointer', {
+                  className={classnames('flex-1 select-none', {
                     'text-primary': isChecked
                   })}
-                  onClick={() => toggleRole(role.name)}
                 >
                   {role.name}
                   {hasChildren && ` (${role.children?.length || 0})`}

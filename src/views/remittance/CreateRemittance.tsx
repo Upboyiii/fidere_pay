@@ -342,8 +342,13 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       setSubmitSuccess(true)
     } catch (error: any) {
       console.error('提交失败:', error)
-      const errorMessage = error?.response?.data?.message || error?.message || t('remittance.submitFailed')
-      toast.error(errorMessage)
+      const msg = error?.response?.data?.message || error?.message || ''
+      const isInputWrong =
+        typeof msg === 'string' && (msg.includes('输入错误') || msg.includes('輸入錯誤'))
+      const isCodeError =
+        typeof msg === 'string' && (msg.includes('验证码') || msg.includes('时间同步') || msg.includes('驗證碼') || msg.includes('時間同步'))
+      const i18nMsg = isInputWrong ? t('settings.googleAuthCodeWrong') : isCodeError ? t('settings.googleAuthCodeError') : null
+      toast.error(i18nMsg || msg || t('remittance.submitFailed'))
     } finally {
       setSubmitting(false)
     }
@@ -1359,9 +1364,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         <DialogContent sx={{ pt: 4, pb: 3 }}>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
             <Typography variant='body2' color='text.secondary' sx={{ lineHeight: 1.7 }}>
-              {/* 已注释：去掉支付密码相关提示 */}
-              {/* {t('remittance.securitySettingsRequired') || '为了保障您的资金安全，在进行汇款操作前，请先完成以下安全设置（支付密码和谷歌验证都必须设置）'} */}
-              为了保障您的资金安全，在进行汇款操作前，请先完成Google验证设置
+              {t('remittance.googleAuthRequiredBeforeRemittance')}
             </Typography>
 
             {/* 安全设置项列表 */}

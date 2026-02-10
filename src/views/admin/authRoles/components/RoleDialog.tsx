@@ -31,7 +31,10 @@ import { getRoleParams } from '@server/admin'
 import RoleSelect from './RoleSelect'
 
 // Hook Imports
-import { useTranslate } from '@/contexts/DictionaryContext'
+import { useTranslate, useDictionary } from '@/contexts/DictionaryContext'
+
+// Util Imports
+import { getMenuLabel } from '@/utils/menuConverter'
 
 // Type Imports
 import type { RoleData, MenuNode, RoleTreeNode } from './utils'
@@ -82,6 +85,7 @@ const defaultFormValues = {
  */
 const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entranceOptions }: RoleDialogProps) => {
   const t = useTranslate()
+  const dictionary = useDictionary()
   const { control, handleSubmit, reset, watch, setValue } = useForm({
     defaultValues: defaultFormValues
   })
@@ -423,7 +427,7 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
             })}
             onClick={() => toggleMenuSelect(menu.id, menu)}
           >
-            {menu.label}
+            {getMenuLabel(menu, dictionary ?? undefined) || menu.label}
             {hasChildren && ` (${menu.children?.length || 0})`}
           </Typography>
         </Box>

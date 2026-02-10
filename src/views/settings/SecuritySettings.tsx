@@ -161,7 +161,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       loadStatus()
     } catch (error: any) {
       console.error('绑定失败:', error)
-      toast.error(error?.message || t('settings.bindFailed'))
+      const msg = error?.response?.data?.message || error?.message || ''
+      const isInputWrong =
+        typeof msg === 'string' && (msg.includes('输入错误') || msg.includes('輸入錯誤'))
+      const isCodeError =
+        typeof msg === 'string' && (msg.includes('验证码') || msg.includes('时间同步') || msg.includes('驗證碼') || msg.includes('時間同步'))
+      const i18nMsg = isInputWrong ? t('settings.googleAuthCodeWrong') : isCodeError ? t('settings.googleAuthCodeError') : null
+      toast.error(i18nMsg || msg || t('settings.bindFailed'))
     }
   }
 
@@ -181,7 +187,13 @@ const SecuritySettings = ({ mode }: { mode: Mode }) => {
       loadStatus()
     } catch (error: any) {
       console.error('解绑失败:', error)
-      toast.error(error?.message || t('settings.unbindFailed'))
+      const msg = error?.response?.data?.message || error?.message || ''
+      const isInputWrong =
+        typeof msg === 'string' && (msg.includes('输入错误') || msg.includes('輸入錯誤'))
+      const isCodeError =
+        typeof msg === 'string' && (msg.includes('验证码') || msg.includes('时间同步') || msg.includes('驗證碼') || msg.includes('時間同步'))
+      const i18nMsg = isInputWrong ? t('settings.googleAuthCodeWrong') : isCodeError ? t('settings.googleAuthCodeError') : null
+      toast.error(i18nMsg || msg || t('settings.unbindFailed'))
     }
   }
 

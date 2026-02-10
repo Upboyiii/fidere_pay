@@ -142,7 +142,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 </Select>
               </FormControl>
               <TextField
-                label='币种编码'
+                label={t('adminOtc.currencyCode')}
                 value={filters.currencyCode}
                 onChange={e => setFilters({ ...filters, currencyCode: e.target.value })}
                 size='small'
