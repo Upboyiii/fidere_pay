@@ -34,7 +34,11 @@ import { getAdminAssetList, adjustAsset, type AdminAssetListItem } from '@server
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
 const AdminAssetList = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminAssetListItem[]>([])
@@ -114,7 +118,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
     if (!selectedItem) return
 
     if (!adjustForm.amount || Number(adjustForm.amount) <= 0) {
-      toast.error('请输入有效的调整金额')
+      toast.error(t('adminOtc.enterValidAmount'))
       return
     }
 
@@ -127,12 +131,12 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
         amount: Number(adjustForm.amount),
         remark: adjustForm.remark || undefined
       })
-      toast.success('资产调整成功')
+      toast.success(t('adminOtc.adjustSuccess'))
       handleCloseAdjustDialog()
       loadData() // 刷新列表
     } catch (error: any) {
       console.error('资产调整失败:', error)
-      toast.error(error?.message || '资产调整失败')
+      toast.error(error?.message || t('adminOtc.adjustFailed'))
     } finally {
       setAdjusting(false)
     }
@@ -188,28 +192,28 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5' sx={{ fontWeight: 600 }}>用户资产列表</Typography>
-              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>{t('adminOtc.userAssetList')}</Typography>
+              <Chip label={t('adminOtc.totalRecords', { count: total })} size='small' variant='outlined' />
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
-                label='用户名'
+                label={t('adminOtc.username')}
                 value={filters.userName}
                 onChange={e => setFilters({ ...filters, userName: e.target.value })}
                 size='small'
                 sx={{ minWidth: 120 }}
-                placeholder='模糊搜索'
+                placeholder={t('adminOtc.fuzzySearchPlaceholder')}
               />
               <TextField
-                label='用户昵称'
+                label={t('adminOtc.userNickname')}
                 value={filters.userNickname}
                 onChange={e => setFilters({ ...filters, userNickname: e.target.value })}
                 size='small'
                 sx={{ minWidth: 120 }}
-                placeholder='模糊搜索'
+                placeholder={t('adminOtc.fuzzySearchPlaceholder')}
               />
               <Button variant='contained' onClick={loadData}>
-                查询
+                {t('adminOtc.search')}
               </Button>
               <Button 
                 variant='outlined' 
@@ -224,33 +228,33 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                   loadData(resetFilters, 0)
                 }}
               >
-                重置
+                {t('adminOtc.reset')}
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '800px' }}>
                 <thead>
                   <tr>
-                    <th>用户名</th>
-                    <th>用户昵称</th>
-                    <th>币种</th>
+                    <th>{t('adminOtc.username')}</th>
+                    <th>{t('adminOtc.userNickname')}</th>
+                    <th>{t('adminOtc.currency')}</th>
                     {/* <th>余额</th> */}
-                    <th>可用余额</th>
-                    <th>冻结余额</th>
-                    <th>操作</th>
+                    <th>{t('adminOtc.availableBalance')}</th>
+                    <th>{t('adminOtc.frozenBalance')}</th>
+                    <th>{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={8} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={8} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -269,7 +273,7 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                             color='primary'
                             onClick={() => handleOpenAdjustDialog(item)}
                           >
-                            调整资产
+                            {t('adminOtc.adjustAsset')}
                           </Button>
                         </td>
                       </tr>
@@ -295,20 +299,20 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
 
       {/* 调整资产弹窗 */}
       <Dialog open={adjustDialogOpen} onClose={handleCloseAdjustDialog} maxWidth='sm' fullWidth>
-        <DialogTitle>调整用户资产</DialogTitle>
+        <DialogTitle>{t('adminOtc.adjustUserAsset')}</DialogTitle>
         <DialogContent>
           {selectedItem && (
             <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label='用户名'
+                  label={t('adminOtc.username')}
                   value={selectedItem.userName || '-'}
                   size='small'
                   disabled
                   sx={{ flex: 1 }}
                 />
                 <TextField
-                  label='币种'
+                  label={t('adminOtc.currency')}
                   value={selectedItem.currencyCode}
                   size='small'
                   disabled
@@ -317,14 +321,14 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
               </Box>
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
-                  label='当前余额'
+                  label={t('adminOtc.currentBalance')}
                   value={selectedItem.balance}
                   size='small'
                   disabled
                   sx={{ flex: 1 }}
                 />
                 <TextField
-                  label='可用余额'
+                  label={t('adminOtc.availableBalance')}
                   value={selectedItem.availableBalance}
                   size='small'
                   disabled
@@ -332,18 +336,18 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                 />
               </Box>
               <FormControl size='small' fullWidth>
-                <InputLabel>调整类型</InputLabel>
+                <InputLabel>{t('adminOtc.adjustType')}</InputLabel>
                 <Select
                   value={adjustForm.adjustType}
-                  label='调整类型'
+                  label={t('adminOtc.adjustType')}
                   onChange={e => setAdjustForm({ ...adjustForm, adjustType: e.target.value as 1 | 2 })}
                 >
-                  <MenuItem value={1}>增加</MenuItem>
-                  <MenuItem value={2}>扣减</MenuItem>
+                  <MenuItem value={1}>{t('adminOtc.add')}</MenuItem>
+                  <MenuItem value={2}>{t('adminOtc.deduct')}</MenuItem>
                 </Select>
               </FormControl>
               <TextField
-                label='调整金额'
+                label={t('adminOtc.adjustAmount')}
                 type='number'
                 value={adjustForm.amount}
                 onChange={e => setAdjustForm({ ...adjustForm, amount: e.target.value })}
@@ -351,27 +355,27 @@ const AdminAssetList = ({ mode }: { mode: Mode }) => {
                 fullWidth
                 required
                 inputProps={{ min: 0, step: '0.01' }}
-                placeholder='请输入调整金额'
+                placeholder={t('adminOtc.enterAdjustAmount')}
               />
               <TextField
-                label='调整原因/备注'
+                label={t('adminOtc.adjustReason')}
                 value={adjustForm.remark}
                 onChange={e => setAdjustForm({ ...adjustForm, remark: e.target.value })}
                 size='small'
                 fullWidth
                 multiline
                 rows={3}
-                placeholder='请输入调整原因（选填）'
+                placeholder={t('adminOtc.enterAdjustReason')}
               />
             </Box>
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={handleCloseAdjustDialog} disabled={adjusting}>
-            取消
+            {t('adminOtc.cancel')}
           </Button>
           <Button variant='contained' onClick={handleAdjustSubmit} disabled={adjusting}>
-            {adjusting ? '提交中...' : '确认调整'}
+            {adjusting ? t('adminOtc.submitting') : t('adminOtc.confirmAdjust')}
           </Button>
         </DialogActions>
       </Dialog>

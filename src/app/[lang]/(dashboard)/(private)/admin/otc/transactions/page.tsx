@@ -6,10 +6,17 @@ import AdminTransactionList from '@views/admin/otc/AdminTransactionList'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '资金流水列表',
-  description: '查看资金流水记录'
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const dict = await getDictionary(lang)
+  const otc = dict.adminOtc as Record<string, string>
+
+  return {
+    title: otc.financialList || '资金流水列表',
+    description: otc.financialListDesc || '查看资金流水记录'
+  }
 }
 
 const AdminTransactionListPage = async () => {

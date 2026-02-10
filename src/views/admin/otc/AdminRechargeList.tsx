@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -33,8 +36,15 @@ import tableStyles from '@core/styles/table.module.css'
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+import LocalizedDateField from '@/components/LocalizedDateField'
+
 const AdminRechargeList = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminRechargeListItem[]>([])
@@ -145,23 +155,24 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                 size='small'
                 sx={{ minWidth: 180 }}
               />
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.startDate')}
-                type='date'
+                placeholder={t('adminOtc.selectStartDate')}
                 value={filters.startDate}
-                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, startDate: v })}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.endDate')}
-                type='date'
+                placeholder={t('adminOtc.selectEndDate')}
                 value={filters.endDate}
-                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, endDate: v })}
+                minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
               <Button 
                 variant='contained' 
@@ -320,7 +331,7 @@ const AdminRechargeList = ({ mode }: { mode: Mode }) => {
                             if (!timestamp) return '-'
                             // 处理时间戳：如果是10位（秒级），转换为毫秒；如果是13位（毫秒级），直接使用
                             const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-                            return new Date(ms).toLocaleString('zh-CN', {
+                            return new Date(ms).toLocaleString(dateLocale, {
                               year: 'numeric',
                               month: '2-digit',
                               day: '2-digit',

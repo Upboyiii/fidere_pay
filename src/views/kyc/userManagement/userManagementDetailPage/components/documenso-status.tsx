@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useParams } from 'next/navigation'
 import {
   Typography,
   Chip,
@@ -23,6 +24,7 @@ import {
   Tooltip
 } from '@mui/material'
 import { FileText, RefreshCw, CheckCircle, XCircle, Clock, Eye, Download, Plus, Send } from 'lucide-react'
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
 
 interface DocumensoStatusProps {
   userId: string
@@ -30,6 +32,9 @@ interface DocumensoStatusProps {
 }
 
 export function DocumensoStatus({ userId, onStatusUpdate }: DocumensoStatusProps) {
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [documents, setDocuments] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -226,7 +231,7 @@ export function DocumensoStatus({ userId, onStatusUpdate }: DocumensoStatusProps
                           {doc.title}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
-                          {new Date(doc.createdAt).toLocaleDateString('zh-CN')}
+                          {new Date(doc.createdAt).toLocaleDateString(dateLocale)}
                         </Typography>
                       </div>
                     </div>
@@ -283,8 +288,8 @@ export function DocumensoStatus({ userId, onStatusUpdate }: DocumensoStatusProps
                           variant='outlined'
                         />
                       </TableCell>
-                      <TableCell>{new Date(doc.createdAt).toLocaleString('zh-CN')}</TableCell>
-                      <TableCell>{doc.completedAt ? new Date(doc.completedAt).toLocaleString('zh-CN') : '-'}</TableCell>
+                      <TableCell>{new Date(doc.createdAt).toLocaleString(dateLocale)}</TableCell>
+                      <TableCell>{doc.completedAt ? new Date(doc.completedAt).toLocaleString(dateLocale) : '-'}</TableCell>
                       <TableCell>
                         <div className='flex flex-col gap-1'>
                           {doc.signers.map((signer: any) => (

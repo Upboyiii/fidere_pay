@@ -120,9 +120,20 @@ export const navigation = {
     adminConfiguration: 'Administrator Configuration',
     adminTransfer: 'Transfer Management',
     adminPayees: 'Payee List',
+    adminPayeeManagement: 'Payee Management',
     adminFinancial: 'Financial Records',
     adminRecharge: 'Recharge Management',
-    adminCallbackAddress: 'Callback Address'
+    adminCallbackAddress: 'Callback Address',
+    // 权限管理菜单翻译
+    permissionManagement: 'Permission Management',
+    authMenu: 'Menu Management',
+    authRoles: 'Role Management',
+    authDept: 'Department Management',
+    authPost: 'Position Management',
+    authUser: 'User Management',
+    userAssetList: 'User Asset List',
+    callbackRecordList: 'Callback Records List',
+    financialList: 'Financial Records List'
   },
   zh: {
     dashboards: '仪表板',
@@ -199,9 +210,20 @@ export const navigation = {
     adminConfiguration: '管理员配置',
     adminTransfer: '转账管理',
     adminPayees: '收款人列表',
+    adminPayeeManagement: '收款人管理',
     adminFinancial: '资金流水',
     adminRecharge: '充值管理',
-    adminCallbackAddress: '回调地址'
+    adminCallbackAddress: '回调地址',
+    // 权限管理菜单翻译
+    permissionManagement: '权限管理',
+    authMenu: '菜单管理',
+    authRoles: '角色管理',
+    authDept: '部门管理',
+    authPost: '岗位管理',
+    authUser: '用户管理',
+    userAssetList: '用户资产列表',
+    callbackRecordList: '回调记录列表',
+    financialList: '资金流水列表'
   },
   zhTW: {
     dashboards: '儀表板',
@@ -278,8 +300,19 @@ export const navigation = {
     adminConfiguration: '管理員配置',
     adminTransfer: '轉賬管理',
     adminPayees: '收款人列表',
+    adminPayeeManagement: '收款人管理',
     adminFinancial: '資金流水',
     adminRecharge: '充值管理',
-    adminCallbackAddress: '回調地址'
+    adminCallbackAddress: '回調地址',
+    // 權限管理菜單翻譯
+    permissionManagement: '權限管理',
+    authMenu: '菜單管理',
+    authRoles: '角色管理',
+    authDept: '部門管理',
+    authPost: '崗位管理',
+    authUser: '用戶管理',
+    userAssetList: '用戶資產列表',
+    callbackRecordList: '回調記錄列表',
+    financialList: '資金流水列表'
   }
 } as const

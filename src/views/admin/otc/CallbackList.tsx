@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -31,8 +34,15 @@ import tableStyles from '@core/styles/table.module.css'
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+import LocalizedDateField from '@/components/LocalizedDateField'
+
 const CallbackList = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<CallbackListItem[]>([])
@@ -105,7 +115,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
         <Card sx={{ width: '100%' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>回调记录列表</Typography>
+              <Typography variant='h5'>{t('adminOtc.callbackRecordList')}</Typography>
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
@@ -129,23 +139,24 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                   <MenuItem value='2'>{t('adminOtc.failed')}</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.startDate')}
-                type='date'
+                placeholder={t('adminOtc.selectStartDate')}
                 value={filters.startDate}
-                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, startDate: v })}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.endDate')}
-                type='date'
+                placeholder={t('adminOtc.selectEndDate')}
                 value={filters.endDate}
-                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, endDate: v })}
+                minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
                 {t('adminOtc.search')}
@@ -191,7 +202,7 @@ const CallbackList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td className='max-w-xs truncate'>{item.callbackUrl}</td>
                         <td>{item.retryCount}</td>
-                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</td>
+                        <td>{item.createdAt ? new Date(item.createdAt).toLocaleString(dateLocale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '-'}</td>
                         <td>
                           <Button size='small' onClick={() => handleRetry(item.id)}>
                             {t('adminOtc.retry') || '重试'}

@@ -4,6 +4,9 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -25,7 +28,12 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+
 const UserRechargeList = ({ mode }: { mode: Mode }) => {
+  const params = useParams()
+  const dateLocale = getDateLocaleFromLang(params?.lang as string)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<RechargeDetailItem[]>([])
@@ -170,7 +178,7 @@ const UserRechargeList = ({ mode }: { mode: Mode }) => {
                             size='small'
                           />
                         </td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{new Date(item.createdAt).toLocaleString(dateLocale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
                         <td>
                           <Button size='small' component={Link} href={`/otc/recharges/${item.rechargeNo}`}>
                             详情

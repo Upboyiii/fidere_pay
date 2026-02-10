@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -36,7 +39,12 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+
 const ApiKeyList = ({ mode }: { mode: Mode }) => {
+  const params = useParams()
+  const dateLocale = getDateLocaleFromLang(params?.lang as string)
   const [data, setData] = useState<ApiKeyItem[]>([])
   const [loading, setLoading] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -212,7 +220,7 @@ const ApiKeyList = ({ mode }: { mode: Mode }) => {
                             style={{ cursor: 'pointer' }}
                           />
                         </td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{new Date(item.createdAt).toLocaleString(dateLocale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
                         <td>
                           <Box className='flex gap-2'>
                             <Button size='small' onClick={() => handleOpenDialog(item)}>

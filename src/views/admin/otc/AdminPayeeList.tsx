@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -32,8 +35,14 @@ import tableStyles from '@core/styles/table.module.css'
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+
 const AdminPayeeList = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminPayeeItem[]>([])
@@ -98,7 +107,7 @@ const AdminPayeeList = ({ mode }: { mode: Mode }) => {
   const formatTime = (timestamp?: number) => {
     if (!timestamp) return '-'
     const ts = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-    return new Date(ts).toLocaleString('zh-CN', {
+    return new Date(ts).toLocaleString(dateLocale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',

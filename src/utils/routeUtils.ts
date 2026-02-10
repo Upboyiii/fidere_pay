@@ -6,6 +6,19 @@ import { i18n } from '@configs/i18n'
 import type { Locale } from '@configs/i18n'
 
 /**
+ * 根据应用语言代码获取 Intl 日期格式化的 locale
+ * 切换语言后，时间/日期显示格式会跟随（如英文用 en-US，繁体用 zh-TW）
+ * @param lang - 应用语言代码 (en | zh-CN | zh-Hant)
+ * @returns Intl locale 字符串
+ */
+export const getDateLocaleFromLang = (lang?: string): string => {
+  if (lang === 'en') return 'en-US'
+  if (lang === 'zh-Hant') return 'zh-TW'
+  return 'zh-CN'
+}
+
+
+/**
  * 从当前浏览器路径中提取语言代码
  * @returns 当前语言代码
  */

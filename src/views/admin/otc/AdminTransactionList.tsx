@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -29,7 +32,18 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+import LocalizedDateField from '@/components/LocalizedDateField'
+
 const AdminTransactionList = ({ mode }: { mode: Mode }) => {
+  const t = useTranslate()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminTransactionListItem[]>([])
@@ -96,7 +110,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
       setStatistics({ totalIncome, totalExpenditure })
     } catch (error) {
       console.error('加载数据失败:', error)
-      toast.error('加载数据失败')
+      toast.error(t('adminOtc.loadDataFailed'))
     } finally {
       setLoading(false)
     }
@@ -174,70 +188,71 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
         <Card sx={{ width: '100%', borderRadius: '16px' }}>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5' sx={{ fontWeight: 600 }}>资金流水列表</Typography>
-              <Chip label={`共 ${total} 条`} size='small' variant='outlined' />
+              <Typography variant='h5' sx={{ fontWeight: 600 }}>{t('adminOtc.financialList')}</Typography>
+              <Chip label={t('adminOtc.totalRecords', { count: total })} size='small' variant='outlined' />
             </Box>
             <Box className='flex items-center gap-4 mb-6 flex-wrap'>
               <TextField
-                label='用户名'
+                label={t('adminOtc.username')}
                 value={filters.userName}
                 onChange={e => setFilters({ ...filters, userName: e.target.value })}
                 size='small'
                 sx={{ minWidth: 150 }}
               />
               <TextField
-                label='币种编码'
+                label={t('adminOtc.currencyCode')}
                 value={filters.currencyCode}
                 onChange={e => setFilters({ ...filters, currencyCode: e.target.value })}
                 size='small'
                 sx={{ minWidth: 150 }}
-                placeholder='如: USDT-TRC20'
+                placeholder={t('adminOtc.currencyCodePlaceholder')}
               />
               <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel id='bizType-label'>业务类型</InputLabel>
+                <InputLabel id='bizType-label'>{t('adminOtc.bizType')}</InputLabel>
                 <Select
                   labelId='bizType-label'
                   value={filters.bizType}
                   onChange={e => setFilters({ ...filters, bizType: e.target.value })}
-                  label='业务类型'
+                  label={t('adminOtc.bizType')}
                 >
-                  <MenuItem value=''>全部</MenuItem>
-                  <MenuItem value='1'>充值</MenuItem>
-                  <MenuItem value='2'>提现</MenuItem>
-                  <MenuItem value='3'>转账</MenuItem>
-                  <MenuItem value='5'>管理员调整</MenuItem>
+                  <MenuItem value=''>{t('adminOtc.all')}</MenuItem>
+                  <MenuItem value='1'>{t('adminOtc.recharge')}</MenuItem>
+                  <MenuItem value='2'>{t('adminOtc.withdraw')}</MenuItem>
+                  <MenuItem value='3'>{t('adminOtc.transfer')}</MenuItem>
+                  <MenuItem value='5'>{t('adminOtc.adminAdjust')}</MenuItem>
                 </Select>
               </FormControl>
               <FormControl size='small' sx={{ minWidth: 120 }}>
-                <InputLabel id='direction-label'>方向</InputLabel>
+                <InputLabel id='direction-label'>{t('adminOtc.direction')}</InputLabel>
                 <Select
                   labelId='direction-label'
                   value={filters.direction}
                   onChange={e => setFilters({ ...filters, direction: e.target.value })}
-                  label='方向'
+                  label={t('adminOtc.direction')}
                 >
-                  <MenuItem value=''>全部</MenuItem>
-                  <MenuItem value='1'>入账</MenuItem>
-                  <MenuItem value='2'>出账</MenuItem>
+                  <MenuItem value=''>{t('adminOtc.all')}</MenuItem>
+                  <MenuItem value='1'>{t('adminOtc.incoming')}</MenuItem>
+                  <MenuItem value='2'>{t('adminOtc.outgoing')}</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
-                label='开始日期'
-                type='date'
+              <LocalizedDateField
+                label={t('adminOtc.startDate')}
+                placeholder={t('adminOtc.selectStartDate')}
                 value={filters.startDate}
-                onChange={e => setFilters({ ...filters, startDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, startDate: v })}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
-              <TextField
-                label='结束日期'
-                type='date'
+              <LocalizedDateField
+                label={t('adminOtc.endDate')}
+                placeholder={t('adminOtc.selectEndDate')}
                 value={filters.endDate}
-                onChange={e => setFilters({ ...filters, endDate: e.target.value })}
+                onChange={v => setFilters({ ...filters, endDate: v })}
+                minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
               <Button 
                 variant='contained' 
@@ -247,7 +262,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                 }}
                 disabled={loading}
               >
-                查询
+                {t('adminOtc.search')}
               </Button>
               <Button 
                 variant='outlined' 
@@ -267,36 +282,36 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                 }}
                 disabled={loading}
               >
-                重置
+                {t('adminOtc.reset')}
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper} style={{ overflowX: 'auto' }}>
               <table className={tableStyles.table} style={{ width: '100%', minWidth: '1400px' }}>
                 <thead>
                   <tr>
-                    <th>订单号</th>
-                    <th>用户信息</th>
-                    <th>币种</th>
-                    <th>业务类型</th>
-                    <th>方向</th>
-                    <th>变动金额</th>
-                    <th>可用余额变化</th>
-                    <th>冻结余额变化</th>
-                    <th>备注</th>
-                    <th>创建时间</th>
+                    <th>{t('adminOtc.orderNo')}</th>
+                    <th>{t('adminOtc.userInfo')}</th>
+                    <th>{t('adminOtc.currency')}</th>
+                    <th>{t('adminOtc.bizType')}</th>
+                    <th>{t('adminOtc.direction')}</th>
+                    <th>{t('adminOtc.changeAmount')}</th>
+                    <th>{t('adminOtc.availableBalanceChange')}</th>
+                    <th>{t('adminOtc.frozenBalanceChange')}</th>
+                    <th>{t('adminOtc.remark')}</th>
+                    <th>{t('adminOtc.createTime')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={10} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={10} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -321,10 +336,10 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                         <td>
                           <Chip 
                             label={
-                              item.bizType === 1 ? '充值' : 
-                              item.bizType === 2 ? '提现' : 
-                              item.bizType === 3 ? '转账' : 
-                              item.bizType === 5 ? '管理员调整' : 
+                              item.bizType === 1 ? t('adminOtc.recharge') : 
+                              item.bizType === 2 ? t('adminOtc.withdraw') : 
+                              item.bizType === 3 ? t('adminOtc.transfer') : 
+                              item.bizType === 5 ? t('adminOtc.adminAdjust') : 
                               String(item.bizType)
                             }
                             size='small'
@@ -339,7 +354,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                         </td>
                         <td>
                           <Chip 
-                            label={item.direction === 1 ? '入账' : '出账'}
+                            label={item.direction === 1 ? t('adminOtc.incoming') : t('adminOtc.outgoing')}
                             size='small'
                             color={item.direction === 1 ? 'success' : 'error'}
                             variant='filled'
@@ -356,25 +371,25 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.85rem' }}>
                             <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
-                              前: {item.availableBalanceBefore}
+                              {t('adminOtc.before')}: {item.availableBalanceBefore}
                             </span>
                             <span style={{ color: 'var(--mui-palette-text-primary)' }}>
-                              后: {item.availableBalanceAfter}
+                              {t('adminOtc.after')}: {item.availableBalanceAfter}
                             </span>
                           </div>
                         </td>
                         <td>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', fontSize: '0.85rem' }}>
                             <span style={{ color: 'var(--mui-palette-text-secondary)' }}>
-                              前: {item.frozenBalanceBefore}
+                              {t('adminOtc.before')}: {item.frozenBalanceBefore}
                             </span>
                             <span style={{ color: 'var(--mui-palette-text-primary)' }}>
-                              后: {item.frozenBalanceAfter}
+                              {t('adminOtc.after')}: {item.frozenBalanceAfter}
                             </span>
                           </div>
                         </td>
                         <td>
-                          <Tooltip title={item.remark || '无备注'} arrow placement='top'>
+                          <Tooltip title={item.remark || t('adminOtc.noRemark')} arrow placement='top'>
                             <div style={{ 
                               maxWidth: '200px', 
                               overflow: 'hidden', 
@@ -395,7 +410,7 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                             // 判断时间戳长度：10位是秒级，需要乘以1000；13位是毫秒级，直接使用
                             const timestampStr = String(timestamp)
                             const ms = timestampStr.length === 10 ? timestamp * 1000 : timestamp
-                            return new Date(ms).toLocaleString('zh-CN', {
+                            return new Date(ms).toLocaleString(dateLocale, {
                               year: 'numeric',
                               month: '2-digit',
                               day: '2-digit',

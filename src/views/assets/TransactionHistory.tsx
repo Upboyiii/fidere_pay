@@ -42,6 +42,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
+import LocalizedDateField from '@/components/LocalizedDateField'
 
 const TransactionHistory = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
@@ -276,25 +277,22 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.startDate')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
+                    <LocalizedDateField
+                      label={t('assets.startDate')}
+                      placeholder={t('assets.selectStartDate')}
                       value={filters.startDate}
-                      onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      onChange={(v) => setFilters({ ...filters, startDate: v })}
+                      size='small'
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.endDate')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
+                    <LocalizedDateField
+                      label={t('assets.endDate')}
+                      placeholder={t('assets.selectEndDate')}
                       value={filters.endDate}
-                      onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      onChange={(v) => setFilters({ ...filters, endDate: v })}
+                      minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
+                      size='small'
                     />
                   </Grid>
                 </Grid>

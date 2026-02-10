@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -23,7 +26,16 @@ import { toast } from 'react-toastify'
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
 
+// Hook Imports
+import { useTranslate } from '@/contexts/DictionaryContext'
+
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+
 const UserTransactionList = ({ mode }: { mode: Mode }) => {
+  const params = useParams()
+  const t = useTranslate()
+  const dateLocale = getDateLocaleFromLang(params?.lang as string)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<UserTransactionListItem[]>([])
@@ -53,7 +65,7 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
       setTotal(res.data?.total || 0)
     } catch (error) {
       console.error('加载数据失败:', error)
-      toast.error('加载数据失败')
+      toast.error(t('adminOtc.loadDataFailed'))
     } finally {
       setLoading(false)
     }
@@ -69,35 +81,35 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
         <Card>
           <CardContent>
             <Box className='flex items-center justify-between mb-4'>
-              <Typography variant='h5'>资金流水</Typography>
+              <Typography variant='h5'>{t('assets.fundFlow')}</Typography>
             </Box>
             <Box className='flex items-center gap-4 mb-4 flex-wrap'>
               <TextField
-                label='币种编码'
+                label={t('adminOtc.currencyCode')}
                 value={filters.currencyCode}
                 onChange={e => setFilters({ ...filters, currencyCode: e.target.value })}
                 size='small'
               />
               <TextField
-                label='业务类型'
+                label={t('adminOtc.bizType')}
                 value={filters.bizType}
                 onChange={e => setFilters({ ...filters, bizType: e.target.value })}
                 size='small'
               />
               <TextField
-                label='方向'
+                label={t('adminOtc.direction')}
                 value={filters.direction}
                 onChange={e => setFilters({ ...filters, direction: e.target.value })}
                 size='small'
                 select
                 SelectProps={{ native: true }}
               >
-                <option value=''>全部</option>
-                <option value='1'>入账</option>
-                <option value='2'>出账</option>
+                <option value=''>{t('adminOtc.all')}</option>
+                <option value='1'>{t('adminOtc.incoming')}</option>
+                <option value='2'>{t('adminOtc.outgoing')}</option>
               </TextField>
               <TextField
-                label='开始时间'
+                label={t('adminOtc.startDate')}
                 type='datetime-local'
                 value={filters.startTime}
                 onChange={e => setFilters({ ...filters, startTime: e.target.value })}
@@ -105,7 +117,7 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <TextField
-                label='结束时间'
+                label={t('adminOtc.endDate')}
                 type='datetime-local'
                 value={filters.endTime}
                 onChange={e => setFilters({ ...filters, endTime: e.target.value })}
@@ -113,32 +125,32 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
                 InputLabelProps={{ shrink: true }}
               />
               <Button variant='contained' onClick={loadData}>
-                查询
+                {t('adminOtc.search')}
               </Button>
             </Box>
             <div className={tableStyles.tableWrapper}>
               <table className={tableStyles.table}>
                 <thead>
                   <tr>
-                    <th>币种</th>
-                    <th>业务类型</th>
-                    <th>方向</th>
-                    <th>金额</th>
-                    <th>余额</th>
-                    <th>创建时间</th>
+                    <th>{t('adminOtc.currency')}</th>
+                    <th>{t('adminOtc.bizType')}</th>
+                    <th>{t('adminOtc.direction')}</th>
+                    <th>{t('adminOtc.amount')}</th>
+                    <th>{t('adminOtc.totalBalance')}</th>
+                    <th>{t('adminOtc.createTime')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
                       <td colSpan={6} className='text-center'>
-                        加载中...
+                        {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
                       <td colSpan={6} className='text-center'>
-                        暂无数据
+                        {t('adminOtc.noData')}
                       </td>
                     </tr>
                   ) : (
@@ -146,13 +158,13 @@ const UserTransactionList = ({ mode }: { mode: Mode }) => {
                       <tr key={item.id}>
                         <td>{item.currencyCode}</td>
                         <td>{item.bizType}</td>
-                        <td>{item.direction === 1 ? '入账' : '出账'}</td>
+                        <td>{item.direction === 1 ? t('adminOtc.incoming') : t('adminOtc.outgoing')}</td>
                         <td className={item.direction === 1 ? 'text-green-600' : 'text-red-600'}>
                           {item.direction === 1 ? '+' : '-'}
                           {item.amount}
                         </td>
                         <td>{item.balance}</td>
-                        <td>{new Date(item.createdAt).toLocaleString()}</td>
+                        <td>{new Date(item.createdAt).toLocaleString(dateLocale, { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' })}</td>
                       </tr>
                     ))
                   )}

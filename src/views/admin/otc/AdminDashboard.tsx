@@ -22,7 +22,7 @@ import IconButton from '@mui/material/IconButton'
 import type { Mode } from '@core/types'
 
 // Util Imports
-import { getLocalizedPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getDateLocaleFromLang } from '@/utils/routeUtils'
 
 // Context Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
@@ -197,11 +197,12 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
     }
   ]
 
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const formatTime = (timestamp: number | undefined) => {
     if (!timestamp) return '-'
     // 处理秒级和毫秒级时间戳
     const ts = timestamp > 9999999999 ? timestamp : timestamp * 1000
-    return new Date(ts).toLocaleString('zh-CN', {
+    return new Date(ts).toLocaleString(dateLocale, {
       month: '2-digit',
       day: '2-digit',
       hour: '2-digit',
@@ -647,7 +648,7 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
               <Box sx={{ p: 4, borderBottom: '1px solid rgba(0,0,0,0.05)' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <Typography variant='h6' sx={{ fontWeight: 600 }}>
-                    最近资金流水
+                    {t('adminOtc.recentFinancial')}
                   </Typography>
                   <Link
                     href={getLocalizedPath('/Adminconfiguration/financial', currentLang)}
@@ -736,7 +737,7 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
                           {(() => {
                             const timestamp = item.createTime || item.createdAt
                             if (!timestamp) return '-'
-                            return new Date(timestamp).toLocaleString('zh-CN', {
+                            return new Date(timestamp).toLocaleString(dateLocale, {
                               month: '2-digit',
                               day: '2-digit',
                               hour: '2-digit',

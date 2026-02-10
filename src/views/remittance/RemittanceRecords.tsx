@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath, getDateLocaleFromLang } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -41,6 +41,7 @@ import { useTranslate } from '@/contexts/DictionaryContext'
 
 // Utils Imports
 import { TokenManager } from '@/utils/tokenManager'
+import LocalizedDateField from '@/components/LocalizedDateField'
 
 // Style Imports
 import tableStyles from '@core/styles/table.module.css'
@@ -63,13 +64,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const params = useParams()
   const currentLang = (params?.lang as string) || undefined
   const t = useTranslate()
-  
-  // 根据当前语言设置日期格式化的 locale
-  const getDateLocale = () => {
-    if (currentLang === 'en') return 'en-US'
-    if (currentLang === 'zh-Hant') return 'zh-TW'
-    return 'zh-CN'
-  }
+  const dateLocale = getDateLocaleFromLang(currentLang)
   
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
@@ -179,7 +174,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
   const formatTimestamp = (timestamp?: number) => {
     if (!timestamp) return '-'
     const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-    return new Date(ms).toLocaleString(getDateLocale(), {
+    return new Date(ms).toLocaleString(dateLocale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -361,25 +356,22 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     </FormControl>
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.orderTime')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
+                    <LocalizedDateField
+                      label={t('remittance.startDate')}
+                      placeholder={t('remittance.selectStartDate')}
                       value={filters.startDate}
-                      onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      onChange={(v) => setFilters({ ...filters, startDate: v })}
+                      size='small'
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('remittance.orderTime')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
+                    <LocalizedDateField
+                      label={t('remittance.endDate')}
+                      placeholder={t('remittance.selectEndDate')}
                       value={filters.endDate}
-                      onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
+                      onChange={(v) => setFilters({ ...filters, endDate: v })}
+                      minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
+                      size='small'
                     />
                   </Grid>
                 </Grid>

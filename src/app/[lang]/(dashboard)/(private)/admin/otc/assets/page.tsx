@@ -6,10 +6,17 @@ import AdminAssetList from '@views/admin/otc/AdminAssetList'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '用户资产列表',
-  description: '查看用户资产列表'
+export async function generateMetadata({ params }: { params: Promise<{ lang: string }> }): Promise<Metadata> {
+  const { lang } = await params
+  const dict = await getDictionary(lang)
+  const otc = dict.adminOtc as Record<string, string>
+
+  return {
+    title: otc.userAssetList || '用户资产列表',
+    description: otc.userAssetListDesc || '查看用户资产列表'
+  }
 }
 
 const AdminAssetListPage = async () => {

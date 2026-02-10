@@ -3,6 +3,9 @@
 // React Imports
 import { useState, useEffect, useRef, useCallback } from 'react'
 
+// Next Imports
+import { useParams } from 'next/navigation'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
@@ -38,8 +41,15 @@ import tableStyles from '@core/styles/table.module.css'
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
 
+// Util Imports
+import { getDateLocaleFromLang } from '@/utils/routeUtils'
+import LocalizedDateField from '@/components/LocalizedDateField'
+
 const AdminTransferList = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
+  const params = useParams()
+  const currentLang = (params?.lang as string) || undefined
+  const dateLocale = getDateLocaleFromLang(currentLang)
   const [page, setPage] = useState(0)
   const [rowsPerPage, setRowsPerPage] = useState(10)
   const [data, setData] = useState<AdminTransferListItem[]>([])
@@ -206,7 +216,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
   const formatTimestamp = (timestamp?: number) => {
     if (!timestamp) return '-'
     const ms = timestamp.toString().length === 10 ? timestamp * 1000 : timestamp
-    return new Date(ms).toLocaleString('zh-CN', {
+    return new Date(ms).toLocaleString(dateLocale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit',
@@ -342,23 +352,24 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   <MenuItem value='4'>{t('adminOtc.failed')}</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.startTime')}
-                type='date'
+                placeholder={t('adminOtc.selectStartDate')}
                 value={filters.startTime}
-                onChange={e => setFilters({ ...filters, startTime: e.target.value })}
+                onChange={v => setFilters({ ...filters, startTime: v })}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
-              <TextField
+              <LocalizedDateField
                 label={t('adminOtc.endTime')}
-                type='date'
+                placeholder={t('adminOtc.selectEndDate')}
                 value={filters.endTime}
-                onChange={e => setFilters({ ...filters, endTime: e.target.value })}
+                onChange={v => setFilters({ ...filters, endTime: v })}
+                minDate={filters.startTime ? new Date(filters.startTime + 'T00:00:00') : undefined}
                 size='small'
+                labelAbove={false}
                 sx={{ minWidth: 200 }}
-                InputLabelProps={{ shrink: true }}
               />
               <Button 
                 variant='contained' 
@@ -513,7 +524,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                           />
                         </td>
                         <td style={{ fontSize: '0.85rem' }}>
-                          {item.createTime ? new Date(item.createTime * 1000).toLocaleString('zh-CN', {
+                          {item.createTime ? new Date(item.createTime * 1000).toLocaleString(dateLocale, {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',
@@ -817,7 +828,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.createTime')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
                       {selectedRecord.createTime 
-                        ? new Date(selectedRecord.createTime * 1000).toLocaleString('zh-CN', {
+                        ? new Date(selectedRecord.createTime * 1000).toLocaleString(dateLocale, {
                             year: 'numeric',
                             month: '2-digit',
                             day: '2-digit',

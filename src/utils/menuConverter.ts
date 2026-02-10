@@ -111,9 +111,21 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
       '管理员配置': 'adminConfiguration',
       '转账管理': 'adminTransfer',
       '收款人列表': 'adminPayees',
+      '收款人': 'remittanceRecipients',
+      '收款人管理': 'adminPayeeManagement',
       '资金流水': 'adminFinancial',
       '充值管理': 'adminRecharge',
-      '回调地址': 'adminCallbackAddress'
+      '回调地址': 'adminCallbackAddress',
+      // 权限管理
+      '权限管理': 'permissionManagement',
+      '菜单管理': 'authMenu',
+      '角色管理': 'authRoles',
+      '部门管理': 'authDept',
+      '岗位管理': 'authPost',
+      '用户管理': 'authUser',
+      '用户资产列表': 'userAssetList',
+      '回调记录列表': 'callbackRecordList',
+      '资金流水列表': 'financialList'
     }
     
     const translationKey = titleToKeyMap[metaTitle]

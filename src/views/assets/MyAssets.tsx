@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { useRouter, useParams, usePathname } from 'next/navigation'
 
 // Util Imports
-import { getLocalizedPath, getCurrentLangFromPath } from '@/utils/routeUtils'
+import { getLocalizedPath, getCurrentLangFromPath, getDateLocaleFromLang } from '@/utils/routeUtils'
 
 // MUI Imports
 import Grid from '@mui/material/Grid2'
@@ -51,6 +51,7 @@ import tableStyles from '@core/styles/table.module.css'
 
 // Hook Imports
 import { useTranslate } from '@/contexts/DictionaryContext'
+import LocalizedDateField from '@/components/LocalizedDateField'
 
 const MyAssets = ({ mode }: { mode: Mode }) => {
   const router = useRouter()
@@ -69,6 +70,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
     // 如果路径中没有语言，则使用 params
     return (params?.lang as string) || undefined
   }, [pathname, params?.lang])
+  const dateLocale = getDateLocaleFromLang(currentLang)
   
   const t = useTranslate()
   const [page, setPage] = useState(0)
@@ -644,28 +646,23 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                       </Select>
                     </FormControl>
                   </Box>
-                  <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.startDate')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
-                      value={filters.startDate}
-                      onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-                    />
-                  </Box>
-                  <Box sx={{ flex: '1 1 200px', minWidth: '200px' }}>
-                    <Typography variant='caption' sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>{t('assets.endDate')}</Typography>
-                    <TextField
-                      fullWidth
-                      size='small'
-                      type='date'
-                      value={filters.endDate}
-                      onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: '8px' } }}
-                    />
-                  </Box>
+                  <LocalizedDateField
+                    label={t('assets.startDate')}
+                    placeholder={t('assets.selectStartDate')}
+                    value={filters.startDate}
+                    onChange={(v) => setFilters({ ...filters, startDate: v })}
+                    size='small'
+                    sx={{ flex: '1 1 200px', minWidth: '200px' }}
+                  />
+                  <LocalizedDateField
+                    label={t('assets.endDate')}
+                    placeholder={t('assets.selectEndDate')}
+                    value={filters.endDate}
+                    onChange={(v) => setFilters({ ...filters, endDate: v })}
+                    minDate={filters.startDate ? new Date(filters.startDate + 'T00:00:00') : undefined}
+                    size='small'
+                    sx={{ flex: '1 1 200px', minWidth: '200px' }}
+                  />
                   <Box sx={{ display: 'flex', gap: 2, alignSelf: 'flex-end' }}>
                     <Button 
                       variant='text' 
@@ -848,7 +845,7 @@ const MyAssets = ({ mode }: { mode: Mode }) => {
                                 // 判断是秒级(10位)还是毫秒级(13位)时间戳
                                 const ts = Number(timestamp)
                                 const msTimestamp = ts > 9999999999 ? ts : ts * 1000
-                                return new Date(msTimestamp).toLocaleString('zh-CN', {
+                                return new Date(msTimestamp).toLocaleString(dateLocale, {
                                   year: 'numeric',
                                   month: '2-digit',
                                   day: '2-digit',
