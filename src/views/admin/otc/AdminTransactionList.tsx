@@ -19,7 +19,6 @@ import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import MenuItem from '@mui/material/MenuItem'
-import Tooltip from '@mui/material/Tooltip'
 import Chip from '@mui/material/Chip'
 
 // Type Imports
@@ -297,20 +296,19 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                     <th>{t('adminOtc.changeAmount')}</th>
                     <th>{t('adminOtc.availableBalanceChange')}</th>
                     <th>{t('adminOtc.frozenBalanceChange')}</th>
-                    <th>{t('adminOtc.remark')}</th>
                     <th>{t('adminOtc.createTime')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={10} className='text-center'>
+                      <td colSpan={9} className='text-center'>
                         {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className='text-center'>
+                      <td colSpan={9} className='text-center'>
                         {t('adminOtc.noData')}
                       </td>
                     </tr>
@@ -387,20 +385,6 @@ const AdminTransactionList = ({ mode }: { mode: Mode }) => {
                               {t('adminOtc.after')}: {item.frozenBalanceAfter}
                             </span>
                           </div>
-                        </td>
-                        <td>
-                          <Tooltip title={item.remark || t('adminOtc.noRemark')} arrow placement='top'>
-                            <div style={{ 
-                              maxWidth: '200px', 
-                              overflow: 'hidden', 
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                              fontSize: '0.85rem',
-                              cursor: 'pointer'
-                            }}>
-                              {item.remark || '-'}
-                            </div>
-                          </Tooltip>
                         </td>
                         <td style={{ fontSize: '0.85rem' }}>
                           {(() => {
