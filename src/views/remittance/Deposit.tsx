@@ -58,17 +58,6 @@ const Deposit = ({ mode }: { mode: Mode }) => {
   const [rechargeDetail, setRechargeDetail] = useState<any>(null)
   const [network, setNetwork] = useState('Tron (TRC20)')
 
-  // 开发环境调试信息 - 在组件挂载时输出
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[Deposit] Component mounted/updated:', { 
-        pathname, 
-        paramsLang: params?.lang, 
-        extractedLang: currentLang 
-      })
-    }
-  }, [pathname, params?.lang, currentLang])
-
   // 获取充值地址
   const loadDepositAddress = async () => {
     setLoading(true)

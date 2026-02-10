@@ -203,7 +203,6 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
       delete submitData.password
     }
 
-    console.log('submitData', submitData)
     onSave?.(submitData)
   }
 

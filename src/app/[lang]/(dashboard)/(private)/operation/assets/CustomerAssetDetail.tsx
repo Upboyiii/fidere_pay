@@ -71,7 +71,6 @@ async function getCustomerInfo(userId: string) {
   }
 }
 
-
 // Mock wealth products data
 const wealthProducts = [
   {
@@ -224,7 +223,6 @@ export default function CustomerAssetDetailClient({
 
   // Debug log
   useEffect(() => {
-    // console.log('CustomerAssetDetail mounted:', { customerId, userId, isValidUserId })
   }, [customerId, userId, isValidUserId])
 
   // Load customer info
@@ -241,15 +239,12 @@ export default function CustomerAssetDetailClient({
       return
     }
     try {
-      // console.log('loadOverviewData: Starting...', { userId })
       setOverviewLoading(true)
       setOverviewError(null)
       const response = await getCustomerAssetOverview(userId)
-      // console.log('loadOverviewData: Response received', response)
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
         : response.data
-      // console.log('loadOverviewData: Actual data', actualData)
       setOverviewData(actualData as CustomerAssetOverviewResponse)
     } catch (err) {
       // console.error('Failed to load customer asset overview:', err)
@@ -371,7 +366,7 @@ export default function CustomerAssetDetailClient({
         (currentKey.tab !== "wealth" || 
          (loadingRef.current.investPage === currentKey.investPage && 
           loadingRef.current.investRowsPerPage === currentKey.investRowsPerPage))) {
-      console.log('Skipping duplicate load for:', currentKey)
+
       return
     }
     
@@ -552,8 +547,7 @@ export default function CustomerAssetDetailClient({
   }, [yAxisMaxValue])
 
   const renderOverview = () => {
-    console.log('renderOverview called:', { overviewLoading, overviewError, overviewData: !!overviewData })
-    
+
     if (overviewLoading) {
       return (
         <Grid container spacing={6}>
@@ -597,7 +591,6 @@ export default function CustomerAssetDetailClient({
     }
 
     const { summary } = overviewData
-    console.log('renderOverview: Rendering with data', { summary })
 
     return (
     <Grid container spacing={6}>

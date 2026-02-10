@@ -297,7 +297,6 @@ export default function ChangeRequestDetailPage() {
   }
 
   const handleApprove = () => {
-    console.log('Approving change request:', requestDetail.id)
     setApproveDialogOpen(false)
     router.push('/dashboard/change-requests')
   }
@@ -310,9 +309,6 @@ export default function ChangeRequestDetailPage() {
         reason: value.reason
       }))
 
-    console.log('Rejecting change request:', requestDetail.id)
-    console.log('Rejection reason:', rejectionReason)
-    console.log('Field issues:', issueFields)
     setRejectDialogOpen(false)
     router.push('/dashboard/change-requests')
   }
@@ -377,13 +373,7 @@ export default function ChangeRequestDetailPage() {
   }
 
   useEffect(() => {
-    console.log('[v0] ChangeRequestDetailPage mounted with ID:', requestId)
   }, [requestId])
-
-  // if (requestId === 'create') {
-  //   console.log('[v0] Rendering CreateChangeRequestPage directly from [id] route')
-  //   return <CreateChangeRequestPage />
-  // }
 
   return (
     <>

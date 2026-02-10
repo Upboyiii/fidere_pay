@@ -326,7 +326,7 @@ export default function CustomerDigitalAssetDetail({
     if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(address)
-        console.log('地址已复制到剪贴板:', address)
+
         return
       } catch (err) {
         console.error('复制失败:', err)
@@ -348,7 +348,7 @@ export default function CustomerDigitalAssetDetail({
       textArea.remove()
       
       if (successful) {
-        console.log('地址已复制到剪贴板（备用方法）:', address)
+
       } else {
         throw new Error('execCommand failed')
       }
@@ -396,7 +396,7 @@ export default function CustomerDigitalAssetDetail({
   const loadCustomerDetail = async () => {
     // 防止重复调用
     if (customerDetailLoadedRef.current === customerId) {
-      console.log('⏭️ 跳过重复调用客户详情接口，customerId:', customerId)
+
       return
     }
     
@@ -414,10 +414,9 @@ export default function CustomerDigitalAssetDetail({
       // 标记为已加载
       customerDetailLoadedRef.current = customerId
       
-      console.log('📤 调用客户详情接口，userId:', userId)
+
       const response = await getCustomerDetail({ userId })
-      console.log('✅ 客户详情接口响应:', response)
-      
+
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -465,10 +464,9 @@ export default function CustomerDigitalAssetDetail({
         params.keyword = activeAddressFilters.keyword.trim()
       }
       
-      console.log('📤 调用地址列表接口，参数:', params)
+
       const response = await getAddressList(params)
-      console.log('✅ 地址列表接口响应:', response)
-      
+
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -598,10 +596,9 @@ export default function CustomerDigitalAssetDetail({
         params.keyword = activeTxFilters.keyword
       }
       
-      console.log('📤 调用客户交易流水接口，参数:', params)
+
       const response = await getCustomerTransactionFlow(params)
-      console.log('✅ 接口响应:', response)
-      
+
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -1592,5 +1589,4 @@ export default function CustomerDigitalAssetDetail({
     </div>
   )
 }
-
 

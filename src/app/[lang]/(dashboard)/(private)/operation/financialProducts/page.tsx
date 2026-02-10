@@ -95,7 +95,7 @@ export default function WealthPage() {
   }
 
   const handleExecuteAction = () => {
-    console.log(`[v0] Executing ${confirmAction} for order ${selectedOrder?.id}`)
+
     // Execute the action here
     setConfirmDialogOpen(false)
     setApprovalDrawerOpen(false)

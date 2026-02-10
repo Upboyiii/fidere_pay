@@ -99,7 +99,6 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
 
     // 如果本地token丢失但NextAuth有session，同步清除session
     if (localAuthState === 'unauthenticated' && session) {
-      console.log('检测到本地token丢失但NextAuth session存在，清除session')
       isClearingRef.current = true
       setHasClearedSession(true)
       const signOutUser = async () => {
@@ -142,7 +141,6 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
         }
       } else if (sessionToken && !localTokens?.accessToken) {
         // 本地没有token但session有，两个必须一致，清除并退出登录
-        console.log('检测到本地token丢失但session存在，清除本地和session，执行退出登录')
         isClearingRef.current = true
         setHasClearedSession(true)
         setLocalAuthState('unauthenticated')

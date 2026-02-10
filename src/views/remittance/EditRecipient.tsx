@@ -50,17 +50,42 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
   const currentLang = (params?.lang as string) || 'zh-CN'
   const isEnglish = currentLang === 'en'
   
+  // 获取国家项的中/英文名称（兼容 camelCase 和 snake_case）
+  const getCountryNameCh = (c: CountryListItem) =>
+    c.countryNameCh ?? (c as Record<string, unknown>).country_name_ch ?? ''
+  const getCountryNameEn = (c: CountryListItem) =>
+    c.countryName ?? (c as Record<string, unknown>).country_name ?? ''
+  const getCountryAbbr = (c: CountryListItem) =>
+    c.countryAbbr ?? (c as Record<string, unknown>).country_abbr ?? ''
+
+  // 根据国家名称或代码查找国家（支持中英文名称、代码，兼容 "香港"/"中国香港" 等）
+  const findCountry = (nameOrCode: string) => {
+    if (!nameOrCode) return null
+    const normalized = String(nameOrCode).trim()
+    if (!normalized) return null
+    const lower = normalized.toLowerCase()
+    return (
+      countries.find(c => {
+        const nameCh = getCountryNameCh(c)
+        const nameEn = getCountryNameEn(c)
+        const abbr = getCountryAbbr(c)
+        return (
+          nameCh === normalized ||
+          nameEn === normalized ||
+          abbr === normalized ||
+          (abbr && abbr.toLowerCase() === lower) ||
+          (nameCh && nameCh.includes(normalized)) ||
+          (nameEn && nameEn.toLowerCase().includes(lower))
+        )
+      }) ?? null
+    )
+  }
+
   // 根据语言返回对应的国家名称字段
   const getCountryDisplayName = (country: CountryListItem) => {
-    return isEnglish ? country.countryName : country.countryNameCh
-  }
-  
-  // 根据语言和国家名称查找国家（支持中英文）
-  const findCountryByName = (name: string) => {
-    if (!name) return null
-    return countries.find(c => 
-      c.countryNameCh === name || c.countryName === name
-    ) || null
+    const nameCh = getCountryNameCh(country)
+    const nameEn = getCountryNameEn(country)
+    return isEnglish ? (nameEn || nameCh) : (nameCh || nameEn)
   }
   const [loading, setLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -97,15 +122,16 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
     remark: ''
   })
 
-  // 加载国家列表
+  // 加载国家列表（优先加载，确保编辑时能正确匹配国家）
   useEffect(() => {
     const loadCountries = async () => {
       setCountriesLoading(true)
       try {
         const res = await getCountryList()
         const data = res.data?.data || res.data
-        if (data && data.list) {
-          setCountries(data.list)
+        const list = data?.list ?? data
+        if (Array.isArray(list) && list.length > 0) {
+          setCountries(list)
         }
       } catch (error) {
         console.error('获取国家列表失败:', error)
@@ -117,20 +143,16 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
     loadCountries()
   }, [])
 
-  // 加载收款人详情（编辑模式）
+  // 加载收款人详情（编辑模式，等国家列表加载完成后再加载以便正确匹配）
   useEffect(() => {
-    if (isEdit && recipientId) {
+    if (isEdit && recipientId && !countriesLoading) {
       const loadDetail = async () => {
         setLoading(true)
         try {
           const res = await getPayeeDetail({ id: recipientId })
-          // API 响应结构：{ code: 0, message: "", data: PayeeItem }
-          // clientRequest 返回：{ data: { code: 0, message: "", data: PayeeItem } }
-          // 所以需要 res.data.data 来获取实际的 PayeeItem
-          const data = res.data?.data || res.data
+          // API 响应结构可能是 { code: 0, data: PayeeItem } 或 { data: { data: PayeeItem } }
+          const data = res.data?.data ?? res.data
           if (data) {
-            console.log('加载的收款人详情数据:', data)
-            
             // 解析电话号码：联系电话输入框仅显示纯数字，国家代码在独立的下拉框中
             // 修复 "+1+111..." 重复拼接问题：后端可能存了 araeCode + phone，导致区号重复
             let phone = (data.phone || '').trim()
@@ -164,8 +186,14 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
               firstName: data.firstName ?? '',
               lastName: data.lastName ?? '',
               remitType: data.remitType ?? 1,
-              country: data.country ?? '',
-              countryCode: data.countryCode ?? data.country ?? '',
+              country: data.country ?? data.countryName ?? data.country_name ?? '',
+              countryCode:
+                data.countryCode ??
+                data.country_code ??
+                data.countryAbbr ??
+                data.country_abbr ??
+                data.country ??
+                '',
               state: data.state ?? '',
               city: data.city ?? '',
               address: data.address ?? '',
@@ -177,8 +205,18 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
               accountNo: data.accountNo ?? '',
               swiftCode: data.swiftCode ?? '',
               bankName: data.bankName ?? '',
-              bankCountry: data.bankCountry ?? '',
-              bankCountryCode: data.bankCountryCode ?? data.bankCountry ?? '',
+              bankCountry:
+                data.bankCountry ??
+                data.bankCountryName ??
+                data.bank_country ??
+                '',
+              bankCountryCode:
+                data.bankCountryCode ??
+                data.bank_country_code ??
+                data.bankCountryAbbr ??
+                data.bank_country_abbr ??
+                data.bankCountry ??
+                '',
               bankState: data.bankState ?? '',
               bankCity: data.bankCity ?? '',
               bankAddress: data.bankAddress ?? '',
@@ -199,7 +237,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
       }
       loadDetail()
     }
-  }, [isEdit, recipientId])
+  }, [isEdit, recipientId, countriesLoading])
 
   const handleBack = () => {
     router.back()
@@ -530,7 +568,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <Autocomplete
                     options={countries}
-                    value={findCountryByName(formData.country) || null}
+                    value={findCountry(formData.country) || findCountry(formData.countryCode) || null}
                     onChange={(event, newValue) => {
                       setFormData({ 
                         ...formData, 
@@ -884,7 +922,7 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                   </Typography>
                   <Autocomplete
                     options={countries}
-                    value={findCountryByName(formData.bankCountry) || null}
+                    value={findCountry(formData.bankCountry) || findCountry(formData.bankCountryCode) || null}
                     onChange={(event, newValue) => {
                       setFormData({ 
                         ...formData, 

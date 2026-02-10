@@ -42,7 +42,6 @@ function withAuth<T extends any[], R>(
 
       // 获取当前会话
       const session = await getServerSession(authOptions)
-      console.log('session', session)
 
       // 即使没有会话也继续执行，避免意外退出登录
       // 只在真正需要时才进行认证检查
@@ -176,7 +175,6 @@ export const getPublicStatisticsData = withAuth(async () => {
  * @returns 搜索结果
  */
 export const searchPublicContent = withAuth(async (query: string) => {
-  console.log('搜索公开内容:', query)
 
   // 模拟搜索逻辑
   const results = {
@@ -244,8 +242,6 @@ export const logPageVisit = withOptionalAuth(async (page: string, session: any) 
     isAuthenticated: !!session
   }
 
-  console.log('页面访问日志:', logData)
-
   // 这里可以保存到数据库
   return { success: true, logged: logData }
 })
@@ -257,7 +253,6 @@ export const logPageVisit = withOptionalAuth(async (page: string, session: any) 
  */
 export const createEcommerceItem = withAuth(async (data: any) => {
   // 这里可以添加业务逻辑
-  console.log('创建电商项目:', data)
 
   // 模拟 API 调用
   const response = await fetch(`${process.env.API_URL}/ecommerce`, {
@@ -283,7 +278,6 @@ export const createEcommerceItem = withAuth(async (data: any) => {
  * @returns 更新结果
  */
 export const updateEcommerceItem = withAuth(async (id: string, data: any) => {
-  console.log('更新电商项目:', id, data)
 
   const response = await fetch(`${process.env.API_URL}/ecommerce/${id}`, {
     method: 'PUT',

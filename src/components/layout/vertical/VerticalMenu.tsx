@@ -76,15 +76,6 @@ const VerticalMenu = ({ dictionary, scrollMenu }: Props) => {
   // 获取菜单数据
   const menuDataArray = menuData(dictionary, userRole as string, menuList)
   
-  // 调试：打印菜单数据（开发环境）
-  if (process.env.NODE_ENV === 'development') {
-    console.log('🔍 菜单调试信息:')
-    console.log('  - 用户角色:', userRole)
-    console.log('  - menuList:', menuList)
-    console.log('  - 菜单数据:', menuDataArray)
-    console.log('  - 菜单数据长度:', menuDataArray.length)
-  }
-
   const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
 
   return (

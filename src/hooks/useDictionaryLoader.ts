@@ -40,12 +40,6 @@ export function useDictionaryLoader(lang: Locale) {
           dictModule = await import('@/data/dictionaries/zh-CN')
         }
         const dictData = dictModule.default
-        
-        // 开发环境调试信息
-        if (process.env.NODE_ENV === 'development') {
-          console.log('[DictionaryLoader] Loaded dictionary for lang:', lang, 'remittance.addRecipient:', dictData?.remittance?.addRecipient)
-        }
-        
         setDictionary(dictData)
       } catch (error) {
         console.error('Failed to load dictionary:', error)

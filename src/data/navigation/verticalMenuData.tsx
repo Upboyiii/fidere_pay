@@ -222,14 +222,6 @@ const verticalMenuData = (
   // 优先使用接口返回的动态菜单数据
   // 如果提供了 menuList，优先使用动态菜单
   if (menuList && menuList.length > 0) {
-    // 调试日志（开发环境）
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 菜单调试信息:')
-      console.log('  - 用户角色:', userRole)
-      console.log('  - menuList 总数:', menuList.length)
-      console.log('  - menuList 示例:', menuList.slice(0, 3))
-    }
-
     // 根据角色过滤菜单
     let filteredMenuList = menuList
     const normalizedUserRole = userRole?.toLowerCase() || ''
@@ -240,44 +232,19 @@ const verticalMenuData = (
     // 运营角色：只显示运营相关的路由（/operation/ 开头）
     if (isOperationMode) {
       filteredMenuList = filterOperationMenus(menuList)
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - 运营模式，过滤后菜单数:', filteredMenuList.length)
-      }
     }
     // 管理员角色：显示所有菜单
     else if (isAdminMode) {
       // 管理员显示所有菜单，不需要过滤
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - 管理员模式，显示所有菜单')
-      }
     }
     // KYC角色和其他角色：显示所有菜单
-    else {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - 其他角色模式，显示所有菜单')
-      }
-    }
 
     // 转换菜单格式，传递字典用于翻译
     const dynamicMenu = convertMenuListToVerticalMenu(filteredMenuList, dictionary)
     
     // 如果动态菜单不为空，返回动态菜单
     if (dynamicMenu && dynamicMenu.length > 0) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - 动态菜单转换成功，菜单数:', dynamicMenu.length)
-        console.log('  - 动态菜单示例:', dynamicMenu.slice(0, 2))
-      }
       return dynamicMenu
-    } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - 动态菜单转换后为空，使用硬编码菜单作为后备')
-      }
-    }
-  } else {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 菜单调试信息:')
-      console.log('  - menuList 为空或不存在，使用硬编码菜单作为后备')
-      console.log('  - 用户角色:', userRole)
     }
   }
 

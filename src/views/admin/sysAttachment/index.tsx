@@ -136,7 +136,6 @@ export default function SysAttachment() {
   const handleDownload = useCallback(
     (attachment: AttachmentData) => {
       // TODO: 实现文件下载逻辑
-      console.log('下载文件:', attachment)
       toast.info(t('admin.downloadFeaturePending'))
     },
     [t]

@@ -112,8 +112,6 @@ export default function AuthMenu() {
    * 新增子菜单
    */
   const handleAddChild = useCallback((menu: MenuItemData) => {
-    console.log('menu', menu)
-
     setEditingMenu(null)
     setParentMenu(menu)
     setDialogOpen(true)

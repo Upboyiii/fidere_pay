@@ -79,16 +79,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
   const [activeStep, setActiveStep] = useState(0)
   
-  // 开发环境调试信息 - 在组件挂载时输出
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('[CreateRemittance] Component mounted/updated:', { 
-        pathname, 
-        paramsLang: params?.lang, 
-        extractedLang: currentLang 
-      })
-    }
-  }, [pathname, params?.lang, currentLang])
   const [payCurrency, setPayCurrency] = useState('USDT-TRC20') // 默认 USDT-TRC20
   const [receiveCurrency, setReceiveCurrency] = useState('USD')
   const [payAmount, setPayAmount] = useState('')
@@ -146,7 +136,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
     setFeeConfigLoading(true)
     try {
       const res = await getUserFeeConfig()
-      console.log('手续费配置响应:', res)
       const apiData = res.data?.data || res.data
 
       // 设置手续费配置
@@ -156,12 +145,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       // 将 ratioFee 转换为百分比存储（0.001 => 0.1）
       const ratioPercent = (apiData?.ratioFee || 0) * 100
       setFeeRate(ratioPercent)
-
-      console.log('手续费配置:', {
-        fixedFee: apiData?.fixedFee,
-        ratioFee: apiData?.ratioFee,
-        ratioPercent: ratioPercent
-      })
     } catch (error) {
       console.error('加载手续费配置失败:', error)
       // 使用默认值
@@ -217,15 +200,10 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       // ])
       const googleStatus = await getGoogleAuthStatus()
 
-      console.log('=== 安全验证状态响应 ===')
-      console.log('Google验证状态:', googleStatus)
-      // console.log('支付密码状态:', payPasswordStatus) // 已注释
 
       const googleData = googleStatus.data?.data || googleStatus.data
       // const payPasswordData = payPasswordStatus.data?.data || payPasswordStatus.data // 已注释
 
-      console.log('Google验证数据:', googleData)
-      // console.log('支付密码数据:', payPasswordData) // 已注释
 
       setGoogleAuthBound(googleData?.bound || false)
       // 已注释：去掉支付密码验证，只需要Google验证
@@ -236,7 +214,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       //   payPasswordData?.enabled ||
       //   false
 
-      // console.log('支付密码是否已设置:', isPasswordSet)
       // setPayPasswordSet(isPasswordSet)
     } catch (error) {
       console.error('加载安全验证状态失败:', error)
@@ -263,14 +240,10 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('handleFileUpload 被调用', event.target.files)
     const file = event.target.files?.[0]
     if (!file) {
-      console.log('没有选择文件')
       return
     }
-
-    console.log('选择的文件:', { name: file.name, type: file.type, size: file.size })
 
     // 验证文件大小 (5MB)
     if (file.size > 5 * 1024 * 1024) {
@@ -289,16 +262,13 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
       'image/jpg'
     ]
     if (!allowedTypes.includes(file.type)) {
-      console.log('文件类型不匹配:', file.type, '允许的类型:', allowedTypes)
       toast.error(t('remittance.unsupportedFormat'))
       return
     }
 
     setUploading(true)
     try {
-      console.log('开始上传文件')
       const res = await uploadSingleFile(file)
-      console.log('上传响应:', res)
       const apiData = res.data?.data || res.data
       setUploadedFile({
         name: apiData.name || file.name,
@@ -717,14 +687,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                           // 实时获取当前语言，避免闭包问题
                           const realTimeLang = getCurrentLangFromPath()
                           const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-                          if (process.env.NODE_ENV === 'development') {
-                            console.log('[CreateRemittance] Navigate to recipients/new:', { 
-                              realTimeLang, 
-                              currentLang, 
-                              pathname, 
-                              targetPath 
-                            })
-                          }
                           router.push(targetPath)
                         }}
                         sx={{ borderRadius: '8px', px: 6 }}
@@ -770,14 +732,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                             // 实时获取当前语言，避免闭包问题
                             const realTimeLang = getCurrentLangFromPath()
                             const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-                            if (process.env.NODE_ENV === 'development') {
-                              console.log('[CreateRemittance] Navigate to recipients/new:', { 
-                                realTimeLang, 
-                                currentLang, 
-                                pathname, 
-                                targetPath 
-                              })
-                            }
                             router.push(targetPath)
                           }}
                           sx={{
@@ -867,7 +821,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
 
                           {/* 汇款目的 */}
                           <Box sx={{ mt: 3, pt: 3, borderTop: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>汇款目的</Typography>
+                            <Typography variant='body2' sx={{ fontWeight: 600, color: 'text.secondary', mb: 0.5 }}>{t('remittance.remittancePurpose')}</Typography>
                             <Typography variant='body2' sx={{ fontWeight: 600 }}>
                               {selectedRecipient.purpose}
                             </Typography>
@@ -884,9 +838,9 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                 <CardHeader
                   title={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant='h6' sx={{ fontWeight: 700 }}>交易材料</Typography>
-                      <Typography variant='body2' color='text.secondary'>(可选)</Typography>
-                      <Tooltip title='上传交易相关的证明材料'>
+                      <Typography variant='h6' sx={{ fontWeight: 700 }}>{t('remittance.transactionMaterials')}</Typography>
+                      <Typography variant='body2' color='text.secondary'>{t('remittance.optional')}</Typography>
+                      <Tooltip title={t('remittance.uploadMaterialTooltip')}>
                         <IconButton size='small' sx={{ p: 0.5, color: 'text.secondary' }}>
                           <i className='ri-information-line text-sm' />
                         </IconButton>
@@ -1290,13 +1244,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                               // 实时获取当前语言，避免闭包问题
                               const realTimeLang = getCurrentLangFromPath()
                               const targetPath = getLocalizedPath('/settings', realTimeLang)
-                              if (process.env.NODE_ENV === 'development') {
-                                console.log('[CreateRemittance] Navigate to settings:', { 
-                                  realTimeLang, 
-                                  currentLang, 
-                                  targetPath 
-                                })
-                              }
                               router.push(targetPath)
                             }}
                             sx={{ mt: 1, borderRadius: '6px', alignSelf: 'flex-start' }}
@@ -1561,13 +1508,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
               // 实时获取当前语言，避免闭包问题
               const realTimeLang = getCurrentLangFromPath()
               const targetPath = getLocalizedPath('/settings', realTimeLang)
-              if (process.env.NODE_ENV === 'development') {
-                console.log('[CreateRemittance] Navigate to settings (from dialog):', { 
-                  realTimeLang, 
-                  currentLang, 
-                  targetPath 
-                })
-              }
               router.push(targetPath)
             }}
             sx={{
@@ -1688,14 +1628,6 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                   // 实时获取当前语言，避免闭包问题
                   const realTimeLang = getCurrentLangFromPath()
                   const targetPath = getLocalizedPath('/remittance/records', realTimeLang)
-                  if (process.env.NODE_ENV === 'development') {
-                    console.log('[CreateRemittance] Navigate to remittance/records:', { 
-                      realTimeLang, 
-                      currentLang, 
-                      pathname, 
-                      targetPath 
-                    })
-                  }
                   router.push(targetPath)
                 }}
                 sx={{ borderRadius: '8px', py: 1.5 }}

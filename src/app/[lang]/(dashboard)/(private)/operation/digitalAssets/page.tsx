@@ -716,7 +716,7 @@ export default function DigitalAssetsPage() {
   }
 
   const handleExportCSV = () => {
-    console.log('Exporting CSV...')
+
   }
 
   // 日期格式化函数（用于出金审核）
@@ -1593,11 +1593,9 @@ export default function DigitalAssetsPage() {
     }
 
     setUploadingDepositVoucher(true)
-    console.log('📤 开始上传手动入金凭证:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData =
@@ -1614,7 +1612,7 @@ export default function DigitalAssetsPage() {
           voucherUrl: uploadedUrl
         })
         setSnackbar({ open: true, message: '凭证上传成功', severity: 'success' })
-        console.log('✅ 手动入金凭证URL已设置:', uploadedUrl)
+
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1642,11 +1640,9 @@ export default function DigitalAssetsPage() {
     }
 
     setUploadingWithdrawalVoucher(true)
-    console.log('📤 开始上传手动出金凭证:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData =
@@ -1663,7 +1659,7 @@ export default function DigitalAssetsPage() {
           voucherUrl: uploadedUrl
         })
         setSnackbar({ open: true, message: '凭证上传成功', severity: 'success' })
-        console.log('✅ 手动出金凭证URL已设置:', uploadedUrl)
+
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1703,14 +1699,6 @@ export default function DigitalAssetsPage() {
   const handleDepositSubmit = async () => {
     try {
       // 验证必填字段
-      console.log('📋 手动入金表单数据:', {
-        customerId: depositForm.customerId,
-        currency: depositForm.currency,
-        amount: depositForm.amount,
-        notes: depositForm.notes,
-        customerName: depositForm.customerName,
-        customerEmail: depositForm.customerEmail
-      })
 
       if (!depositForm.customerId || !depositForm.currency || !depositForm.amount || !depositForm.notes) {
         const missingFields = []
@@ -1731,8 +1719,6 @@ export default function DigitalAssetsPage() {
         remark: depositForm.notes,
         voucherUrl: depositForm.voucherUrl || undefined
       }
-
-      console.log('📤 提交手动入金请求:', requestData)
 
       const response = await manualDeposit(requestData)
 
@@ -1781,14 +1767,6 @@ export default function DigitalAssetsPage() {
   const handleWithdrawalSubmit = async () => {
     try {
       // 验证必填字段
-      console.log('📋 手动出金表单数据:', {
-        customerId: withdrawalForm.customerId,
-        currency: withdrawalForm.currency,
-        amount: withdrawalForm.amount,
-        notes: withdrawalForm.notes,
-        customerName: withdrawalForm.customerName,
-        customerEmail: withdrawalForm.customerEmail
-      })
 
       if (!withdrawalForm.customerId || !withdrawalForm.currency || !withdrawalForm.amount || !withdrawalForm.notes) {
         const missingFields = []

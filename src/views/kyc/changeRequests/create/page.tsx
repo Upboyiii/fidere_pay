@@ -1,7 +1,5 @@
 'use client'
 
-console.log('[v0] create/page.tsx file loaded')
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -76,8 +74,6 @@ const mockUsers = [
 ]
 
 export default function CreateChangeRequestPage() {
-  console.log('[v0] CreateChangeRequestPage function called')
-
   const router = useRouter()
   const [selectedUser, setSelectedUser] = useState<(typeof mockUsers)[0] | null>(null)
   const [requestType, setRequestType] = useState<'document' | 'signature'>('document')
@@ -86,13 +82,6 @@ export default function CreateChangeRequestPage() {
   const [reason, setReason] = useState('')
   const [instructions, setInstructions] = useState('')
   const [deadline, setDeadline] = useState('')
-
-  useEffect(() => {
-    console.log('[v0] CreateChangeRequestPage mounted')
-    return () => {
-      console.log('[v0] CreateChangeRequestPage unmounted')
-    }
-  }, [])
 
   const handleSubmit = () => {
     if (!selectedUser) {
@@ -107,16 +96,6 @@ export default function CreateChangeRequestPage() {
       alert('请填写变更原因')
       return
     }
-
-    console.log('[v0] 提交变更工单', {
-      user: selectedUser,
-      type: requestType,
-      documents: selectedDocuments,
-      priority,
-      reason,
-      instructions,
-      deadline
-    })
 
     router.push('/dashboard/change-requests')
   }

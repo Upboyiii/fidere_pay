@@ -131,12 +131,12 @@ export default function ProductDetailClient({
   }
 
   const handleSaveNetValue = () => {
-    console.log("Saving net value:", netValueForm)
+
     handleCloseNetValueDrawer()
   }
 
   const handleDeleteNetValue = () => {
-    console.log("Deleting net value:", selectedNetValue)
+
     setDeleteConfirmOpen(false)
     setSelectedNetValue(null)
   }

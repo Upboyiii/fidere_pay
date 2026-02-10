@@ -24,32 +24,19 @@ export const getDateLocaleFromLang = (lang?: string): string => {
  */
 export const getCurrentLangFromPath = (): string => {
   if (typeof window === 'undefined') {
-    console.log('[getCurrentLangFromPath] SSR环境，返回默认语言:', i18n.defaultLocale)
     return i18n.defaultLocale
   }
   
   const pathname = window.location.pathname
   const langMatch = pathname.match(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/)
   
-  console.log('[getCurrentLangFromPath] 调试信息:', {
-    'window.location.pathname': pathname,
-    'window.location.href': window.location.href,
-    'langMatch': langMatch,
-    'extractedLang': langMatch ? langMatch[1] : null,
-    'i18n.locales': i18n.locales
-  })
-  
   if (langMatch && langMatch[1]) {
     const extractedLang = langMatch[1] as Locale
     if (i18n.locales.includes(extractedLang)) {
-      console.log('[getCurrentLangFromPath] ✅ 成功提取语言:', extractedLang)
       return extractedLang
-    } else {
-      console.log('[getCurrentLangFromPath] ⚠️ 提取的语言不在配置中:', extractedLang)
     }
   }
   
-  console.log('[getCurrentLangFromPath] ⚠️ 未找到语言前缀，返回默认语言:', i18n.defaultLocale)
   return i18n.defaultLocale
 }
 
@@ -61,17 +48,13 @@ export const getCurrentLangFromPath = (): string => {
  */
 export const getLocalizedPath = (path: string, lang?: string): string => {
   if (!path || typeof path !== 'string') {
-    console.log('[getLocalizedPath] ⚠️ Invalid path:', path)
     return path || '/'
   }
 
   const targetLang = lang || i18n.defaultLocale
-  
-  console.log('[getLocalizedPath] 输入:', { path, lang, targetLang })
 
   // 如果是外部链接（http/https）或锚点链接，直接返回
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('#')) {
-    console.log('[getLocalizedPath] 外部链接，直接返回:', path)
     return path
   }
 
@@ -89,16 +72,12 @@ export const getLocalizedPath = (path: string, lang?: string): string => {
     const isLangPrefix = i18n.locales.some(locale => locale.toLowerCase() === normalizedExtractedLang)
     
     if (isLangPrefix) {
-      // 如果第一个段是语言代码，说明已包含语言前缀，直接返回原路径
-      console.log('[getLocalizedPath] 已包含语言前缀，直接返回:', path)
       return path
     }
   }
 
   // 添加语言前缀
-  const result = `/${targetLang}${path.startsWith('/') ? path : `/${path}`}`
-  console.log('[getLocalizedPath] ✅ 结果:', result)
-  return result
+  return `/${targetLang}${path.startsWith('/') ? path : `/${path}`}`
 }
 
 /**

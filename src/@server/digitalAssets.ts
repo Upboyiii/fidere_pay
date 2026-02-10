@@ -261,7 +261,7 @@ export const getCustomerTransactionFlow = (params: {
     cleanParams.includeInternal = true
   }
   
-  console.log('📤 getCustomerTransactionFlow 请求参数:', cleanParams)
+
   return clientRequest.get<TransactionFlowResponse>('/operation/coin/coin/customer-transaction-flow', { params: cleanParams })
 }
 
@@ -325,11 +325,8 @@ export const uploadSingleFile = (file: File) => {
   const formData = new FormData()
   formData.append('file', file)
   
-  console.log('📤 准备上传文件:')
-  console.log('  - 文件名:', file.name)
-  console.log('  - 文件大小:', (file.size / 1024).toFixed(2), 'KB')
-  console.log('  - 文件类型:', file.type)
-  
+
+
   return clientRequest.post<UploadImageResponse>('/system/upload/singleFile', formData)
 }
 

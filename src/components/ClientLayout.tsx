@@ -115,11 +115,6 @@ const ClientLayout = ({ children, params }: Props) => {
   const lang = langFromPath || (urlParams?.lang as Locale) || params?.lang || i18n.defaultLocale
   const { dictionary, loading } = useDictionaryLoader(lang)
   const direction = i18n.langDirection[lang] || 'ltr'
-  
-  // 开发环境调试信息
-  if (process.env.NODE_ENV === 'development') {
-    console.log('[ClientLayout] Pathname:', pathname, 'Lang from path:', langFromPath, 'URL params lang:', urlParams?.lang, 'Final lang:', lang)
-  }
 
   // 如果还在加载中，显示加载状态
   if (loading || !dictionary) {

@@ -40,7 +40,6 @@ function updateWranglerName() {
     // 检查是否成功替换
     if (updatedContent === content) {
     }
-    console.log('newName', newName)
 
     // 写入文件
     writeFileSync(wranglerPath, updatedContent, 'utf-8')

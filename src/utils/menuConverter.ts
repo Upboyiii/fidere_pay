@@ -73,16 +73,6 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
       return String(navigationDict[lowerKey])
     }
     
-    // 调试日志（开发环境）
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      console.log('[Menu Label] 未找到翻译:', {
-        name: nameStr,
-        translationKey,
-        lowerKey,
-        availableKeys: navigationDict ? Object.keys(navigationDict).slice(0, 20) : [],
-        metaTitle: node.meta?.title
-      })
-    }
   }
 
   const currentLocale = getCurrentLocale()
@@ -310,20 +300,6 @@ export const convertMenuListToVerticalMenu = (
     // 根据当前语言获取菜单标题，优先使用 name 值查找翻译
     const label = getMenuLabel(node, dictionary)
     
-    // 调试日志（开发环境）- 特别关注父级菜单
-    if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
-      const hasChildren = node.children && node.children.length > 0
-      if (hasChildren) {
-        console.log('[Menu Converter] 父级菜单:', {
-          name: node.name,
-          label,
-          metaTitle: node.meta?.title,
-          path: node.path || node.linkUrl,
-          childrenCount: node.children?.length
-        })
-      }
-    }
-
     // 优先使用 meta.icon，其次使用 icon，如果都不存在则返回 undefined（不显示图标）
     const icon = node.meta?.icon || node.icon || undefined
 

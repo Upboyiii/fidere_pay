@@ -548,7 +548,6 @@ export default function FiatAssetsPage() {
     const loadData = async () => {
       try {
         setLoading(true)
-        console.log('📊 加载总览数据...')
         const response = await getFiatOverview()
         // 从 ServerResponse 中提取数据
         const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -557,7 +556,6 @@ export default function FiatAssetsPage() {
         setApiData(actualData as FiatOverviewResponse)
         // 更新同步时间
         setLastSyncTime(formatSyncTime())
-        console.log('✅ 总览数据加载完成')
       } catch (error) {
         console.error('❌ 加载总览数据失败:', error)
         setSnackbar({ open: true, message: getErrorMessage(error), severity: "error" })
@@ -598,7 +596,6 @@ export default function FiatAssetsPage() {
     if (manualWithdrawalOpen) {
       // 加载手续费（如果有币种）
       const currency = withdrawalForm.currency || "USD"
-      console.log('💰 手动出金抽屉打开，加载手续费:', currency)
       loadOutCashFee(currency)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -608,22 +605,16 @@ export default function FiatAssetsPage() {
   const loadDictData = useCallback(async (forceReload: boolean = false) => {
     // 如果已加载且不强制重新加载，则跳过
     if (dictDataLoadedRef.current && !forceReload) {
-      console.log('出金审批：字典数据已加载，跳过加载')
       return
     }
 
     try {
-      console.log('出金审批：开始加载字典数据...', { forceReload })
       setLoadingDictData(true)
       const [channelResponse, bankResponse] = await Promise.all([
         getChannelList(),
         getBankList()
       ])
       
-      console.log('出金审批：接口响应', {
-        channelResponse,
-        bankResponse
-      })
       
       // 从 ServerResponse 中提取数据
       // 接口返回格式: { code: 200, data: { list: [...] } }
@@ -664,12 +655,6 @@ export default function FiatAssetsPage() {
         }
       }
       
-      console.log('出金审批：提取后的数据', {
-        channelData,
-        bankData,
-        channelDataLength: Array.isArray(channelData) ? channelData.length : 0,
-        bankDataLength: Array.isArray(bankData) ? bankData.length : 0
-      })
       
       const finalChannelList = Array.isArray(channelData) ? channelData : []
       const finalBankList = Array.isArray(bankData) ? bankData : []
@@ -680,10 +665,6 @@ export default function FiatAssetsPage() {
       // 更新 ref 存储最新的数据长度，供 useEffect 使用
       drawerDataLoadingRef.current = false
       
-      console.log('出金审批：字典数据加载成功', {
-        channelListLength: finalChannelList.length,
-        bankListLength: finalBankList.length
-      })
     } catch (error) {
       console.error('出金审批：加载字典数据失败', error)
       setSnackbar({ open: true, message: getErrorMessage(error), severity: "error" })
@@ -708,25 +689,16 @@ export default function FiatAssetsPage() {
       const currentBankLength = bankList.length
       
       if (currentChannelLength === 0 || currentBankLength === 0) {
-        console.log('出金审批抽屉打开：检测到字典数据为空，开始加载...', {
-          channelListLength: currentChannelLength,
-          bankListLength: currentBankLength
-        })
         drawerDataLoadingRef.current = true
         loadDictData(true).finally(() => {
           drawerDataLoadingRef.current = false
         })
       } else {
-        console.log('出金审批抽屉打开：字典数据已存在', {
-          channelListLength: currentChannelLength,
-          bankListLength: currentBankLength
-        })
       }
       
       // 加载手续费（如果有选中的出金审批记录）
       if (selectedWithdrawalApproval?.currency) {
         const currencyType = selectedWithdrawalApproval.currency === 'USD' ? 'USD' : selectedWithdrawalApproval.currency === 'HKD' ? 'HKD' : 'USD'
-        console.log('💰 出金审批抽屉打开，加载手续费:', currencyType)
         loadOutCashFee(currencyType)
       }
     } else if (!approvalDrawerOpen) {
@@ -739,7 +711,6 @@ export default function FiatAssetsPage() {
   // 监听手动入金抽屉打开，确保字典数据已加载
   useEffect(() => {
     if (manualDepositOpen && channelList.length === 0) {
-      console.log('手动入金抽屉打开：检测到渠道列表为空，开始加载...')
       loadDictData(true)
     }
   }, [manualDepositOpen, channelList.length, loadDictData])
@@ -747,7 +718,6 @@ export default function FiatAssetsPage() {
   // 监听手动出金抽屉打开，确保字典数据已加载
   useEffect(() => {
     if (manualWithdrawalOpen && channelList.length === 0) {
-      console.log('手动出金抽屉打开：检测到渠道列表为空，开始加载...')
       loadDictData(true)
     }
   }, [manualWithdrawalOpen, channelList.length, loadDictData])
@@ -755,10 +725,6 @@ export default function FiatAssetsPage() {
   // 监听查看打款信息抽屉打开，确保渠道列表和银行列表已加载
   useEffect(() => {
     if (viewPaymentDrawerOpen && (channelList.length === 0 || bankList.length === 0)) {
-      console.log('查看打款信息抽屉打开：检测到字典数据为空，开始加载...', {
-        channelListLength: channelList.length,
-        bankListLength: bankList.length
-      })
       loadDictData(true)
     }
   }, [viewPaymentDrawerOpen, channelList.length, bankList.length, loadDictData])
@@ -808,11 +774,8 @@ export default function FiatAssetsPage() {
   // 加载资金流水数据（支持传入自定义筛选条件和页码）
   const loadTransactionFlow = async (customFilters?: typeof transactionFilters, customPage?: number) => {
     try {
-      console.log('🔄 开始加载资金流水数据')
       const filters = customFilters || transactionFilters
       const pageNum = customPage !== undefined ? customPage : transactionFlowPage
-      console.log('📋 使用筛选条件:', filters)
-      console.log('📄 使用页码:', pageNum)
       setTransactionFlowLoading(true)
       const params: any = {
         pageNum: pageNum + 1,
@@ -828,7 +791,6 @@ export default function FiatAssetsPage() {
       }
       if (filters.userId && filters.userId !== '') {
         params.userId = parseInt(filters.userId)
-        console.log('✅ 添加 userId 参数:', params.userId)
       }
       if (filters.type && filters.type !== 'all') {
         params.type = parseInt(filters.type)
@@ -843,15 +805,12 @@ export default function FiatAssetsPage() {
         } else {
           params.status = parseInt(filters.status)
         }
-        console.log('✅ 添加 status 参数:', params.status)
       }
       if (filters.keyword && filters.keyword.trim()) {
         params.keyword = filters.keyword.trim()
       }
       
-      console.log('📤 实际发送的 API 参数:', params)
       const response = await getTransactionFlow(params)
-      console.log('✅ 资金流水 API 响应:', response)
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -867,31 +826,22 @@ export default function FiatAssetsPage() {
 
   // 当进入流水查询标签页或分页改变时加载数据（不自动响应筛选条件）
   useEffect(() => {
-    console.log('🎯 流水查询 useEffect 触发')
-    console.log('  - activeTab:', activeTab)
-    console.log('  - transactionFlowPage:', transactionFlowPage)
-    console.log('  - transactionFlowPageSize:', transactionFlowPageSize)
     
     if (activeTab === 'transactions') {
-      console.log('✅ 当前在流水查询标签页，开始加载数据')
       loadTransactionFlow()
     } else {
-      console.log('⏭️  当前不在流水查询标签页，跳过加载')
     }
   }, [activeTab, transactionFlowPage, transactionFlowPageSize])
 
   // 加载客户最近交易
   const loadCustomerRecentTransactions = async (userId: number) => {
     try {
-      console.log('🔍 开始加载客户最近交易，userId:', userId)
       setRecentTransactionsLoading(true)
       const response = await getCustomerRecentTransactions(userId)
-      console.log('✅ 客户最近交易 API 响应:', response)
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
         : response.data
-      console.log('📊 提取的客户最近交易数据:', actualData)
       setCustomerRecentTransactions(actualData as CustomerRecentTransactionsResponse)
     } catch (error) {
       console.error('❌ 加载客户最近交易失败:', error)
@@ -903,9 +853,7 @@ export default function FiatAssetsPage() {
 
   // 当选中客户改变时加载其最近交易
   useEffect(() => {
-    console.log('🎯 客户选择变化 - selectedCustomerId:', selectedCustomerId, 'activeTab:', activeTab)
     if (selectedCustomerId && activeTab === 'customer-assets') {
-      console.log('✅ 触发加载客户最近交易')
       loadCustomerRecentTransactions(selectedCustomerId)
     }
   }, [selectedCustomerId, activeTab])
@@ -914,7 +862,6 @@ export default function FiatAssetsPage() {
   useEffect(() => {
     if (customerAssetsData && customerAssetsData.list && customerAssetsData.list.length > 0 && !selectedCustomerId) {
       const firstCustomerId = customerAssetsData.list[0].userId
-      console.log('🎯 自动选中第一个客户, userId:', firstCustomerId)
       setSelectedCustomerId(firstCustomerId)
     }
   }, [customerAssetsData])
@@ -922,11 +869,8 @@ export default function FiatAssetsPage() {
   // 加载入账认领列表数据（支持传入自定义筛选条件和页码）
   const loadDepositClaimList = async (customFilters?: typeof depositClaimFilters, customPage?: number) => {
     try {
-      console.log('🔄 开始加载入账认领列表数据')
       const filters = customFilters || depositClaimFilters
       const pageNum = customPage !== undefined ? customPage : depositClaimPage
-      console.log('📋 使用筛选条件:', filters)
-      console.log('📄 使用页码:', pageNum)
       setDepositClaimLoading(true)
       const params: any = {
         pageNum: pageNum + 1,
@@ -940,11 +884,9 @@ export default function FiatAssetsPage() {
         } else {
           params.status = parseInt(filters.status)
         }
-        console.log('✅ 添加 status 参数:', params.status)
       }
       if (filters.matchStatus && filters.matchStatus !== 'all') {
         params.matchStatus = parseInt(filters.matchStatus)
-        console.log('✅ 添加 matchStatus 参数:', params.matchStatus)
       }
       if (filters.startTime) {
         // formatDateToString 返回格式: yyyy-MM-ddT00:00:00 或 yyyy-MM-ddT23:59:59
@@ -960,9 +902,7 @@ export default function FiatAssetsPage() {
         params.keyword = filters.keyword.trim()
       }
       
-      console.log('📤 实际发送的 API 参数:', params)
       const response = await getDepositClaimList(params)
-      console.log('✅ 入账认领列表 API 响应:', response)
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -978,9 +918,7 @@ export default function FiatAssetsPage() {
 
   // 当进入入账认领标签页或分页改变时加载数据（不自动响应筛选条件）
   useEffect(() => {
-    console.log('🎯 入账认领 useEffect 触发, activeTab:', activeTab)
     if (activeTab === 'deposits') {
-      console.log('✅ 当前在入账认领标签页，开始加载数据')
       loadDepositClaimList()
     }
   }, [activeTab, depositClaimPage, depositClaimPageSize])
@@ -988,10 +926,8 @@ export default function FiatAssetsPage() {
   // 根据参考号自动选中对应的认领数据
   useEffect(() => {
     if (pendingSelectReferenceNo && depositClaimData && depositClaimData.list.length > 0) {
-      console.log('🔍 查找参考号对应的认领数据:', pendingSelectReferenceNo)
       const matchedClaim = depositClaimData.list.find(claim => claim.referenceNo === pendingSelectReferenceNo)
       if (matchedClaim) {
-        console.log('✅ 找到匹配的认领数据，ID:', matchedClaim.id)
         // 选中对应的数据
         if (!selectedClaimIds.includes(matchedClaim.id)) {
           setSelectedClaimIds([...selectedClaimIds, matchedClaim.id])
@@ -1000,10 +936,8 @@ export default function FiatAssetsPage() {
         setPendingSelectReferenceNo(null)
         hasSetSearchKeywordRef.current = false
       } else {
-        console.log('⚠️ 当前页未找到匹配的认领数据，参考号:', pendingSelectReferenceNo)
         // 如果当前页没找到，设置搜索条件帮助用户找到数据（只设置一次，避免循环）
         if (!hasSetSearchKeywordRef.current && depositClaimFilters.keyword !== pendingSelectReferenceNo) {
-          console.log('🔍 设置搜索条件为参考号:', pendingSelectReferenceNo)
           hasSetSearchKeywordRef.current = true
           const newFilters = { ...depositClaimFilters, keyword: pendingSelectReferenceNo }
           setDepositClaimFilters(newFilters)
@@ -1021,7 +955,6 @@ export default function FiatAssetsPage() {
     // datetime-local 格式: 2025-11-11T17:43
     // 目标格式: 2025-11-11 17:43:00
     const formatted = dateTimeStr.replace('T', ' ') + ':00'
-    console.log('🕐 时间格式转换:', dateTimeStr, '→', formatted)
     return formatted
   }
 
@@ -1054,7 +987,6 @@ export default function FiatAssetsPage() {
   // 加载对账统计数据（支持传入自定义筛选条件）
   const loadReconciliationStats = async (customFilters?: typeof reconciliationFilters) => {
     try {
-      console.log('🔄 开始加载对账统计数据')
       const filters = customFilters || reconciliationFilters
       const params: any = {}
       
@@ -1069,9 +1001,7 @@ export default function FiatAssetsPage() {
         params.endTime = dateStr
       }
       
-      console.log('📤 对账统计 API 参数:', params)
       const response = await getReconciliationStats(params)
-      console.log('✅ 对账统计 API 响应:', response)
       
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -1086,11 +1016,8 @@ export default function FiatAssetsPage() {
   // 加载对账列表数据（支持传入自定义筛选条件和页码）
   const loadReconciliationList = async (customFilters?: typeof reconciliationFilters, customPage?: number) => {
     try {
-      console.log('🔄 开始加载对账列表数据')
       const filters = customFilters || reconciliationFilters
       const pageNum = customPage !== undefined ? customPage : reconciliationPage
-      console.log('📋 使用筛选条件:', filters)
-      console.log('📄 使用页码:', pageNum)
       setReconciliationLoading(true)
       
       const params: any = {
@@ -1115,9 +1042,7 @@ export default function FiatAssetsPage() {
         params.keyword = filters.keyword
       }
       
-      console.log('📤 对账列表 API 参数:', params)
       const response = await getReconciliationList(params)
-      console.log('✅ 对账列表 API 响应:', response)
       
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -1134,11 +1059,8 @@ export default function FiatAssetsPage() {
   // 加载出金审批列表数据（支持传入自定义筛选条件和页码）
   const loadWithdrawalApprovalList = async (customFilters?: typeof withdrawalFilters, customPage?: number) => {
     try {
-      console.log('🔄 开始加载出金审批列表数据')
       const filters = customFilters || withdrawalFilters
       const pageNum = customPage !== undefined ? customPage : withdrawalPage
-      console.log('📋 使用筛选条件:', filters)
-      console.log('📄 使用页码:', pageNum)
       setWithdrawalLoading(true)
       
       const params: any = {
@@ -1153,7 +1075,6 @@ export default function FiatAssetsPage() {
         } else {
           params.status = parseInt(filters.status)
         }
-        console.log('✅ 添加 status 参数:', params.status)
       }
       if (filters.startTime) {
         // formatDateToString 返回格式: yyyy-MM-ddT00:00:00 或 yyyy-MM-ddT23:59:59
@@ -1170,9 +1091,7 @@ export default function FiatAssetsPage() {
         params.keyword = filters.keyword.replace(/\s+/g, '')
       }
       
-      console.log('📤 出金审批列表 API 参数:', params)
       const response = await getWithdrawApprovalList(params)
-      console.log('✅ 出金审批列表 API 响应:', response)
       
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
         ? response.data.data 
@@ -1224,9 +1143,7 @@ export default function FiatAssetsPage() {
         requestData.voucherUrl = approvalVoucherUrl
       }
 
-      console.log('📤 提交审批请求:', requestData)
       await withdrawApproval(requestData)
-      console.log('✅ 审批成功')
 
       setSnackbar({ 
         open: true, 
@@ -1263,9 +1180,7 @@ export default function FiatAssetsPage() {
 
   // 当进入对账中心标签页或分页改变时加载数据（不自动响应筛选条件）
   useEffect(() => {
-    console.log('🎯 对账中心 useEffect 触发, activeTab:', activeTab)
     if (activeTab === 'reconciliation') {
-      console.log('✅ 当前在对账中心标签页，开始加载数据')
       loadReconciliationStats()
       loadReconciliationList()
     }
@@ -1291,11 +1206,9 @@ export default function FiatAssetsPage() {
     // 先保存文件信息
     setClaimVoucherFile(file)
     setUploadingVoucher(true)
-    console.log('📤 开始上传凭证图片:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -1308,7 +1221,6 @@ export default function FiatAssetsPage() {
         const uploadedUrl = uploadData.path
         setClaimForm({ ...claimForm, voucherUrl: uploadedUrl })
         setSnackbar({ open: true, message: "凭证上传成功", severity: "success" })
-        console.log('✅ 凭证URL已设置:', uploadedUrl)
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1346,11 +1258,9 @@ export default function FiatAssetsPage() {
     }
 
     setUploadingDepositVoucher(true)
-    console.log('📤 开始上传手动入金凭证:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -1367,7 +1277,6 @@ export default function FiatAssetsPage() {
           voucherUrl: uploadedUrl 
         })
         setSnackbar({ open: true, message: "凭证上传成功", severity: "success" })
-        console.log('✅ 手动入金凭证URL已设置:', uploadedUrl)
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1403,11 +1312,9 @@ export default function FiatAssetsPage() {
     }
 
     setUploadingWithdrawalVoucher(true)
-    console.log('📤 开始上传手动出金凭证:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -1424,7 +1331,6 @@ export default function FiatAssetsPage() {
           voucherUrl: uploadedUrl 
         })
         setSnackbar({ open: true, message: "凭证上传成功", severity: "success" })
-        console.log('✅ 手动出金凭证URL已设置:', uploadedUrl)
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1460,11 +1366,9 @@ export default function FiatAssetsPage() {
     }
 
     setUploadingApprovalVoucher(true)
-    console.log('📤 开始上传出金审批凭证:', file.name, '大小:', (file.size / 1024).toFixed(2), 'KB')
 
     try {
       const response = await uploadSingleFile(file)
-      console.log('✅ 凭证上传成功:', response)
 
       // 从 ServerResponse 中提取数据
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -1478,7 +1382,6 @@ export default function FiatAssetsPage() {
         setApprovalProof(file)
         setApprovalVoucherUrl(uploadedUrl)
         setSnackbar({ open: true, message: "凭证上传成功", severity: "success" })
-        console.log('✅ 出金审批凭证URL已设置:', uploadedUrl)
       }
     } catch (error: any) {
       console.error('❌ 凭证上传失败:', error)
@@ -1543,10 +1446,6 @@ export default function FiatAssetsPage() {
 
     try {
       setClaimSubmitting(true)
-      console.log('🔄 提交认领操作')
-      console.log('  - action:', action)
-      console.log('  - selectedClaim:', selectedClaim)
-      console.log('  - claimForm:', claimForm)
 
       const requestData: DepositClaimRequest = {
         id: selectedClaim.id,
@@ -1568,11 +1467,9 @@ export default function FiatAssetsPage() {
         }
       }
 
-      console.log('📤 发送请求数据:', requestData)
 
       await depositClaim(requestData)
       
-      console.log('✅ 认领操作成功')
       setSnackbar({ 
         open: true, 
         message: action === 'approve' ? "认领成功" : action === 'reject' ? "拒绝成功" : "匹配成功", 
@@ -1618,11 +1515,6 @@ export default function FiatAssetsPage() {
 
     try {
       setClaimSubmitting(true)
-      console.log('🔄 提交批量认领操作')
-      console.log('  - selectedClaimIds:', selectedClaimIds)
-      console.log('  - selectedClaimCustomer:', selectedClaimCustomer)
-      console.log('  - unmatchedClaims:', unmatchedClaims.length)
-      console.log('  - claimForm:', claimForm)
 
       const requestData: BatchDepositClaimRequest = {
         ids: selectedClaimIds,
@@ -1630,11 +1522,9 @@ export default function FiatAssetsPage() {
         remark: claimForm.remark.trim(),
       }
 
-      console.log('📤 发送批量请求数据:', requestData)
 
       await batchDepositClaim(requestData)
       
-      console.log('✅ 批量认领操作成功')
       setSnackbar({ 
         open: true, 
         message: `批量认领成功，共处理 ${selectedClaimIds.length} 条记录`, 
@@ -2125,7 +2015,6 @@ export default function FiatAssetsPage() {
         voucherUrl: depositForm.voucherUrl || undefined,  // 使用已上传的凭证URL
       }
 
-      console.log('📤 提交手动入金请求:', requestData)
       await manualDeposit(requestData)
       
       setSnackbar({ open: true, message: "手动入金成功", severity: "success" })
@@ -2230,14 +2119,12 @@ export default function FiatAssetsPage() {
   // 加载客户银行账号白名单
   const loadBankAccountList = async (userId: number) => {
     if (!userId) {
-      console.log('⚠️ 用户ID为空，清空银行账号列表')
       setBankAccountList([])
       setWithdrawalForm((prev) => ({ ...prev, bankAccountId: null }))
       return
     }
 
     try {
-      console.log('📋 开始加载银行账号列表，userId:', userId)
       setBankAccountLoading(true)
       const response = await getBankAccountList({ userId })
       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -2245,12 +2132,10 @@ export default function FiatAssetsPage() {
         : response.data
       const bankAccountData = actualData as BankAccountListResponse
       const accountList = bankAccountData?.list || []
-      console.log('✅ 银行账号列表加载成功，数量:', accountList.length, accountList)
       setBankAccountList(accountList)
       
       // 如果只有一个银行账号，自动选择
       if (accountList.length === 1) {
-        console.log('🔘 自动选择唯一的银行账号:', accountList[0].id)
         setWithdrawalForm((prev) => ({ ...prev, bankAccountId: accountList[0].id }))
       } else if (accountList.length === 0) {
         // 如果没有银行账号，只清空银行账号选择，保持客户选择不变
@@ -2285,7 +2170,6 @@ export default function FiatAssetsPage() {
       // 保存手续费和对应的币种
       setOutCashFee(feeData?.fee || "0")
       setOutCashFeeCurrency(feeData?.currencyType || currencyType)
-      console.log('✅ 手续费加载成功:', { currencyType, fee: feeData?.fee || "0" })
     } catch (error) {
       console.error('❌ 加载出金手续费失败:', error)
       setOutCashFee("0")
@@ -2369,8 +2253,6 @@ export default function FiatAssetsPage() {
         voucherUrl: withdrawalForm.voucherUrl || undefined,  // 使用已上传的凭证URL
       }
 
-      console.log('📤 提交手动出金请求:', requestData)
-      console.log('📋 选择的银行账号信息:', selectedAccount)
       await manualWithdraw(requestData)
       
       setSnackbar({ open: true, message: "手动出金成功", severity: "success" })
@@ -2402,14 +2284,12 @@ export default function FiatAssetsPage() {
 
   const handleConfirmAction = () => {
     if (actionType === "confirm-deposit") {
-      console.log("Processing confirmed deposit:", selectedItem, selectedCustomer, uploadedFile)
       setSnackbar({ open: true, message: "入账认领成功", severity: "success" })
       setClaimDrawerOpen(false)
       setSelectedItem(null)
       setSelectedCustomer(null)
       setUploadedFile(null)
     } else if (actionType === "approve-withdrawal") {
-      console.log("Processing approved withdrawal:", selectedWithdrawal, approvalChannel, approvalBank, approvalProof)
       setSnackbar({ open: true, message: "出金审批成功", severity: "success" })
       setApprovalDrawerOpen(false)
       setApprovalChannel("")
@@ -2425,12 +2305,10 @@ export default function FiatAssetsPage() {
       handleManualWithdrawalAction()
       return  // 让异步函数自己处理对话框关闭
     } else if (actionType === "mark-paid") {
-      console.log("Marking withdrawal as paid:", selectedWithdrawal)
       setSnackbar({ open: true, message: "已标记为已支付", severity: "success" })
       setConfirmDialogOpen(false)
       setSelectedWithdrawal(null)
     } else if (actionType === "mark-settled") {
-      console.log("Marking withdrawal as settled:", selectedWithdrawal)
       setSnackbar({ open: true, message: "已标记为已结算", severity: "success" })
       setConfirmDialogOpen(false)
       setSelectedWithdrawal(null)
@@ -2444,7 +2322,6 @@ export default function FiatAssetsPage() {
       alert("请填写拒绝原因")
       return
     }
-    console.log("[v0] Rejecting with reason:", rejectReason)
     
     // 如果是出金审批的拒绝操作，调用新的处理函数
     if (selectedWithdrawalApproval) {
@@ -2453,7 +2330,6 @@ export default function FiatAssetsPage() {
     }
     
     if (actionType === "approve-withdrawal") {
-      console.log("Rejecting withdrawal:", selectedWithdrawal)
       setSnackbar({ open: true, message: "出金已拒绝", severity: "error" })
       setApprovalDrawerOpen(false)
       setRejectDialogOpen(false)
@@ -2759,7 +2635,6 @@ export default function FiatAssetsPage() {
   }
 
   const exportCSV = () => {
-    console.log("[v0] Exporting CSV")
     alert("导出 CSV 功能")
   }
 
@@ -4395,7 +4270,6 @@ export default function FiatAssetsPage() {
             className='max-sm:is-full'
             disabled={selectedClaimIds.length === 0}
             onClick={() => {
-              console.log('📋 打开批量认领抽屉，选中数量:', selectedClaimIds.length)
               setIsBatchMode(true)
               setSelectedClaimCustomer(null)
               setClaimForm({
@@ -4575,7 +4449,6 @@ export default function FiatAssetsPage() {
                           <IconButton
                             size='small'
                             onClick={() => {
-                              console.log('🎯 打开认领抽屉:', claim)
                               setSelectedClaim(claim)
                               // 如果还没有匹配客户，清空选择
                               if (!claim.customerName) {
@@ -4603,7 +4476,6 @@ export default function FiatAssetsPage() {
                           <IconButton
                             size='small'
                             onClick={() => {
-                              console.log('🚫 打开拒绝对话框:', claim)
                               setSelectedClaim(claim)
                               setClaimRejectReason("")
                               setClaimRejectDialogOpen(true)
@@ -4624,7 +4496,6 @@ export default function FiatAssetsPage() {
                           <IconButton
                             size='small'
                             onClick={() => {
-                              console.log('查看详情:', claim)
                               // TODO: 打开详情弹窗
                             }}
                             sx={{ 
@@ -4930,7 +4801,6 @@ export default function FiatAssetsPage() {
                           <IconButton
                             size='small'
                             onClick={() => {
-                              console.log('查看附件:', approval)
                               setSnackbar({ open: true, message: "查看附件功能待实现", severity: "info" })
                             }}
                             sx={{ 
@@ -5098,7 +4968,6 @@ export default function FiatAssetsPage() {
               startIcon={<i className='ri-upload-cloud-line' />}
               onClick={() => {
                 // TODO: 实现导入对账单逻辑
-                console.log('导入对账单')
               }}
             >
               导入对账单
@@ -5109,7 +4978,6 @@ export default function FiatAssetsPage() {
               startIcon={<i className='ri-file-warning-line' />}
               onClick={() => {
                 // TODO: 实现导出差异逻辑
-                console.log('导出差异')
               }}
             >
               导出差异
@@ -5254,7 +5122,6 @@ export default function FiatAssetsPage() {
                         variant='outlined'
                         color='primary'
                         onClick={() => {
-                          console.log('跳转到入账认领，参考号:', item.referenceNo)
                           // 保存参考号，用于在入账认领列表中自动选中
                           if (item.referenceNo) {
                             hasSetSearchKeywordRef.current = false  // 重置标记
@@ -5332,7 +5199,6 @@ export default function FiatAssetsPage() {
                   onClick={async () => {
                     try {
                       setLoading(true)
-                      console.log('🔄 手动刷新总览数据...')
                       const response = await getFiatOverview()
                       // 从 ServerResponse 中提取数据
                       const actualData = response.data && typeof response.data === 'object' && 'data' in response.data 
@@ -5341,7 +5207,6 @@ export default function FiatAssetsPage() {
                       setApiData(actualData as FiatOverviewResponse)
                       // 更新同步时间
                       setLastSyncTime(formatSyncTime())
-                      console.log('✅ 总览数据刷新完成')
                       setSnackbar({ open: true, message: "数据刷新成功", severity: "success" })
                     } catch (error) {
                       console.error('Failed to refresh data:', error)

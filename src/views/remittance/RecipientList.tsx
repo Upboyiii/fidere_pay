@@ -197,14 +197,6 @@ const RecipientList = ({ mode }: { mode: Mode }) => {
                 // 实时获取当前语言，避免闭包问题
                 const realTimeLang = getCurrentLangFromPath()
                 const targetPath = getLocalizedPath('/remittance/recipients/new', realTimeLang)
-                if (process.env.NODE_ENV === 'development') {
-                  console.log('[RecipientList] Navigate to recipients/new:', { 
-                    realTimeLang, 
-                    currentLang, 
-                    pathname, 
-                    targetPath 
-                  })
-                }
                 router.push(targetPath)
               }}
               sx={{ borderRadius: '8px', px: 6 }}

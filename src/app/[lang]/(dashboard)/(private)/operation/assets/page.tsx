@@ -140,16 +140,13 @@ export default function AssetsPage() {
   // Load overview data
   const loadOverviewData = useCallback(async (statDate?: string) => {
     try {
-      console.log('loadOverviewData: Starting...', { statDate })
+
       setLoading(true)
       setError(null)
       const response = await getAssetOverview(statDate)
-      console.log('loadOverviewData: Response received', response)
 
       // clientRequestInternal 已经处理了嵌套数据，response.data 应该就是实际数据
       const actualData = response.data
-
-      console.log('loadOverviewData: Actual data', actualData)
 
       // 验证数据格式
       if (!actualData || typeof actualData !== 'object') {
@@ -179,7 +176,7 @@ export default function AssetsPage() {
   // Initial load - only load when not showing customer detail
   useEffect(() => {
     if (!showCustomerDetail) {
-      console.log('Initial load triggered', { showCustomerDetail })
+
       loadOverviewData()
     }
   }, [showCustomerDetail, loadOverviewData])
@@ -316,7 +313,7 @@ export default function AssetsPage() {
   // Load customer list data
   const loadCustomerList = useCallback(async (currentPage: number, currentRowsPerPage: number, currentKeyword: string) => {
     try {
-      console.log('loadCustomerList: Starting...', { currentPage, currentRowsPerPage, currentKeyword })
+
       setCustomerListLoading(true)
       setCustomerListError(null)
       const response = await getCustomerList({
@@ -324,10 +321,8 @@ export default function AssetsPage() {
         pageSize: currentRowsPerPage,
         keyword: currentKeyword || undefined,
       })
-      console.log('loadCustomerList: Response received', response)
 
       const actualData = response.data
-      console.log('loadCustomerList: Actual data', actualData)
 
       if (!actualData || typeof actualData !== 'object') {
         console.error('loadCustomerList: Invalid data format', actualData)
@@ -393,7 +388,6 @@ export default function AssetsPage() {
         return "default"
     }
   }
-
 
   const renderOverview = () => {
     // Show loading state

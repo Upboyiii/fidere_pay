@@ -42,15 +42,6 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     // 移除语言前缀，获取实际路由路径
     const routePath = pathname.replace(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/, '') || '/'
 
-    // 调试日志（开发环境）
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔍 RouteGuard 调试信息:')
-      console.log('  - pathname:', pathname)
-      console.log('  - routePath:', routePath)
-      console.log('  - isMenuLoaded:', isMenuLoaded)
-      console.log('  - sessionStatus:', sessionStatus)
-    }
-
     // 检查是否是公开路径
     const publicPaths = ['/login', '/register', '/not-authorized', '/not-found']
     if (publicPaths.some(path => routePath === path || routePath.startsWith(path))) {
@@ -66,19 +57,8 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     const isOperationMode = normalizedUserRole === 'operation' || normalizedUserRole.includes('operation')
     const isAdminMode = normalizedUserRole === 'admin' || normalizedUserRole.includes('admin')
 
-    // 调试日志（开发环境）
-    if (process.env.NODE_ENV === 'development') {
-      console.log('  - userRole:', userRole)
-      console.log('  - isKycMode:', isKycMode)
-      console.log('  - isOperationMode:', isOperationMode)
-      console.log('  - menuList length:', menuList?.length || 0)
-    }
-
     // 特殊处理管理员角色：管理员有全部路由权限
     if (isAdminMode) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ✅ 管理员模式，允许访问所有路由')
-      }
       setIsAuthorized(true)
       setIsChecking(false)
       return
@@ -87,9 +67,6 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     // 优先检查硬编码路由（不需要等待菜单加载）
     // 特殊处理运营角色：运营角色使用硬编码菜单，menuList 可能为空
     if (isOperationMode && routePath.startsWith('/operation')) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ✅ 运营模式，允许访问 /operation/*')
-      }
       setIsAuthorized(true)
       setIsChecking(false)
       return
@@ -99,9 +76,6 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     // 这些路由使用硬编码菜单，menuList 可能为空
     // 优先检查硬编码路由，避免等待菜单加载导致的404闪烁
     if ((isOperationMode || isKycMode) && (routePath.startsWith('/assets') || routePath.startsWith('/remittance'))) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ✅ 运营/KYC模式，允许访问 /assets/* 或 /remittance/*')
-      }
       setIsAuthorized(true)
       setIsChecking(false)
       return
@@ -109,9 +83,6 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
 
     // 如果菜单和 session 都还未加载完成，继续等待
     if (!isMenuLoaded || sessionStatus === 'loading') {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ⏳ 菜单或 session 还未加载完成，继续等待')
-      }
       // 保持 isChecking 为 true，显示 loading 状态
       return
     }
@@ -119,9 +90,6 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     // 菜单已加载完成，进行权限检查
     if (menuList.length === 0) {
       // 菜单为空，可能是新用户或没有分配菜单
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ⚠️ 菜单列表为空')
-      }
       // 如果菜单为空且不是特殊角色，暂时允许访问（避免误拦截）
       // 可以根据业务需求调整这里的逻辑
       setIsAuthorized(false)
@@ -132,20 +100,9 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     // 检查路由权限
     const hasPermission = hasRoutePermission(pathname, menuList)
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('  - hasPermission:', hasPermission)
-    }
-
     if (!hasPermission) {
-      // 没有权限，标记为未授权
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ❌ 没有权限访问该路由')
-      }
       setIsAuthorized(false)
     } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('  - ✅ 有权限访问该路由')
-      }
       setIsAuthorized(true)
     }
 
