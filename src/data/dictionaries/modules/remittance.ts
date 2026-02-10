@@ -196,6 +196,7 @@ export const remittance = {
     notBoundRecommended: 'Not Bound · Recommended',
     // Edit Recipient Page
     editRecipient: 'Edit Recipient',
+    editRecipientDesc: 'Edit recipient information',
     recipientInfo: 'Recipient Information',
     confirmInfo: 'Confirm Information',
     back: 'Back',
@@ -474,6 +475,7 @@ export const remittance = {
     notBoundRecommended: '未绑定 · 推荐',
     // 编辑收款人页面
     editRecipient: '编辑收款人',
+    editRecipientDesc: '编辑收款人信息',
     recipientInfo: '收款人信息',
     confirmInfo: '确认信息',
     back: '返回',
@@ -745,6 +747,7 @@ export const remittance = {
     notBoundRecommended: '未綁定 · 推薦',
     // 編輯收款人頁面
     editRecipient: '編輯收款人',
+    editRecipientDesc: '編輯收款人信息',
     recipientInfo: '收款人信息',
     confirmInfo: '確認信息',
     back: '返回',

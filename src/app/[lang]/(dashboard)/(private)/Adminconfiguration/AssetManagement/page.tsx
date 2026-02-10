@@ -6,10 +6,23 @@ import AdminAssetList from '@views/admin/otc/AdminAssetList'
 
 // Server Action Imports
 import { getServerMode } from '@core/utils/serverHelpers'
+import { getDictionary } from '@/utils/getDictionary'
 
-export const metadata: Metadata = {
-  title: '资产管理',
-  description: '管理数字资产配置'
+// Type Imports
+import type { Locale } from '@configs/i18n'
+
+type Props = {
+  params: Promise<{ lang: Locale }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { lang } = await params
+  const dict = await getDictionary(lang)
+
+  return {
+    title: dict.adminOtc.assetManagement,
+    description: dict.adminOtc.assetManagementDesc
+  }
 }
 
 const AssetManagementPage = async () => {
