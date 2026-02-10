@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react'
 
 // MUI Imports
 import FormControl from '@mui/material/FormControl'
+import FormHelperText from '@mui/material/FormHelperText'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
 import Box from '@mui/material/Box'
@@ -31,6 +32,8 @@ interface DepartmentSelectProps {
   error?: FieldError
   /** 表单字段名，默认为 'department' */
   name?: string
+  /** 标签 key，用户表单用 'dept'（部门），部门管理用 'parentDept'（上级部门） */
+  labelKey?: 'dept' | 'parentDept'
 }
 
 /**
@@ -41,7 +44,14 @@ interface DepartmentSelectProps {
  * @param error - 错误状态
  * @param name - 表单字段名，默认为 'department'
  */
-const DepartmentSelect = ({ control, departments, required, error, name = 'department' }: DepartmentSelectProps) => {
+const DepartmentSelect = ({
+  control,
+  departments,
+  required,
+  error,
+  name = 'department',
+  labelKey = 'parentDept'
+}: DepartmentSelectProps) => {
   const t = useTranslate()
   const [selectOpen, setSelectOpen] = useState(false)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -149,12 +159,12 @@ const DepartmentSelect = ({ control, departments, required, error, name = 'depar
 
         return (
           <FormControl fullWidth required={required} error={!!(error || fieldState.error)}>
-            <InputLabel>{t('admin.parentDept')}</InputLabel>
+            <InputLabel>{t(`admin.${labelKey}`)}</InputLabel>
             <Select
               open={selectOpen}
               onOpen={() => setSelectOpen(true)}
               onClose={() => setSelectOpen(false)}
-              label={t('admin.parentDept')}
+              label={t(`admin.${labelKey}`)}
               value={value}
               onChange={e => {
                 field.onChange(e.target.value)
@@ -193,6 +203,9 @@ const DepartmentSelect = ({ control, departments, required, error, name = 'depar
             >
               <Box className='p-2'>{departments.map(dept => renderDepartmentNode(dept))}</Box>
             </Select>
+            {(error || fieldState.error) && (
+              <FormHelperText>{(error || fieldState.error)?.message}</FormHelperText>
+            )}
           </FormControl>
         )
       }}

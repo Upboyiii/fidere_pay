@@ -101,7 +101,7 @@ const PostDialog = ({ open, onClose, onSave, postData }: PostDialogProps) => {
           <i className='ri-close-line' />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={6}>
             <Grid size={{ xs: 12, sm: 6 }}>

@@ -140,7 +140,7 @@ const JobDialog = ({ open, onClose, onSave, jobId }: JobDialogProps) => {
           <X size={20} />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           {loading ? (
             <Grid container spacing={6}>

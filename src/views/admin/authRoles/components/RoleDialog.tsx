@@ -246,10 +246,31 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
   }
 
   /**
+   * 根据选中节点，补充所有祖先（父级）菜单 ID，确保父栏目能正确展示
+   * 例如：只选「我的资产」时，必须包含「资产管理」的 id，否则父菜单不显示
+   */
+  const ensureAncestorIds = (ids: (string | number)[], nodes: MenuNode[]): (string | number)[] => {
+    const result = new Set<string | number>(ids)
+    const walk = (list: MenuNode[], ancestors: (string | number)[]) => {
+      list.forEach(node => {
+        const isSelected = ids.some(id => String(id) === String(node.id))
+        if (isSelected) {
+          ancestors.forEach(pid => result.add(pid))
+        }
+        if (node.children && node.children.length > 0) {
+          walk(node.children, [...ancestors, node.id])
+        }
+      })
+    }
+    walk(nodes, [])
+    return Array.from(result)
+  }
+
+  /**
    * 更新父节点状态
    */
   const updateParentNodes = (selectedIds: (string | number)[], isSelecting: boolean): (string | number)[] => {
-    const updatedIds = [...selectedIds]
+    let updatedIds = [...selectedIds]
 
     /**
      * 递归检查并更新节点（从叶子节点向上）
@@ -283,6 +304,10 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
     }
 
     checkAndUpdate(menuTree)
+    // 选中时：确保所有被选节点的祖先 id 都包含在 menuIds 中，否则父栏目不显示
+    if (isSelecting) {
+      updatedIds = ensureAncestorIds(updatedIds, menuTree)
+    }
     return updatedIds
   }
 
@@ -415,13 +440,16 @@ const RoleDialog = ({ open, onClose, onSave, roleData, roleTree, menuTree, entra
     // 确保使用默认入口（第一个入口）
     const defaultEntrance = entranceOptions.length > 0 ? entranceOptions[0].key : ''
 
+    // 提交前确保 menuIds 包含所有选中节点的祖先 ID，否则父菜单栏不显示
+    const menuIds = ensureAncestorIds(data.menuIds || [], menuTree)
+
     const submitData: any = {
       name: data.roleName || '',
       parentId: parentId || 0,
       roleSort: Number(data.roleSort) || 0,
       status: data.status || '1',
       remark: data.remark || '',
-      menuIds: data.menuIds || [],
+      menuIds,
       entrance: data.entrance || defaultEntrance
     }
 

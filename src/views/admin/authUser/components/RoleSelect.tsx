@@ -58,10 +58,10 @@ const RoleSelect = ({ control, roleTree, required = false }: RoleSelectProps) =>
       name='role'
       control={control}
       rules={{
-        required: required ? t('admin.roleRequired') || '请选择关联角色' : false,
+        required: required ? t('admin.roleRequired') : false,
         validate: (value) => {
           if (required && (!Array.isArray(value) || value.length === 0)) {
-            return t('admin.roleRequired') || '请选择关联角色'
+            return t('admin.roleRequired')
           }
           return true
         }

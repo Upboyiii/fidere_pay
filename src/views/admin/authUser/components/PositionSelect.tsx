@@ -46,10 +46,10 @@ const PositionSelect = ({ control, positions, required = false }: PositionSelect
       name='position'
       control={control}
       rules={{
-        required: required ? t('admin.positionRequired') || '请选择岗位' : false,
+        required: required ? t('admin.positionRequired') : false,
         validate: (value) => {
           if (required && (!Array.isArray(value) || value.length === 0)) {
-            return t('admin.positionRequired') || '请选择岗位'
+            return t('admin.positionRequired')
           }
           return true
         }

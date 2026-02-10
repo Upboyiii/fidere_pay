@@ -69,13 +69,13 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
   const onSubmit = async (data: { newPassword: string; confirmNewPassword: string }) => {
     // 验证两次密码是否一致
     if (data.newPassword !== data.confirmNewPassword) {
-      toast.error('两次输入的密码不一致')
+      toast.error(t('form.passwordsNotMatch'))
       return
     }
 
     // 验证密码长度（根据实际需求调整）
     if (data.newPassword.length < 6) {
-      toast.error('密码长度至少为6位')
+      toast.error(t('form.passwordTooShort', { min: 6 }))
       return
     }
 
@@ -87,7 +87,7 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
       onSuccess?.()
     } catch (error: any) {
       console.error('密码修改失败:', error)
-      toast.error(error?.message || '密码修改失败，请重试')
+      toast.error(error?.message || t('admin.resetPasswordFailed'))
     } finally {
       setLoading(false)
     }
@@ -96,12 +96,12 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
   return (
     <Dialog fullWidth maxWidth='sm' open={open} onClose={handleClose}>
       <DialogTitle className='flex items-center justify-between'>
-        修改密码
+        {t('admin.resetPassword')}
         <IconButton size='small' onClick={handleClose}>
           <i className='ri-close-line' />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           {userName && (
             <Grid container spacing={3} sx={{ mb: 2 }}>
@@ -122,10 +122,10 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
                 name='newPassword'
                 control={control}
                 rules={{
-                  required: '请输入新密码',
+                  required: t('admin.enterNewPassword'),
                   minLength: {
                     value: 6,
-                    message: '密码长度至少为6位'
+                    message: t('form.passwordTooShort', { min: 6 })
                   }
                 }}
                 render={({ field, fieldState }) => (
@@ -133,9 +133,9 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
                     {...field}
                     fullWidth
                     type={isNewPasswordShown ? 'text' : 'password'}
-                    label='新密码'
+                    label={t('admin.newPassword')}
                     required
-                    placeholder='请输入新密码'
+                    placeholder={t('admin.enterNewPassword')}
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     slotProps={{
@@ -164,10 +164,10 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
                 name='confirmNewPassword'
                 control={control}
                 rules={{
-                  required: '请确认新密码',
+                  required: t('admin.confirmNewPassword'),
                   validate: (value, formValues) => {
                     if (value !== formValues.newPassword) {
-                      return '两次输入的密码不一致'
+                      return t('form.passwordsNotMatch')
                     }
                     return true
                   }
@@ -177,9 +177,9 @@ const ResetPasswordDialog = ({ open, onClose, userId, userName, onSuccess }: Res
                     {...field}
                     fullWidth
                     type={isConfirmPasswordShown ? 'text' : 'password'}
-                    label='确认新密码'
+                    label={t('admin.confirmNewPasswordLabel')}
                     required
-                    placeholder='请再次输入新密码'
+                    placeholder={t('admin.confirmNewPassword')}
                     error={!!fieldState.error}
                     helperText={fieldState.error?.message}
                     slotProps={{

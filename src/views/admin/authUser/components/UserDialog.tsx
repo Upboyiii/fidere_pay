@@ -214,7 +214,7 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
           <i className='ri-close-line' />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={3}>
             {/* 左列 */}
@@ -258,7 +258,7 @@ const UserDialog = ({ open, onClose, onSave, userData, departments = [] }: UserD
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <DepartmentSelect control={control} departments={departments} required />
+              <DepartmentSelect control={control} departments={departments} required labelKey='dept' />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
               <Controller

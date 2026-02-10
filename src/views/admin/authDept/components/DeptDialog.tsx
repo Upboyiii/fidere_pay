@@ -200,7 +200,7 @@ const DeptDialog = ({ open, onClose, onSave, deptData, parentDept, deptTree }: D
           <i className='ri-close-line' />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, sm: 6 }}>

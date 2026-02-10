@@ -115,7 +115,7 @@ const DictTypeDialog = memo(({ open, onClose, onSave, dictTypeData, dictTypeTree
           <X size={20} />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>

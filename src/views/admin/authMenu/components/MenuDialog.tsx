@@ -314,7 +314,7 @@ const MenuDialog = ({ open, onClose, onSave, menuData, parentMenu, menuTree, rol
           <X size={20} />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={3}>
             {/* 第一行：上级菜单、菜单类型 */}

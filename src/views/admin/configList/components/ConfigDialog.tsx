@@ -87,7 +87,7 @@ const ConfigDialog = ({ open, onClose, onSave, configData }: ConfigDialogProps) 
           <X size={20} />
         </IconButton>
       </DialogTitle>
-      <form onSubmit={handleSubmit(onSubmit)}>
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <DialogContent>
           <Grid container spacing={6}>
             <Grid size={{ xs: 12 }}>
