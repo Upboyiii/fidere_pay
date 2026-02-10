@@ -110,6 +110,7 @@ const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typeof get
       '设置': 'settings',
       '管理员配置': 'adminConfiguration',
       '转账管理': 'adminTransfer',
+      '收款人列表': 'adminPayees',
       '资金流水': 'adminFinancial',
       '充值管理': 'adminRecharge',
       '回调地址': 'adminCallbackAddress'
@@ -185,7 +186,8 @@ const ROUTE_MAPPING: Record<string, string> = {
   '/api/v1/biz/recharge/list': '/admin/otc/recharges',
   '/api/v1/biz/transaction/list': '/admin/otc/transactions',
   '/api/v1/biz/transfer/list': '/admin/otc/transfers',
-  
+  '/api/v1/biz/payee/list': '/Adminconfiguration/payees',
+
   // OTC资产管理 - 普通用户接口
   '/api/v1/biz/user/api-key/list': '/otc/api-keys',
   '/api/v1/biz/user/payee/list': '/remittance/recipients',

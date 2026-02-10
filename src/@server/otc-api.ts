@@ -328,13 +328,19 @@ export interface AdminTransferListItem {
   userName: string
   payeeId: number
   payeeName: string
+  payeeAccountType?: number // 1-企业 2-个人
+  payeeAccountName?: string // 收款账户名称
+  payeeAccountNo?: string // 收款账号
+  payeeBankName?: string // 收款银行名
+  payeeSwiftCode?: string // SWIFT Code
+  payeeBankCountry?: string // 收款银行所在国家
   currencyCode: string // 转账币种
   receiveCurrencyCode: string // 接收币种
   transferAmount: number // 转账金额
   receiveAmount: number // 接收金额
   exchangeRate: number // 汇率
   feeAmount: number // 手续费
-  remitType: number // 汇款类型
+  remitType: number // 汇款类型 1-个人 2-企业
   status: number // 0-待审核 1-处理中 2-已完成 3-已驳回 4-失败
   createTime: number
   auditTime: number
@@ -619,6 +625,30 @@ export interface PayeeListResponse {
 
 export const getPayeeList = (params?: PayeeListParams) =>
   clientRequest.get<PayeeListResponse>('/_api/v1/biz/user/payee/list', { params })
+
+// 28.1 管理员-收款人列表
+export interface AdminPayeeListParams {
+  pageNum?: number
+  pageSize?: number
+  userName?: string // 用户名模糊搜索
+  userNickname?: string // 用户昵称模糊搜索
+  accountType?: number // 0-全部 1-公司 2-个人
+  searchKey?: string // 收款人姓名/公司/银行卡账户/银行名称
+}
+
+export interface AdminPayeeItem extends PayeeItem {
+  userId?: number
+  userName?: string
+  userNickname?: string
+}
+
+export interface AdminPayeeListResponse {
+  total: number
+  list: AdminPayeeItem[]
+}
+
+export const getAdminPayeeList = (params?: AdminPayeeListParams) =>
+  clientRequest.get<AdminPayeeListResponse>('/_api/v1/biz/payee/list', { params })
 
 // 29. 获取充值详情
 export interface GetRechargeDetailParams {

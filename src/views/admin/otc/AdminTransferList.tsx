@@ -410,14 +410,12 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 },
               }}
             >
-              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1200px' }}>
+              <table className={tableStyles.table} style={{ width: '100%', minWidth: '1300px' }}>
                 <thead>
                   <tr>
                     <th>{t('adminOtc.applyNo')}</th>
                     <th>{t('adminOtc.username')}</th>
-                    {/* <th>收款人</th> */}
-                    {/* <th>转账币种</th> */}
-                    {/* <th>转账金额</th> */}
+                    <th>{t('adminOtc.recipient')}</th>
                     <th>{t('adminOtc.currency')}</th>
                     <th>{t('adminOtc.amount')}</th>
                     {/* <th>汇率</th> */}
@@ -432,13 +430,13 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan={10} className='text-center'>
+                      <td colSpan={11} className='text-center'>
                         {t('adminOtc.loading')}
                       </td>
                     </tr>
                   ) : data.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className='text-center'>
+                      <td colSpan={11} className='text-center'>
                         {t('adminOtc.noData')}
                       </td>
                     </tr>
@@ -461,9 +459,11 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                         <td>
                           <span style={{ fontWeight: 600 }}>{item.userName}</span>
                         </td>
-                        {/* <td>
-                          <span style={{ fontWeight: 600 }}>{item.payeeName}</span>
-                        </td> */}
+                        <td>
+                          <Tooltip title={`${item.payeeName}${item.payeeBankName ? ` · ${item.payeeBankName}` : ''}`} arrow>
+                            <span style={{ fontWeight: 500 }}>{item.payeeName || '-'}</span>
+                          </Tooltip>
+                        </td>
                         {/* <td>
                           <Chip label={item.currencyCode} size='small' variant='outlined' />
                         </td> */}
@@ -795,7 +795,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.recipient')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeName || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{(selectedRecord as AdminTransferListItem).payeeName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.accountType')}：</Typography>
@@ -827,6 +827,69 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                           })
                         : '-'}
                     </Typography>
+                  </Box>
+                </Box>
+
+                {/* 收款人信息 */}
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                  {t('adminOtc.payeeInfo')}
+                </Typography>
+                <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeName')}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{(selectedRecord as AdminTransferListItem).payeeName || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAccountName')}：</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '13px', color: '#262626' }}>
+                        {(selectedRecord as AdminTransferListItem).payeeAccountName || '-'}
+                      </Typography>
+                      {((selectedRecord as AdminTransferListItem).payeeAccountName) && (
+                        <IconButton
+                          size='small'
+                          sx={{ width: 24, height: 24, p: 0 }}
+                          onClick={() => {
+                            navigator.clipboard.writeText((selectedRecord as AdminTransferListItem).payeeAccountName || '')
+                            toast.success(t('adminOtc.copied'))
+                          }}
+                        >
+                          <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAccountNo')}：</Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '13px', color: '#262626' }}>
+                        {(selectedRecord as AdminTransferListItem).payeeAccountNo || '-'}
+                      </Typography>
+                      {((selectedRecord as AdminTransferListItem).payeeAccountNo) && (
+                        <IconButton
+                          size='small'
+                          sx={{ width: 24, height: 24, p: 0 }}
+                          onClick={() => {
+                            navigator.clipboard.writeText((selectedRecord as AdminTransferListItem).payeeAccountNo || '')
+                            toast.success(t('adminOtc.copied'))
+                          }}
+                        >
+                          <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
+                        </IconButton>
+                      )}
+                    </Box>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeBankName')}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeBankName || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeSwiftCode')}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', fontFamily: 'monospace', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeSwiftCode?.trim() || '-'}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeBankCountry')}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeBankCountry || '-'}</Typography>
                   </Box>
                 </Box>
 

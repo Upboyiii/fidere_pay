@@ -146,6 +146,14 @@ const AdminDashboard = ({ mode }: { mode: Mode }) => {
       badgeColor: 'warning' as const
     },
     {
+      title: t('navigation.adminPayees') || '收款人列表',
+      description: t('navigation.adminPayees') || '查看平台收款人列表',
+      href: '/Adminconfiguration/payees',
+      icon: 'ri-user-search-line',
+      color: '#0ea5e9',
+      bgColor: 'rgba(14, 165, 233, 0.1)'
+    },
+    {
       title: t('navigation.adminFinancial') || '资金流水',
       description: t('navigation.adminFinancial') || '查看资金流水记录',
       href: '/Adminconfiguration/financial',

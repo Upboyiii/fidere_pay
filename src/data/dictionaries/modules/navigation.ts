@@ -119,6 +119,7 @@ export const navigation = {
     // 管理配置页面翻译
     adminConfiguration: 'Administrator Configuration',
     adminTransfer: 'Transfer Management',
+    adminPayees: 'Payee List',
     adminFinancial: 'Financial Records',
     adminRecharge: 'Recharge Management',
     adminCallbackAddress: 'Callback Address'
@@ -197,6 +198,7 @@ export const navigation = {
     // 管理配置页面翻译
     adminConfiguration: '管理员配置',
     adminTransfer: '转账管理',
+    adminPayees: '收款人列表',
     adminFinancial: '资金流水',
     adminRecharge: '充值管理',
     adminCallbackAddress: '回调地址'
@@ -275,6 +277,7 @@ export const navigation = {
     // 管理配置頁面翻譯
     adminConfiguration: '管理員配置',
     adminTransfer: '轉賬管理',
+    adminPayees: '收款人列表',
     adminFinancial: '資金流水',
     adminRecharge: '充值管理',
     adminCallbackAddress: '回調地址'
