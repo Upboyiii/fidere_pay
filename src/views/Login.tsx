@@ -664,25 +664,30 @@ const Login = ({ mode }: { mode: Mode }) => {
                         sx={{
                           width: 130,
                           height: 52,
+                          minWidth: 130,
+                          minHeight: 52,
                           borderRadius: '12px',
                           overflow: 'hidden',
                           border: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid #eef0f2',
                           cursor: 'pointer',
                           backgroundColor: isDarkMode ? 'rgba(255,255,255,0.05)' : '#fff',
                           flexShrink: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
                           '&:hover': { borderColor: 'primary.main' }
                         }}
                       >
                         {captchaLoading ? (
-                          <div className='w-full h-full flex items-center justify-center'>
-                            <CircularProgress size={20} />
-                          </div>
+                          <CircularProgress size={20} />
                         ) : captchaImg?.img ? (
-                          <img src={`${captchaImg?.img}`} alt='captcha' className='w-full h-full object-contain' />
+                          <img
+                            src={`${captchaImg?.img}`}
+                            alt='captcha'
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', objectPosition: 'center' }}
+                          />
                         ) : (
-                          <div className='w-full h-full flex items-center justify-center text-xs text-gray-400'>
-                            {t('auth.clickToRefresh')}
-                          </div>
+                          <span className='text-xs text-gray-400'>{t('auth.clickToRefresh')}</span>
                         )}
                       </Box>
                     </Stack>
