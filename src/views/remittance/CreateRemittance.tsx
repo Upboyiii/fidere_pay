@@ -770,7 +770,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                                 <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>{selectedRecipient.accountName}</Typography>
                                 <Chip
-                                  label={selectedRecipient.remitType === 2 ? t('remittance.personalAccount') : t('remittance.companyAccount')}
+                                  label={selectedRecipient.accountType === 1 ? t('remittance.companyAccount') : t('remittance.personalAccount')}
                                   size='small'
                                   variant='outlined'
                                   sx={{

@@ -825,7 +825,14 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                         size='small'
                         placeholder={t('remittance.firstNamePlaceholder')}
                         value={formData.firstName}
-                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                        onChange={(e) => {
+                          const fn = e.target.value
+                          setFormData({
+                            ...formData,
+                            firstName: fn,
+                            accountName: !isEdit && formData.accountType === 2 ? `${fn} ${formData.lastName}`.trim() : formData.accountName
+                          })
+                        }}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                       />
                     </Grid>
@@ -838,7 +845,14 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                         size='small'
                         placeholder={t('remittance.lastNamePlaceholder')}
                         value={formData.lastName}
-                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                        onChange={(e) => {
+                          const ln = e.target.value
+                          setFormData({
+                            ...formData,
+                            lastName: ln,
+                            accountName: !isEdit && formData.accountType === 2 ? `${formData.firstName} ${ln}`.trim() : formData.accountName
+                          })
+                        }}
                         sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                       />
                     </Grid>
@@ -854,8 +868,24 @@ const EditRecipient = ({ mode }: { mode: Mode }) => {
                     fullWidth
                     size='small'
                     placeholder={formData.accountType === 1 ? t('remittance.accountNamePlaceholderCompany') : t('remittance.accountNamePlaceholderPersonal')}
-                    value={formData.accountName}
-                    onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
+                    value={
+                      !isEdit && formData.accountType === 2
+                        ? `${formData.firstName} ${formData.lastName}`.trim() || formData.accountName
+                        : formData.accountName
+                    }
+                    onChange={
+                      !isEdit && formData.accountType === 2
+                        ? undefined
+                        : (e) => setFormData({ ...formData, accountName: e.target.value })
+                    }
+                    InputProps={
+                      !isEdit && formData.accountType === 2
+                        ? {
+                            readOnly: true,
+                            sx: { '& .MuiInputBase-input': { color: 'text.secondary', caretColor: 'transparent' } }
+                          }
+                        : undefined
+                    }
                     sx={{ '& .MuiOutlinedInput-root': { borderRadius: '12px' } }}
                   />
                   <Typography variant='caption' color='text.secondary' sx={{ mt: 1, display: 'block' }}>
