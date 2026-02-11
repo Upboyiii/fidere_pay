@@ -783,7 +783,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                                 />
                               </Box>
                               <Typography variant='caption' sx={{ color: 'text.secondary' }}>
-                                {selectedRecipient.swiftCode ? t('remittance.swiftRemittance') : t('remittance.localRemittance')}
+                                {selectedRecipient.remitType === 1 ? t('remittance.swiftRemittance') : t('remittance.localRemittance')}
                               </Typography>
                             </Box>
                           </Box>
@@ -801,7 +801,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
                                 <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
                                   {selectedRecipient.accountNo}
                                 </Typography>
-                                {selectedRecipient.swiftCode && (
+                                {selectedRecipient.remitType === 1 && selectedRecipient.swiftCode && (
                                   <Typography variant='body2' sx={{ color: 'text.secondary' }}>
                                     SWIFT: {selectedRecipient.swiftCode}
                                   </Typography>
