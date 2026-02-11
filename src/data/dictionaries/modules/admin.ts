@@ -270,6 +270,8 @@ export const admin = {
     configKeyPlaceholder: 'Please enter config key',
     systemBuiltInPlaceholder: 'System Built-in',
     addConfigButton: 'Add Config',
+    systemParameterConfigTitle: 'System Parameter Config',
+    systemParameterConfigDesc: 'Manage system parameters',
     // 文件管理相关
     loadAttachmentDataFailed: 'Failed to load attachment data',
     confirmDeleteAttachment: 'Confirm Delete',
@@ -572,6 +574,8 @@ export const admin = {
     configKeyPlaceholder: '请输入参数键名',
     systemBuiltInPlaceholder: '系统内置',
     addConfigButton: '新增参数',
+    systemParameterConfigTitle: '系统参数配置',
+    systemParameterConfigDesc: '管理系统参数',
     // 文件管理相关
     loadAttachmentDataFailed: '加载文件数据失败',
     confirmDeleteAttachment: '确认删除',
@@ -876,6 +880,8 @@ export const admin = {
     configKeyPlaceholder: '請輸入參數鍵名',
     systemBuiltInPlaceholder: '系統內置',
     addConfigButton: '新增參數',
+    systemParameterConfigTitle: '系統參數配置',
+    systemParameterConfigDesc: '管理系統參數',
     // 文件管理相關
     loadAttachmentDataFailed: '載入文件數據失敗',
     confirmDeleteAttachment: '確認刪除',

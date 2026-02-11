@@ -100,16 +100,6 @@ const verticalMenuData = (
   // 运营角色的硬编码菜单（作为后备）
   const operationHardcodedMenu: VerticalMenuDataType[] = [
     {
-      label: '概览',
-      icon: 'ri-home-smile-line',
-      href: '/operation/dashboard'
-    },
-    {
-      label: '客户',
-      icon: 'ri-user-line',
-      href: '/operation/clients'
-    },
-    {
       label: dictionary?.navigation?.assetManagement || '资产管理',
       icon: 'ri-wallet-line',
       children: [

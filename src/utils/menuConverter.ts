@@ -146,6 +146,9 @@ export const getMenuLabel = (node: MenuNode, dictionary?: Awaited<ReturnType<typ
       '字典管理': 'dictManagement',
       '字典数据管理': 'dictDataManagement',
       '参数管理': 'configManagement',
+      '系统参数配置': 'systemParameterConfig',
+      '系统参数设置': 'systemParameterSettings',
+      '参数配置': 'parameterConfig',
       '服务监控': 'serverMonitor',
       '登录日志': 'loginLog',
       '操作日志': 'operLog',
@@ -219,6 +222,15 @@ const ROUTE_MAPPING: Record<string, string> = {
   // 系统配置
   '/system/dict/type/list': '/admin/dictList',
   '/system/config/list': '/admin/configList',
+  '/api/v1/system/config/list': '/admin/System/parameter',
+  // 系统参数配置 - 兼容后端返回的不同路径格式
+  'System/parameter': '/admin/System/parameter',
+  '/System/parameter': '/admin/System/parameter',
+  'admin/System/parameter': '/admin/System/parameter',
+  // 系统参数设置、参数配置（后端可能返回的路径）
+  'system/parameter': '/admin/System/parameter',
+  'System/settings': '/admin/System/parameter',
+  'system/settings': '/admin/System/parameter',
   
   // 权限管理
   '/system/auth/menuList': '/admin/authMenu',
@@ -275,14 +287,26 @@ const mapBackendPathToFrontend = (backendPath: string | undefined): string => {
     return ROUTE_MAPPING[backendPath]
   }
   
+  // 尝试去除首尾空格后的匹配
+  const trimmedPath = backendPath.trim()
+  if (ROUTE_MAPPING[trimmedPath]) {
+    return ROUTE_MAPPING[trimmedPath]
+  }
+  
   // 处理带参数的路径，移除参数部分后匹配
   const pathWithoutParams = backendPath.split('/:')[0]
   if (ROUTE_MAPPING[pathWithoutParams]) {
     return ROUTE_MAPPING[pathWithoutParams]
   }
   
-  // 如果没有映射，返回原路径（可能需要后续处理）
-  return backendPath
+  // 如果路径是 System/parameter 或 system/parameter（忽略大小写），映射到正确的 admin 路由
+  const lowerPath = trimmedPath.toLowerCase()
+  if (lowerPath === 'system/parameter' || lowerPath === '/system/parameter') {
+    return '/admin/System/parameter'
+  }
+  
+  // 如果没有映射，确保路径以 / 开头后返回
+  return trimmedPath.startsWith('/') ? trimmedPath : `/${trimmedPath}`
 }
 
 /**
@@ -298,7 +322,7 @@ const HIDDEN_MENU_PATHS: string[] = [
   '/system/tools/gen', // 代码生成默认隐藏
   '/system/swagger', // API文档默认隐藏（如果需要显示可以移除）
   
-  // 运营相关路由（不需要显示）
+  // 以下路由不在左侧菜单栏展示
   '/operation/dashboard', // 概览
   '/operation/clients', // 客户
   '/operation/assets', // 资产中心

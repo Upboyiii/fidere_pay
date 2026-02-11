@@ -195,6 +195,10 @@ export interface FeeConfigListResponse {
 export const getFeeConfigList = (params?: FeeConfigListParams) =>
   clientRequest.get<FeeConfigListResponse>('/_api/v1/biz/fee-config/list', { params })
 
+/** 获取用户手续费配置详情，传 userId */
+export const getFeeConfig = (params: { userId: number }) =>
+  clientRequest.get<FeeConfigListItem>('/_api/v1/biz/fee-config/get', { params })
+
 // 8. 设置手续费配置
 export interface SetFeeConfigRequest {
   userId: number

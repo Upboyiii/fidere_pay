@@ -31,7 +31,7 @@ import {
   addUserApi,
   editUser
 } from '@server/admin'
-import { setFeeConfig } from '@server/otc-api'
+import { getFeeConfig, setFeeConfig } from '@server/otc-api'
 import FormControl from '@mui/material/FormControl'
 import InputLabel from '@mui/material/InputLabel'
 import Select from '@mui/material/Select'
@@ -272,18 +272,43 @@ export default function AuthUser() {
   }
 
   /**
-   * 配置手续费
+   * 配置手续费 - 先调接口获取用户手续费配置再打开弹窗
    */
-  const handleFeeConfig = useCallback((user: UserData) => {
-    setFeeConfigUser(user)
-    setFeeConfigData({
-      fixedFee: '',
-      ratioFee: '',
-      status: 1,
-      remark: ''
-    })
-    setFeeConfigDialogOpen(true)
-  }, [])
+  const handleFeeConfig = useCallback(
+    async (user: UserData) => {
+      const userId = Number(user.id ?? user.userId)
+      if (!userId || isNaN(userId)) {
+        toast.error(t('admin.loadConfigDataFailed'))
+        return
+      }
+      setFeeConfigUser(user)
+      try {
+        const res = await getFeeConfig({ userId })
+        const raw = (res as any)?.data
+        const detail = raw?.data ?? raw ?? res
+        if (detail && (detail.fixedFee != null || detail.ratioFee != null || detail.status != null)) {
+          setFeeConfigData({
+            fixedFee: detail.fixedFee != null ? String(detail.fixedFee) : '',
+            ratioFee: detail.ratioFee != null ? String(detail.ratioFee) : '',
+            status: detail.status ?? 1,
+            remark: detail.remark || ''
+          })
+        } else {
+          setFeeConfigData({
+            fixedFee: '',
+            ratioFee: '',
+            status: 1,
+            remark: ''
+          })
+        }
+        setFeeConfigDialogOpen(true)
+      } catch (error) {
+        console.error('获取手续费配置失败:', error)
+        toast.error(t('admin.loadConfigDataFailed'))
+      }
+    },
+    [t]
+  )
 
   /**
    * 确认配置手续费
