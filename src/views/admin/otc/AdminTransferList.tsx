@@ -27,12 +27,13 @@ import MenuItem from '@mui/material/MenuItem'
 import Tooltip from '@mui/material/Tooltip'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
+import CircularProgress from '@mui/material/CircularProgress'
 
 // Type Imports
 import type { Mode } from '@core/types'
 
 // API Imports
-import { getAdminTransferList, auditTransfer, completeTransfer, type AdminTransferListItem, type TransferDetailItem } from '@server/otc-api'
+import { getAdminTransferList, auditTransfer, completeTransfer, getTransferDetail, type AdminTransferListItem, type TransferDetailItem } from '@server/otc-api'
 import { toast } from 'react-toastify'
 
 // Style Imports
@@ -44,6 +45,19 @@ import { useTranslate } from '@/contexts/DictionaryContext'
 // Util Imports
 import { getDateLocaleFromLang } from '@/utils/routeUtils'
 import LocalizedDateField from '@/components/LocalizedDateField'
+
+// 获取 API 基础地址（用于文件下载）
+const getApiBaseUrl = () => {
+  // 优先使用环境变量（用于直接访问后端）
+  if (process.env.NEXT_PUBLIC_BACKEND_URL) {
+    return process.env.NEXT_PUBLIC_BACKEND_URL
+  }
+  // 根据当前环境判断
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://192.168.5.111:9009'
+  }
+  return 'https://server.fidere.xyz'
+}
 
 const AdminTransferList = ({ mode }: { mode: Mode }) => {
   const t = useTranslate()
@@ -80,6 +94,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
   })
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState<TransferDetailItem | null>(null)
+  const [detailLoading, setDetailLoading] = useState(false)
 
   const loadData = async (targetFilters?: typeof filters, targetPage?: number) => {
     setLoading(true)
@@ -115,14 +130,15 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
         startTime,
         endTime
       })
-      const list = res.data?.list || []
+      const responseData = res.data as any
+      const list = responseData?.list || []
       setData(list)
-      setTotal(res.data?.total || 0)
+      setTotal(responseData?.total || 0)
       
       // 计算统计数据
-      const totalTransfer = list.reduce((sum, item) => sum + item.transferAmount, 0)
-      const totalReceive = list.reduce((sum, item) => sum + item.receiveAmount, 0)
-      const totalFee = list.reduce((sum, item) => sum + item.feeAmount, 0)
+      const totalTransfer = list.reduce((sum: number, item: AdminTransferListItem) => sum + item.transferAmount, 0)
+      const totalReceive = list.reduce((sum: number, item: AdminTransferListItem) => sum + item.receiveAmount, 0)
+      const totalFee = list.reduce((sum: number, item: AdminTransferListItem) => sum + item.feeAmount, 0)
       setStatistics({ totalTransfer, totalReceive, totalFee })
     } catch (error) {
       console.error('加载数据失败:', error)
@@ -196,10 +212,28 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
   const pendingCount = data.filter(item => item.status === 0).length
   const processingCount = data.filter(item => item.status === 1).length
 
-  // 查看详情
-  const handleViewDetail = (item: AdminTransferListItem) => {
-    setSelectedRecord(item as unknown as TransferDetailItem)
+  // 查看详情：调用用户端接口 /api/v1/biz/user/transfer/detail 获取转账详情
+  const handleViewDetail = async (item: AdminTransferListItem) => {
     setDrawerOpen(true)
+    setDetailLoading(true)
+    setSelectedRecord(null)
+    try {
+      const res = await getTransferDetail({ applyNo: item.applyNo })
+      const detail = res.data?.data ?? res.data ?? res
+      // 合并列表项的 userName，因为详情接口可能不返回
+      setSelectedRecord({ ...(detail as TransferDetailItem), userName: item.userName })
+    } catch (error) {
+      console.error('获取转账详情失败:', error)
+      toast.error(t('adminOtc.loadDataFailed') || '加载详情失败')
+      setDrawerOpen(false)
+    } finally {
+      setDetailLoading(false)
+    }
+  }
+
+  const getRemitTypeLabel = (type: number) => {
+    // remitType: 1-SWIFT汇款 2-本地汇款（根据用户端 API）
+    return type === 2 ? 'SWIFT' : type === 1 ? t('adminOtc.localRemittance') || '本地汇款' : 'SWIFT'
   }
 
   const getStatusLabel = (status: number) => {
@@ -698,7 +732,14 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
           </Box>
 
           {/* 内容 */}
-          {selectedRecord && (
+          {detailLoading ? (
+            <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', px: 5, py: 8 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <CircularProgress size={48} />
+                <Typography variant='body2' color='text.secondary'>{t('adminOtc.loading') || '加载中...'}</Typography>
+              </Box>
+            </Box>
+          ) : selectedRecord ? (
             <>
               {/* 内容区域 */}
               <Box sx={{ flex: 1, overflowY: 'auto', px: 5, py: 4, bgcolor: '#fafafa' }}>
@@ -806,18 +847,36 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.recipient')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{(selectedRecord as AdminTransferListItem).payeeName || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{selectedRecord.payeeInfo?.accountName || selectedRecord.payeeInfo?.firstName + ' ' + selectedRecord.payeeInfo?.lastName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.accountType')}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.remittanceType') || '汇款类型'}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
-                      {selectedRecord.remitType === 1 ? t('adminOtc.personal') : selectedRecord.remitType === 2 ? t('adminOtc.company') : String(selectedRecord.remitType || '-')}
+                      {getRemitTypeLabel(selectedRecord.remitType || 2)}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.fee')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.feeAmount || 0} {selectedRecord.currencyCode}</Typography>
                   </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.fixedFee') || '固定手续费'}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>{selectedRecord.fixedFee || 0} {selectedRecord.currencyCode}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.ratioFee') || '比例手续费'}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>{selectedRecord.ratioFee || 0} {selectedRecord.currencyCode}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.purposeType') || '汇款目的'}：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.purposeType || '-'}</Typography>
+                  </Box>
+                  {selectedRecord.purposeDesc && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.purposeDesc') || '目的说明'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.purposeDesc}</Typography>
+                    </Box>
+                  )}
                   {selectedRecord.memo && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                       <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.transactionMemo')}：</Typography>
@@ -848,40 +907,22 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeName')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>{(selectedRecord as AdminTransferListItem).payeeName || '-'}</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAccountName')}：</Typography>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '13px', color: '#262626' }}>
-                        {(selectedRecord as AdminTransferListItem).payeeAccountName || '-'}
-                      </Typography>
-                      {((selectedRecord as AdminTransferListItem).payeeAccountName) && (
-                        <IconButton
-                          size='small'
-                          sx={{ width: 24, height: 24, p: 0 }}
-                          onClick={() => {
-                            navigator.clipboard.writeText((selectedRecord as AdminTransferListItem).payeeAccountName || '')
-                            toast.success(t('adminOtc.copied'))
-                          }}
-                        >
-                          <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
-                        </IconButton>
-                      )}
-                    </Box>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>
+                      {selectedRecord.payeeInfo?.accountName || (selectedRecord.payeeInfo?.firstName && selectedRecord.payeeInfo?.lastName ? `${selectedRecord.payeeInfo.firstName} ${selectedRecord.payeeInfo.lastName}` : '-')}
+                    </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAccountNo')}：</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '13px', color: '#262626' }}>
-                        {(selectedRecord as AdminTransferListItem).payeeAccountNo || '-'}
+                        {selectedRecord.payeeInfo?.accountNo || '-'}
                       </Typography>
-                      {((selectedRecord as AdminTransferListItem).payeeAccountNo) && (
+                      {selectedRecord.payeeInfo?.accountNo && (
                         <IconButton
                           size='small'
                           sx={{ width: 24, height: 24, p: 0 }}
                           onClick={() => {
-                            navigator.clipboard.writeText((selectedRecord as AdminTransferListItem).payeeAccountNo || '')
+                            navigator.clipboard.writeText(selectedRecord.payeeInfo?.accountNo || '')
                             toast.success(t('adminOtc.copied'))
                           }}
                         >
@@ -892,16 +933,36 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeBankName')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeBankName || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo?.bankName || '-'}</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeSwiftCode')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', fontFamily: 'monospace', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeSwiftCode?.trim() || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', fontFamily: 'monospace', color: '#262626' }}>{selectedRecord.payeeInfo?.swiftCode?.trim() || '-'}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeBankCountry')}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{(selectedRecord as AdminTransferListItem).payeeBankCountry || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo?.bankCountry || '-'}</Typography>
                   </Box>
+                  {selectedRecord.payeeInfo?.email && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeEmail') || '邮箱'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.email}</Typography>
+                    </Box>
+                  )}
+                  {selectedRecord.payeeInfo?.phone && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeePhone') || '电话'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.phone}</Typography>
+                    </Box>
+                  )}
+                  {selectedRecord.payeeInfo?.address && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAddress') || '地址'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>
+                        {[selectedRecord.payeeInfo.address, selectedRecord.payeeInfo.city, selectedRecord.payeeInfo.state, selectedRecord.payeeInfo.country].filter(Boolean).join(', ')}
+                      </Typography>
+                    </Box>
+                  )}
                 </Box>
 
                 {/* 审核信息 (仅审核后显示) */}
@@ -932,6 +993,58 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     </Box>
                   </>
                 )}
+
+                {/* 交易材料 */}
+                <Box sx={{ mb: 4 }}>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                    {t('adminOtc.transactionMaterials') || '交易材料'}
+                  </Typography>
+                  <Box sx={{ bgcolor: '#fff', borderRadius: '8px', p: 3, mb: 2 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
+                        {t('adminOtc.transactionVoucher') || '交易凭证'}
+                      </Typography>
+                      <Button
+                        variant='contained'
+                        size='small'
+                        startIcon={<i className='ri-download-line' />}
+                        disabled={!selectedRecord.transactionMaterial}
+                        onClick={() => {
+                          if (selectedRecord.transactionMaterial) {
+                            const baseUrl = getApiBaseUrl()
+                            window.open(`${baseUrl}/${selectedRecord.transactionMaterial}`, '_blank')
+                          }
+                        }}
+                        sx={{ 
+                          bgcolor: '#1890ff',
+                          color: '#fff',
+                          borderRadius: '6px',
+                          px: 3,
+                          py: 1,
+                          fontSize: '13px',
+                          fontWeight: 500,
+                          textTransform: 'none',
+                          boxShadow: 'none',
+                          '&:hover': {
+                            bgcolor: '#40a9ff',
+                            boxShadow: 'none'
+                          },
+                          '&:disabled': {
+                            bgcolor: '#f5f5f5',
+                            color: '#bfbfbf'
+                          }
+                        }}
+                      >
+                        {t('adminOtc.downloadMaterial') || '下载材料'}
+                      </Button>
+                    </Box>
+                  </Box>
+                  {!selectedRecord.transactionMaterial && (
+                    <Typography variant='caption' sx={{ fontSize: '12px', color: '#8c8c8c', display: 'block', pl: 1 }}>
+                      {t('adminOtc.noMaterial') || '暂无交易材料'}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
 
               {/* 底部按钮 */}
@@ -1012,7 +1125,7 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                 )} */}
               </Box>
             </>
-          )}
+          ) : null}
         </Box>
       </Drawer>
     </Grid>

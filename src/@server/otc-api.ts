@@ -867,11 +867,36 @@ export interface GetTransferDetailParams {
   applyNo: string
 }
 
+export interface PayeeInfo {
+  accountType?: number
+  firstName?: string
+  lastName?: string
+  remitType?: number
+  country?: string
+  countryCode?: string
+  state?: string
+  city?: string
+  address?: string
+  postalCode?: string
+  phone?: string
+  email?: string
+  accountName?: string
+  accountNo?: string
+  swiftCode?: string
+  bankName?: string
+  bankCountry?: string
+  bankCountryCode?: string
+  bankState?: string
+  bankCity?: string
+  bankAddress?: string
+}
+
 export interface TransferDetailItem {
   id: number
   applyNo: string
   userId: number
   payeeId: number
+  userName?: string
   currencyCode: string
   receiveCurrencyCode: string
   transferAmount: number
@@ -893,6 +918,7 @@ export interface TransferDetailItem {
   receiptUrl?: string
   createTime: number
   updateTime: number
+  payeeInfo?: PayeeInfo
   // 兼容旧字段
   createdAt?: number
   updatedAt?: number

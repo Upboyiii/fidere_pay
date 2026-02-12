@@ -179,7 +179,20 @@ export const adminOtc = {
     enterValidAmount: 'Please enter a valid amount',
     adjustSuccess: 'Adjust successful',
     adjustFailed: 'Adjust failed',
-    adjustAsset: 'Adjust Asset'
+    adjustAsset: 'Adjust Asset',
+    remittanceType: 'Remittance Type',
+    localRemittance: 'Local Remittance',
+    fixedFee: 'Fixed Fee',
+    ratioFee: 'Ratio Fee',
+    purposeType: 'Purpose Type',
+    purposeDesc: 'Purpose Description',
+    transactionMaterials: 'Transaction Materials',
+    transactionVoucher: 'Transaction Voucher',
+    downloadMaterial: 'Download Material',
+    noMaterial: 'No material available',
+    payeeEmail: 'Email',
+    payeePhone: 'Phone',
+    payeeAddress: 'Address'
   },
   zh: {
     transferManagement: '转账管理',
@@ -357,7 +370,20 @@ export const adminOtc = {
     enterValidAmount: '请输入有效的调整金额',
     adjustSuccess: '资产调整成功',
     adjustFailed: '资产调整失败',
-    adjustAsset: '调整资产'
+    adjustAsset: '调整资产',
+    remittanceType: '汇款类型',
+    localRemittance: '本地汇款',
+    fixedFee: '固定手续费',
+    ratioFee: '比例手续费',
+    purposeType: '汇款目的',
+    purposeDesc: '目的说明',
+    transactionMaterials: '交易材料',
+    transactionVoucher: '交易凭证',
+    downloadMaterial: '下载材料',
+    noMaterial: '暂无交易材料',
+    payeeEmail: '邮箱',
+    payeePhone: '电话',
+    payeeAddress: '地址'
   },
   'zh-Hant': {
     transferManagement: '轉賬管理',
@@ -534,6 +560,19 @@ export const adminOtc = {
     enterValidAmount: '請輸入有效的調整金額',
     adjustSuccess: '資產調整成功',
     adjustFailed: '資產調整失敗',
-    adjustAsset: '調整資產'
+    adjustAsset: '調整資產',
+    remittanceType: '匯款類型',
+    localRemittance: '本地匯款',
+    fixedFee: '固定手續費',
+    ratioFee: '比例手續費',
+    purposeType: '匯款目的',
+    purposeDesc: '目的說明',
+    transactionMaterials: '交易材料',
+    transactionVoucher: '交易憑證',
+    downloadMaterial: '下載材料',
+    noMaterial: '暫無交易材料',
+    payeeEmail: '郵箱',
+    payeePhone: '電話',
+    payeeAddress: '地址'
   }
 }

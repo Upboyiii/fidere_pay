@@ -362,7 +362,7 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.transactionType')}</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.currency')}</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.amount')}</th>
-                    <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.remark')}</th>
+                    {/* <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.remark')}</th> */}
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.status')}</th>
                     <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>{t('assets.createTime')}</th>
                     {/* <th style={{ padding: '16px 24px', color: '#64748b', fontWeight: 600 }}>操作</th> */}
@@ -414,11 +414,11 @@ const TransactionHistory = ({ mode }: { mode: Mode }) => {
                             {tx.direction === 1 ? '+' : '-'}{Math.abs(tx.changeAmount)}
                           </Typography>
                         </td>
-                        <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
+                        {/* <td style={{ padding: '16px 24px', maxWidth: '200px' }}>
                           <Typography variant='body2' color='text.secondary' sx={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {tx.remark || '-'}
                           </Typography>
-                        </td>
+                        </td> */}
                         <td style={{ padding: '16px 24px' }}>
                           <Chip 
                             label={t('assets.success')} 
