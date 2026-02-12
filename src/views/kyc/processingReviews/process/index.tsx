@@ -14,7 +14,7 @@ import BasicInfoTab from '../../userManagement/userManagementDetailPage/componen
 import { getCareerList } from '@server/pages-api'
 import { getReviewDetail, approveReview, rejectReview } from '@server/kycDashboard'
 import { toast } from 'react-toastify'
-import { editUserManagement } from '@/@server/userManagementTable'
+import { editUserManagement } from '@server/userManagementTable'
 import { getLocalizedUrl } from '@/utils/i18n'
 import { useTranslate } from '@/contexts/DictionaryContext'
 /**

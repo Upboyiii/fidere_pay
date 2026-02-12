@@ -25,7 +25,7 @@ import { formatDate } from 'date-fns/format'
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 import TableFilters from './TableFilters'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 // Util Imports
 import { getInitials } from '@/utils/getInitials'
 import { useTranslate } from '@/contexts/DictionaryContext'

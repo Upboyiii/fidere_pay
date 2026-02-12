@@ -204,7 +204,7 @@ export const assets = {
     transactionsTitle: '交易流水',
     transactionsDescription: '查看交易流水记录'
   },
-  'zh-Hant': {
+  zhTW: {
     welcomeTitle: '歡迎使用 Fidere Pay',
     accountInfo: '賬戶信息',
     totalAssets: '總資產',

@@ -118,7 +118,7 @@ export const development = {
     getNewSecretFailed: '获取新密钥失败',
     enterApiName: '请输入API名称'
   },
-  'zh-Hant': {
+  zhTW: {
     title: '開發配置',
     description: '管理您的API Key，用於系統集成和接口調用',
     apiKeyList: 'API Key 列表',

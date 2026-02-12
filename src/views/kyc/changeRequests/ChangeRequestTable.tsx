@@ -21,7 +21,7 @@ import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import { styled } from '@mui/material/styles'
 import TablePagination from '@mui/material/TablePagination'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 // Third-party Imports
 import classnames from 'classnames'
 import { rankItem } from '@tanstack/match-sorter-utils'

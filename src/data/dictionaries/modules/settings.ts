@@ -138,7 +138,7 @@ export const settings = {
     newPasswordMinLength: '新密码长度至少6位',
     newPasswordsNotMatch: '两次输入的密码不一致'
   },
-  'zh-Hant': {
+  zhTW: {
     title: '安全設置',
     description: '管理您的賬戶安全設置，保護您的資金安全',
     // Google Authenticator

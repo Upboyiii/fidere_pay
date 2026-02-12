@@ -21,7 +21,7 @@ import Grid from '@mui/material/Grid2'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import type { RankingInfo } from '@tanstack/match-sorter-utils'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 
 import Box from '@mui/material/Box'
 

@@ -33,7 +33,8 @@ export const common = {
     pass: 'Pass',
     status: 'Status',
     createTime: 'Create Time',
-    unknown: 'Unknown'
+    unknown: 'Unknown',
+    clickToCopy: 'Click to copy'
   },
   zh: {
     search: '搜索',
@@ -65,7 +66,8 @@ export const common = {
     pass: '通过',
     status: '状态',
     createTime: '创建时间',
-    unknown: '未知'
+    unknown: '未知',
+    clickToCopy: '点击复制'
   },
   zhTW: {
     search: '搜尋',
@@ -97,6 +99,7 @@ export const common = {
     pass: '通過',
     status: '狀態',
     createTime: '創建時間',
-    unknown: '未知'
+    unknown: '未知',
+    clickToCopy: '點擊複製'
   }
 } as const

@@ -16,7 +16,7 @@ import { createColumnHelper } from '@tanstack/react-table'
 // Component Imports
 import CustomAvatar from '@core/components/mui/Avatar'
 import TableComponent, { TableInstance } from '@/components/table'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 
 // Icon Imports
 import { Eye, Clock, Users, FileText } from 'lucide-react'

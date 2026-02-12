@@ -22,7 +22,7 @@ import { getUserManagementTable } from '@server/userManagementTable'
 // Component Imports
 import TabFilters, { SearchData } from '@components/table/tableFilters'
 import CustomAvatar from '@core/components/mui/Avatar'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 import TableComponent, { TableInstance } from '@components/table'
 import { getInitials } from '@/utils/getInitials'
 import { useTranslate } from '@/contexts/DictionaryContext'

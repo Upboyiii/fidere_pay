@@ -385,7 +385,7 @@ export const adminOtc = {
     payeePhone: '电话',
     payeeAddress: '地址'
   },
-  'zh-Hant': {
+  zhTW: {
     transferManagement: '轉賬管理',
     transferTotal: '轉賬總額',
     receiveTotal: '接收總額',

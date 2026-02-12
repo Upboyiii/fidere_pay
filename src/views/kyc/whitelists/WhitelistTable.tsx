@@ -23,7 +23,7 @@ import type { ColumnDef, FilterFn } from '@tanstack/react-table'
 import CustomAvatar from '@core/components/mui/Avatar'
 import TableFilters from './TableFilters'
 import CopyButton from '@/components/options/CopyButton'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 
 // Util Imports
 import { getInitials } from '@/utils/getInitials'

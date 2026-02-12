@@ -551,7 +551,7 @@ export const remittance = {
     other: '其他',
     addressCharCount: '{count}/120'
   },
-  'zh-Hant': {
+  zhTW: {
     createRemittance: '發起全球匯款',
     createRemittanceDesc: '安全、快捷地向全球各地發送資金',
     stepAmount: '匯款金額',

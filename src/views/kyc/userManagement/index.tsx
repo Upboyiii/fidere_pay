@@ -18,7 +18,7 @@ import { getUserManagementTable, updateMemberStatus } from '@server/userManageme
 // Component Imports
 import TableFilters from './TableFilters'
 import CustomAvatar from '@core/components/mui/Avatar'
-import RouterLinkSkip from '@/@menu/components/RouterLinkSkip'
+import RouterLinkSkip from '@menu/components/RouterLinkSkip'
 import TableComponent, { TableInstance } from '@components/table'
 import Grid from '@mui/material/Grid2'
 import { getInitials } from '@/utils/getInitials'

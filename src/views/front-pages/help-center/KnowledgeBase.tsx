@@ -11,7 +11,7 @@ import Grid from '@mui/material/Grid2'
 import classnames from 'classnames'
 
 // Component Imports
-import CustomAvatar from '@/@core/components/mui/Avatar'
+import CustomAvatar from '@core/components/mui/Avatar'
 import DirectionalIcon from '@components/DirectionalIcon'
 
 // Styles Imports
