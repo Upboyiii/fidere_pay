@@ -1,3 +1,5 @@
+'use client'
+
 import AuthUser from '@/views/admin/authUser'
 
 export default function AuthUserPage() {
