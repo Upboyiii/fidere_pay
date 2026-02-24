@@ -87,7 +87,7 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
   const [fee, setFee] = useState(0)
   const [fixedFee, setFixedFee] = useState(0) // 固定费用
   const [feeRate, setFeeRate] = useState(0) // 收费比例（百分比）
-  const [purposeType, setPurposeType] = useState('FAMILY_SUPPORT')
+  const [purposeType, setPurposeType] = useState('')
   const [purposeDesc, setPurposeDesc] = useState('')
   const [memo, setMemo] = useState('')
   // const [payPassword, setPayPassword] = useState('') // 已注释：去掉支付密码验证，只需要Google验证
@@ -327,8 +327,8 @@ const CreateRemittance = ({ mode }: { mode: Mode }) => {
         receiveCurrencyCode: receiveCurrency,
         transferAmount: parseFloat(payAmount),
         exchangeRate,
-        purposeType,
-        purposeDesc: purposeDesc || undefined,
+        purposeType: selectedRecipient?.purpose || purposeType || '',
+        purposeDesc: selectedRecipient?.purposeDesc || purposeDesc || undefined,
         memo: memo || undefined,
         transactionMaterial: uploadedFile?.path || undefined,
         // payPassword, // 已注释：去掉支付密码验证，只需要Google验证

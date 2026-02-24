@@ -682,7 +682,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     <i className='ri-arrow-right-line' style={{ color: 'white', fontSize: '24px' }} />
                   </Box>
                   <Typography variant='caption' sx={{ fontSize: '11px', color: '#8c8c8c', textAlign: 'center', lineHeight: 1.3 }}>
-                    {t('remittance.exchangeRate')}<br />{selectedRecord.exchangeRate.toFixed(4)}
+                    {t('remittance.exchangeRate')}<br />{selectedRecord.exchangeRate?.toFixed(4) || '-'}
                   </Typography>
                 </Box>
 
@@ -698,7 +698,7 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
 
               {/* 基本信息 */}
               <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                基本信息
+                {t('remittance.basicInfo')}
               </Typography>
               <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
@@ -745,66 +745,93 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.purposeDesc}</Typography>
                   </Box>
                 )}
-                {selectedRecord.memo && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>交易备注：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.memo}</Typography>
-                  </Box>
-                )}
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>更新时间：</Typography>
                   <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{formatTimestamp(selectedRecord.updateTime || selectedRecord.updatedAt)}</Typography>
                 </Box>
               </Box>
 
-              {/* 收款人信息 */}
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                {t('remittance.payeeInfo')}
+              {/* 1. 收款人地址信息 */}
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                {t('remittance.payeeAddressInfo')}
               </Typography>
-              <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.payeeNameLabel')}：</Typography>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontWeight: 600 }}>{selectedRecord.payeeInfo?.accountName || '-'}</Typography>
+              <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('remittance.payeeNameLabel')}：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', fontWeight: 600 }}>
+                    {(selectedRecord as any).payeeName || (selectedRecord as any).payeeAccountName || selectedRecord.payeeInfo?.accountName || (selectedRecord.payeeInfo?.firstName && selectedRecord.payeeInfo?.lastName ? `${selectedRecord.payeeInfo.firstName} ${selectedRecord.payeeInfo.lastName}` : `收款人 #${selectedRecord.payeeId}`)}
+                  </Typography>
+                </Box>
+                {selectedRecord.payeeInfo?.email && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>邮箱：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.email}</Typography>
+                  </Box>
+                )}
+                {selectedRecord.payeeInfo?.phone && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>电话：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.phone}</Typography>
+                  </Box>
+                )}
+                {(selectedRecord.payeeInfo?.address || selectedRecord.payeeInfo?.city || selectedRecord.payeeInfo?.state || selectedRecord.payeeInfo?.country) && (
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>地址：</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>
+                      {[selectedRecord.payeeInfo.address, selectedRecord.payeeInfo.city, selectedRecord.payeeInfo.state, selectedRecord.payeeInfo.country].filter(Boolean).join(', ')}
+                    </Typography>
+                  </Box>
+                )}
+                {!selectedRecord.payeeInfo?.email && !selectedRecord.payeeInfo?.phone && !selectedRecord.payeeInfo?.address && !selectedRecord.payeeInfo?.city && !selectedRecord.payeeInfo?.state && !selectedRecord.payeeInfo?.country && (
+                  <Box sx={{ px: 3, py: 2.5 }}>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>-</Typography>
+                  </Box>
+                )}
+              </Box>
+
+              {/* 2. 收款银行信息 */}
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                {t('remittance.payeeBankInfo')}
+              </Typography>
+              <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('remittance.bankAccount')}：</Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '13px', color: '#262626' }}>
+                      {selectedRecord.payeeInfo?.accountNo || (selectedRecord as any).payeeAccountNo || '-'}
+                    </Typography>
+                    {(selectedRecord.payeeInfo?.accountNo || (selectedRecord as any).payeeAccountNo) && (
+                      <IconButton
+                        size='small'
+                        sx={{ width: 24, height: 24, p: 0 }}
+                        onClick={() => {
+                          navigator.clipboard.writeText(selectedRecord.payeeInfo?.accountNo || (selectedRecord as any).payeeAccountNo || '')
+                          toast.success(t('remittance.copied'))
+                        }}
+                      >
+                        <i className='ri-file-copy-line' style={{ fontSize: '14px', color: '#8c8c8c' }} />
+                      </IconButton>
+                    )}
+                  </Box>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>银行名称：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo?.bankName || '-'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('remittance.swiftCode')}：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', fontFamily: 'monospace', color: '#262626' }}>{selectedRecord.payeeInfo?.swiftCode?.trim() || (selectedRecord as any).payeeSwiftCode || '-'}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.payeeId')}：</Typography>
-                  <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', fontFamily: 'monospace' }}>{selectedRecord.payeeId}</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>银行国家：</Typography>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo?.bankCountry || '-'}</Typography>
                 </Box>
               </Box>
 
-              {/* 审核信息 (仅审核后显示) */}
-              {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
-                <>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                    {t('remittance.auditInfo')}
-                  </Typography>
-                  <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
-                    {selectedRecord.auditRemark && (
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditRemark')}：</Typography>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
-                      </Box>
-                    )}
-                    {(selectedRecord.auditTime ?? 0) > 0 && (
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditTime')}：</Typography>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
-                      </Box>
-                    )}
-                    {(selectedRecord.completeTime ?? 0) > 0 && (
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.completeTime')}：</Typography>
-                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </>
-              )}
-
-              {/* 交易材料 */}
+              {/* 3. 上传附件 */}
               <Box sx={{ mb: 4 }}>
                 <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                  {t('remittance.transactionMaterials')}
+                  {t('remittance.uploadAttachments')}
                 </Typography>
                 <Box sx={{ bgcolor: '#fff', borderRadius: '8px', p: 3, mb: 2 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -850,6 +877,45 @@ const RemittanceRecords = ({ mode }: { mode: Mode }) => {
                   </Typography>
                 )}
               </Box>
+
+              {/* 4. 备注 */}
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                {t('remittance.memo')}
+              </Typography>
+              <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', p: 3 }}>
+                <Typography variant='body2' sx={{ fontSize: '14px', color: selectedRecord.memo ? '#262626' : '#8c8c8c' }}>
+                  {selectedRecord.memo || '-'}
+                </Typography>
+              </Box>
+
+              {/* 审核信息 (仅审核后显示) */}
+              {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
+                <>
+                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
+                    {t('remittance.auditInfo')}
+                  </Typography>
+                  <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
+                    {selectedRecord.auditRemark && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditRemark')}：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
+                      </Box>
+                    )}
+                    {(selectedRecord.auditTime ?? 0) > 0 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.auditTime')}：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
+                      </Box>
+                    )}
+                    {(selectedRecord.completeTime ?? 0) > 0 && (
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('remittance.completeTime')}：</Typography>
+                        <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </>
+              )}
 
               {/* 回执单 */}
               <Box>

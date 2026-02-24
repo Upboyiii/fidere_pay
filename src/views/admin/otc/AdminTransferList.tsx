@@ -869,18 +869,14 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.purposeType') || '汇款目的'}：</Typography>
-                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.purposeType || '-'}</Typography>
+                    <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>
+                      {selectedRecord.purposeType === 'FAMILY_SUPPORT' ? '' : (selectedRecord.purposeType || '-')}
+                    </Typography>
                   </Box>
                   {selectedRecord.purposeDesc && (
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                       <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.purposeDesc') || '目的说明'}：</Typography>
                       <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.purposeDesc}</Typography>
-                    </Box>
-                  )}
-                  {selectedRecord.memo && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.transactionMemo')}：</Typography>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.memo}</Typography>
                     </Box>
                   )}
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
@@ -900,9 +896,9 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                   </Box>
                 </Box>
 
-                {/* 收款人信息 */}
+                {/* 1. 收款人地址信息 */}
                 <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                  {t('adminOtc.payeeInfo')}
+                  {t('adminOtc.payeeAddressInfo')}
                 </Typography>
                 <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
@@ -911,6 +907,38 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                       {selectedRecord.payeeInfo?.accountName || (selectedRecord.payeeInfo?.firstName && selectedRecord.payeeInfo?.lastName ? `${selectedRecord.payeeInfo.firstName} ${selectedRecord.payeeInfo.lastName}` : '-')}
                     </Typography>
                   </Box>
+                  {selectedRecord.payeeInfo?.email && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeEmail') || '邮箱'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.email}</Typography>
+                    </Box>
+                  )}
+                  {selectedRecord.payeeInfo?.phone && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeePhone') || '电话'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.phone}</Typography>
+                    </Box>
+                  )}
+                  {(selectedRecord.payeeInfo?.address || selectedRecord.payeeInfo?.city || selectedRecord.payeeInfo?.state || selectedRecord.payeeInfo?.country) && (
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAddress') || '地址'}：</Typography>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>
+                        {[selectedRecord.payeeInfo.address, selectedRecord.payeeInfo.city, selectedRecord.payeeInfo.state, selectedRecord.payeeInfo.country].filter(Boolean).join(', ')}
+                      </Typography>
+                    </Box>
+                  )}
+                  {!selectedRecord.payeeInfo?.email && !selectedRecord.payeeInfo?.phone && !selectedRecord.payeeInfo?.address && !selectedRecord.payeeInfo?.city && !selectedRecord.payeeInfo?.state && !selectedRecord.payeeInfo?.country && (
+                    <Box sx={{ px: 3, py: 2.5 }}>
+                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#8c8c8c' }}>-</Typography>
+                    </Box>
+                  )}
+                </Box>
+
+                {/* 2. 收款银行信息 */}
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                  {t('adminOtc.payeeBankInfo')}
+                </Typography>
+                <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', overflow: 'hidden' }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAccountNo')}：</Typography>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -939,65 +967,16 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeSwiftCode')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', fontFamily: 'monospace', color: '#262626' }}>{selectedRecord.payeeInfo?.swiftCode?.trim() || '-'}</Typography>
                   </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeBankCountry')}：</Typography>
                     <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo?.bankCountry || '-'}</Typography>
                   </Box>
-                  {selectedRecord.payeeInfo?.email && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeEmail') || '邮箱'}：</Typography>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.email}</Typography>
-                    </Box>
-                  )}
-                  {selectedRecord.payeeInfo?.phone && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid #f0f0f0' }}>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeePhone') || '电话'}：</Typography>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626' }}>{selectedRecord.payeeInfo.phone}</Typography>
-                    </Box>
-                  )}
-                  {selectedRecord.payeeInfo?.address && (
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#595959' }}>{t('adminOtc.payeeAddress') || '地址'}：</Typography>
-                      <Typography variant='body2' sx={{ fontSize: '14px', color: '#262626', maxWidth: '60%', textAlign: 'right' }}>
-                        {[selectedRecord.payeeInfo.address, selectedRecord.payeeInfo.city, selectedRecord.payeeInfo.state, selectedRecord.payeeInfo.country].filter(Boolean).join(', ')}
-                      </Typography>
-                    </Box>
-                  )}
                 </Box>
 
-                {/* 审核信息 (仅审核后显示) */}
-                {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
-                  <>
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
-                      {t('adminOtc.auditInfo')}
-                    </Typography>
-                    <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
-                      {selectedRecord.auditRemark && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditRemarkLabel')}</Typography>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
-                        </Box>
-                      )}
-                      {(selectedRecord.auditTime ?? 0) > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditTime')}</Typography>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
-                        </Box>
-                      )}
-                      {(selectedRecord.completeTime ?? 0) > 0 && (
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.completeTime')}</Typography>
-                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </>
-                )}
-
-                {/* 交易材料 */}
+                {/* 3. 上传附件 */}
                 <Box sx={{ mb: 4 }}>
                   <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
-                    {t('adminOtc.transactionMaterials') || '交易材料'}
+                    {t('adminOtc.uploadAttachments')}
                   </Typography>
                   <Box sx={{ bgcolor: '#fff', borderRadius: '8px', p: 3, mb: 2 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1045,6 +1024,45 @@ const AdminTransferList = ({ mode }: { mode: Mode }) => {
                     </Typography>
                   )}
                 </Box>
+
+                {/* 4. 备注 */}
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: '#000' }}>
+                  {t('adminOtc.remark')}
+                </Typography>
+                <Box sx={{ mb: 4, bgcolor: '#fff', borderRadius: '8px', p: 3 }}>
+                  <Typography variant='body2' sx={{ fontSize: '14px', color: selectedRecord.memo ? '#262626' : '#8c8c8c' }}>
+                    {selectedRecord.memo || (t('adminOtc.noRemark') || '无备注')}
+                  </Typography>
+                </Box>
+
+                {/* 审核信息 (仅审核后显示) */}
+                {!!(selectedRecord.auditRemark || (selectedRecord.auditTime ?? 0) > 0 || (selectedRecord.completeTime ?? 0) > 0) && (
+                  <>
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2.5, fontSize: '14px', color: 'text.primary' }}>
+                      {t('adminOtc.auditInfo')}
+                    </Typography>
+                    <Box sx={{ mb: 4, bgcolor: 'background.paper', borderRadius: '8px', overflow: 'hidden' }}>
+                      {selectedRecord.auditRemark && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditRemarkLabel')}</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary', maxWidth: '60%', textAlign: 'right' }}>{selectedRecord.auditRemark}</Typography>
+                        </Box>
+                      )}
+                      {(selectedRecord.auditTime ?? 0) > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5, borderBottom: (selectedRecord.completeTime ?? 0) > 0 ? '1px solid' : 'none', borderColor: 'divider' }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.auditTime')}</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.auditTime)}</Typography>
+                        </Box>
+                      )}
+                      {(selectedRecord.completeTime ?? 0) > 0 && (
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2.5 }}>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.secondary' }}>{t('adminOtc.completeTime')}</Typography>
+                          <Typography variant='body2' sx={{ fontSize: '14px', color: 'text.primary' }}>{formatTimestamp(selectedRecord.completeTime)}</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  </>
+                )}
               </Box>
 
               {/* 底部按钮 */}
