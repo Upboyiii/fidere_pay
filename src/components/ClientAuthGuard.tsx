@@ -42,6 +42,8 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
   const isClearingRef = useRef(false)
   const redirectTriggeredRef = useRef(false)
   const loginPath = `/${locale}/login`
+  const loginPaths = [`/${locale}/login`, `/${locale}/managelogin`, `/${locale}/userlogin`]
+  const isLoginPage = loginPaths.some(p => pathname === p)
 
   // 检查是否已经触发过重定向（使用 sessionStorage）
   const checkRedirectFlag = () => {
@@ -166,7 +168,7 @@ const ClientAuthGuard = memo(({ children, locale }: Props) => {
     if (!isInitialized) return
 
     // 如果已经在登录页，不需要重定向
-    if (pathname === loginPath) {
+    if (isLoginPage) {
       // 如果已经在登录页且有 token，清除重定向标记
       if (localAuthState === 'authenticated') {
         clearRedirectFlag()

@@ -74,7 +74,7 @@ export const hasRoutePermission = (pathname: string, menuList: any[]): boolean =
   const routePath = removeLocalePrefix(pathname)
 
   // 公开路径，无需权限检查
-  const publicPaths = ['/login', '/register', '/not-authorized', '/not-found']
+  const publicPaths = ['/login', '/managelogin', '/userlogin', '/register', '/not-authorized', '/not-found']
   if (publicPaths.some(path => routePath === path || routePath.startsWith(path))) {
     return true
   }

@@ -32,13 +32,10 @@ export const useThemeByRole = () => {
             navbarContentWidth: operationThemeConfig.navbar.contentWidth,
             contentWidth: operationThemeConfig.contentWidth,
             footerContentWidth: operationThemeConfig.footer.contentWidth,
-            // mode: operationThemeConfig.mode,
             skin: operationThemeConfig.skin,
             semiDark: operationThemeConfig.semiDark
           },
-          {
-            updateCookie: true // 更新Cookie以持久化设置
-          }
+          { updateCookie: true }
         )
       } else {
         // 对于非operation角色，只更新布局相关设置，保留primaryColor
@@ -47,11 +44,9 @@ export const useThemeByRole = () => {
           navbarContentWidth: themeConfig.navbar.contentWidth,
           contentWidth: themeConfig.contentWidth,
           footerContentWidth: themeConfig.footer.contentWidth,
-          // mode: themeConfig.mode,
           skin: themeConfig.skin,
           semiDark: themeConfig.semiDark
         })
-        // 可以在这里添加其他角色的主题配置
       }
     },
     [updateSettings]

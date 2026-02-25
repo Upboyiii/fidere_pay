@@ -24,6 +24,7 @@ import { useImageVariant } from '@core/hooks/useImageVariant'
 // Util Imports
 import { getFirstMenuRoute } from '@configs/themeConfig'
 import { getLocalizedUrl } from '@/utils/i18n'
+import { getLoginPathBySource } from '@/utils/loginSource'
 
 const LOGOUT_FLAG = 'logout_in_progress'
 
@@ -77,9 +78,14 @@ const NotFound = ({ mode }: { mode: Mode }) => {
           src='/images/illustrations/characters/5.png'
           className='object-cover bs-[400px] md:bs-[450px] lg:bs-[500px]'
         />
-        <Button href={homeUrl} component={Link} variant='contained'>
-          Back to Home
-        </Button>
+        <div className='flex gap-4 justify-center flex-wrap'>
+          <Button href={homeUrl} component={Link} variant='contained'>
+            Back to Home
+          </Button>
+          <Button href={getLocalizedUrl(getLoginPathBySource(), locale as Locale)} component={Link} variant='outlined'>
+            Back to Login
+          </Button>
+        </div>
       </div>
       <Illustrations maskImg={{ src: miscBackground }} />
     </div>

@@ -23,7 +23,9 @@ import Button from '@mui/material/Button'
 // Third Party Imports
 import PerfectScrollbar from 'react-perfect-scrollbar'
 import { signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useParams } from 'next/navigation'
+import { getLoginPathBySource } from '@/utils/loginSource'
+import { getLocalizedUrl } from '@/utils/i18n'
 
 // Type Imports
 import type { AppDispatch } from '@/redux-store'
@@ -59,6 +61,8 @@ const UserProfileLeft = (props: Props) => {
 
   // Hooks
   const router = useRouter()
+  const params = useParams()
+  const locale = (params?.lang as string) || 'zh-CN'
 
   // States
   const [twoStepVerification, setTwoStepVerification] = useState<boolean>(true)
@@ -95,8 +99,9 @@ const UserProfileLeft = (props: Props) => {
           console.warn('signOut调用失败，但继续清理流程:', signOutError)
         }
 
-        // 确保跳转到登录页面
-        router.replace('/login')
+        // 确保跳转到登录页面（managelogin 用过的回到 managelogin）
+        const loginPath = getLoginPathBySource()
+        router.replace(getLocalizedUrl(loginPath, locale))
       }, 100) // 短暂延迟确保状态清理完成
     } catch (error) {
       console.error('退出登录错误:', error)
@@ -106,11 +111,12 @@ const UserProfileLeft = (props: Props) => {
         localStorage.removeItem('auth_tokens')
         localStorage.removeItem('userRole')
         sessionStorage.setItem('resetCaptcha', 'true')
-        router.replace('/login')
+        const loginPath = getLoginPathBySource()
+        router.replace(getLocalizedUrl(loginPath, locale))
       } catch (fallbackError) {
         console.error('退出登录fallback错误:', fallbackError)
-        // 最后的fallback：直接刷新页面到登录页
-        window.location.href = '/login'
+        const loginPath = getLoginPathBySource()
+        window.location.href = getLocalizedUrl(loginPath, locale)
       }
     }
   }

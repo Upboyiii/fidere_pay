@@ -61,6 +61,7 @@ import { getLocalizedUrl } from '@/utils/i18n'
 import { getCaptchaImg, loginApi, verify2faApi } from '@server/login'
 import type { LoginResponse } from '@server/login'
 import { TokenManager } from '@/utils/tokenManager'
+import { setLoginSource } from '@/utils/loginSource'
 import Select from '@mui/material/Select'
 import type { SelectChangeEvent } from '@mui/material/Select'
 
@@ -88,7 +89,9 @@ const createSchema = (t: (key: string, params?: Record<string, string | number>)
 
 type FormData = InferInput<ReturnType<typeof createSchema>>
 
-const Login = ({ mode }: { mode: Mode }) => {
+type LoginProps = { mode: Mode; variant?: 'user' | 'manage' }
+
+const Login = ({ mode, variant = 'user' }: LoginProps) => {
 
   // Hooks
   const dictionary = useDictionary()
@@ -288,8 +291,9 @@ const Login = ({ mode }: { mode: Mode }) => {
       toast.error(t('auth.signInFailed', { error: 'Authentication failed' }))
       return
     }
-    // 存储用户角色到 localStorage
+    // 存储用户角色和登录入口到 localStorage（退出时按入口跳回对应登录页）
     localStorage.setItem('userRole', _selectValue)
+    setLoginSource(variant)
     // 使用 TokenManager 存储到 localStorage
     TokenManager.setTokens(signInData)
     // 清除重定向标记（防止重复重定向）
@@ -391,6 +395,268 @@ const Login = ({ mode }: { mode: Mode }) => {
     }
   }
 
+  // 管理后台登录 - 专业风格，比用户端更简洁
+  if (variant === 'manage') {
+    return (
+      <div
+        className='flex bs-full min-bs-[100dvh] items-center justify-center relative overflow-hidden'
+        style={{ backgroundColor: '#e2e8f0' }}
+      >
+        <div
+          className='absolute inset-0 z-0 opacity-40'
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, rgba(0,0,0,0.04) 1px, transparent 1px),
+              linear-gradient(to bottom, rgba(0,0,0,0.04) 1px, transparent 1px)
+            `,
+            backgroundSize: '28px 28px'
+          }}
+        />
+        <div className='absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] rounded-full blur-[100px] opacity-30' style={{ background: '#94a3b8' }} />
+
+        <div className='absolute top-0 left-0 right-0 z-50 flex justify-between items-center p-6'>
+          <div className='flex items-center gap-2.5'>
+            <LogoSvg className='h-[32px] w-[32px] flex-shrink-0' />
+            <Typography variant='h6' sx={{ fontWeight: 700, color: '#1e293b', fontSize: '1.25rem', letterSpacing: '-0.02em' }}>
+              Fidere Pay
+            </Typography>
+          </div>
+          <div className='flex items-center gap-3'>
+            <LanguageDropdown />
+            <ModeDropdown />
+          </div>
+        </div>
+
+        <div className='relative z-10 w-full max-w-[420px] px-6'>
+          <div
+            className='rounded-2xl border p-8'
+            style={{
+              backgroundColor: '#ffffff',
+              borderColor: 'rgba(0,0,0,0.08)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.08)'
+            }}
+          >
+            <div className='text-center mb-8'>
+              <div className='flex items-center justify-center gap-2 mb-2'>
+                <div className='w-10 h-10 rounded-lg flex items-center justify-center' style={{ backgroundColor: 'rgba(59, 130, 246, 0.12)' }}>
+                  <i className='ri-dashboard-3-line text-xl' style={{ color: '#2563eb' }} />
+                </div>
+                <Typography variant='h5' sx={{ fontWeight: 700, color: '#1e293b', letterSpacing: '-0.02em' }}>
+                  管理后台
+                </Typography>
+              </div>
+              <Typography variant='body2' sx={{ color: '#64748b', fontSize: '0.9rem' }}>
+                请使用管理员账号登录
+              </Typography>
+            </div>
+
+            <form noValidate autoComplete='off' onSubmit={handleSubmit(onSubmit)} className='flex flex-col gap-5'>
+              <Controller
+                name='email'
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    autoFocus
+                    placeholder={t('auth.accountOrEmail')}
+                    variant='outlined'
+                    size='small'
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '10px',
+                        backgroundColor: '#f8fafc',
+                        '& fieldset': { borderColor: '#e2e8f0' },
+                        '&:hover fieldset': { borderColor: '#94a3b8' },
+                        '&.Mui-focused fieldset': { borderColor: '#2563eb', borderWidth: 1 }
+                      }
+                    }}
+                    onChange={e => { field.onChange(e.target.value); errorState !== null && setErrorState(null) }}
+                    {...((errors.email || errorState !== null) && { error: true, helperText: errors?.email?.message || errorState?.message?.[0] })}
+                  />
+                )}
+              />
+              <Controller
+                name='password'
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    fullWidth
+                    placeholder={t('auth.password')}
+                    type={isPasswordShown ? 'text' : 'password'}
+                    variant='outlined'
+                    size='small'
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        borderRadius: '10px',
+                        backgroundColor: '#f8fafc',
+                        '& fieldset': { borderColor: '#e2e8f0' },
+                        '&:hover fieldset': { borderColor: '#94a3b8' },
+                        '&.Mui-focused fieldset': { borderColor: '#2563eb', borderWidth: 1 }
+                      }
+                    }}
+                    onChange={e => { field.onChange(e.target.value); errorState !== null && setErrorState(null) }}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <InputAdornment position='end'>
+                            <IconButton size='small' onClick={handleClickShowPassword} onMouseDown={e => e.preventDefault()} sx={{ color: '#64748b' }}>
+                              <i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />
+                            </IconButton>
+                          </InputAdornment>
+                        )
+                      }
+                    }}
+                    {...(errors.password && { error: true, helperText: errors.password.message })}
+                  />
+                )}
+              />
+              <Controller
+                control={control}
+                name='totp'
+                render={({ field }) => (
+                  <Stack direction='row' alignItems='center' spacing={2}>
+                    <TextField
+                      {...field}
+                      fullWidth
+                      placeholder={t('auth.captchaPlaceholder')}
+                      variant='outlined'
+                      size='small'
+                      inputProps={{ maxLength: 6 }}
+                      error={!!errors.totp}
+                      helperText={errors.totp?.message}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '10px',
+                          backgroundColor: '#f8fafc',
+                          '& fieldset': { borderColor: '#e2e8f0' },
+                          '&:hover fieldset': { borderColor: '#94a3b8' },
+                          '&.Mui-focused fieldset': { borderColor: '#2563eb', borderWidth: 1 }
+                        }
+                      }}
+                    />
+                    <Box
+                      onClick={requestCaptchaImg}
+                      sx={{
+                        width: 110,
+                        height: 40,
+                        minWidth: 110,
+                        borderRadius: '10px',
+                        overflow: 'hidden',
+                        border: '1px solid #e2e8f0',
+                        cursor: 'pointer',
+                        backgroundColor: '#f8fafc',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        '&:hover': { borderColor: '#94a3b8' }
+                      }}
+                    >
+                      {captchaLoading ? <CircularProgress size={18} sx={{ color: '#64748b' }} /> : captchaImg?.img ? (
+                        <img src={`${captchaImg?.img}`} alt='captcha' style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      ) : (
+                        <span className='text-xs' style={{ color: '#64748b' }}>{t('auth.clickToRefresh')}</span>
+                      )}
+                    </Box>
+                  </Stack>
+                )}
+              />
+              <Button
+                fullWidth
+                variant='contained'
+                type='submit'
+                disabled={loginLoading}
+                size='medium'
+                sx={{
+                  borderRadius: '8px',
+                  py: 1.5,
+                  fontSize: '0.9rem',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  backgroundColor: '#2563eb',
+                  color: '#fff',
+                  '&:hover': { backgroundColor: '#1d4ed8' }
+                }}
+                startIcon={loginLoading ? <CircularProgress size={18} color='inherit' /> : null}
+              >
+                {loginLoading ? t('auth.loggingIn') : t('auth.loginNow')}
+              </Button>
+            </form>
+          </div>
+        </div>
+
+        <Dialog
+          open={googleAuthDialogOpen}
+          onClose={handleCloseGoogleAuthDialog}
+          maxWidth='xs'
+          fullWidth
+          slotProps={{ backdrop: { sx: { backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(6px)' } } }}
+          PaperProps={{
+            sx: {
+              borderRadius: '16px',
+              backgroundColor: '#ffffff',
+              border: '1px solid rgba(0,0,0,0.06)',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.12)'
+            }
+          }}
+        >
+          <Box sx={{ px: 4, pt: 3, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography sx={{ fontWeight: 600, color: '#1e293b' }}>{t('auth.securityVerification')}</Typography>
+            <IconButton size='small' onClick={handleCloseGoogleAuthDialog} sx={{ color: '#64748b' }}>
+              <i className='ri-close-line' />
+            </IconButton>
+          </Box>
+          <Box sx={{ p: 4, pt: 2 }}>
+            <Typography variant='body2' sx={{ mb: 3, color: '#64748b' }}>{t('auth.enterGoogleCode')}</Typography>
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center', mb: 4 }}>
+              {googleAuthCode.map((digit, index) => (
+                <Box
+                  key={index}
+                  component='input'
+                  ref={(el: HTMLInputElement | null) => { googleAuthInputRefs.current[index] = el }}
+                  type='text'
+                  inputMode='numeric'
+                  maxLength={1}
+                  value={digit}
+                  autoFocus={index === 0}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleGoogleAuthCodeChange(index, e.target.value)}
+                  onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleGoogleAuthKeyDown(index, e)}
+                  onPaste={(e: React.ClipboardEvent<HTMLInputElement>) => {
+                    e.preventDefault()
+                    const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, 6)
+                    if (pastedData.length === 6) { setGoogleAuthCode(pastedData.split('')); googleAuthInputRefs.current[5]?.focus() }
+                  }}
+                  sx={{
+                    width: 48,
+                    height: 56,
+                    border: '1px solid',
+                    borderColor: digit ? '#2563eb' : '#e2e8f0',
+                    borderRadius: '10px',
+                    fontSize: '1.5rem',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    outline: 'none',
+                    bgcolor: '#f8fafc',
+                    color: '#1e293b'
+                  }}
+                />
+              ))}
+            </Box>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button variant='text' fullWidth onClick={handleCloseGoogleAuthDialog} sx={{ color: '#64748b', textTransform: 'none' }}>{t('common.cancel')}</Button>
+              <Button variant='contained' fullWidth disabled={googleAuthCode.join('').length !== 6 || verifyLoading} onClick={handleGoogleAuthSubmit} sx={{ bgcolor: '#2563eb', textTransform: 'none' }} startIcon={verifyLoading ? <CircularProgress size={18} color='inherit' /> : null}>
+                {verifyLoading ? t('auth.verifying') : t('auth.startVerification')}
+              </Button>
+            </Box>
+          </Box>
+        </Dialog>
+      </div>
+    )
+  }
+
+  // 用户端登录 - 原有样式
   return (
     <div 
       className='flex bs-full min-bs-[100dvh] relative overflow-hidden transition-colors duration-300'

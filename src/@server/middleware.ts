@@ -21,6 +21,8 @@ export function checkAuthorization({ token, req: _req }: { token: any; req: Next
   // 公开路径，无需认证（支持语言前缀，如 /zh-CN/login）
   const publicPathPatterns = [
     '/login',
+    '/managelogin',
+    '/userlogin',
     '/register',
     '/auth', // NextAuth 路径已从 /api/auth 改为 /auth
     '/api/public',
@@ -95,6 +97,6 @@ export const config = {
      * - login, register (auth pages)
      * - images (public images)
      */
-    '/((?!auth|api/public|_next/static|_next/image|favicon.ico|front-pages|login|register|images).*)'
+    '/((?!auth|api/public|_next/static|_next/image|favicon.ico|front-pages|login|managelogin|userlogin|register|images).*)'
   ]
 }

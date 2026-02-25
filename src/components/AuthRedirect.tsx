@@ -12,6 +12,7 @@ import themeConfig, { getHomePageUrlByRole } from '@configs/themeConfig'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { getLoginPathBySource } from '@/utils/loginSource'
 
 // 使用 sessionStorage 的 key 来持久化重定向状态
 const REDIRECT_EXECUTED_KEY = 'auth_redirect_executed'
@@ -25,11 +26,12 @@ const AuthRedirect = ({ lang }: { lang: Locale }) => {
   const pathname = usePathname()
   // 使用 ref 而不是 state，避免组件重新渲染时重置
   const hasRedirectedRef = useRef(false)
-  const login = `/${lang}/login`
+  const loginPaths = [`/${lang}/login`, `/${lang}/managelogin`, `/${lang}/userlogin`]
+  const isLoginPage = loginPaths.some(p => pathname === p)
 
   useEffect(() => {
     // 如果已经在登录页，不需要重定向
-    if (pathname === login) {
+    if (isLoginPage) {
       return
     }
 
@@ -49,13 +51,14 @@ const AuthRedirect = ({ lang }: { lang: Locale }) => {
     // 根据角色设置不同的首页
     const currentHomePageUrl = getHomePageUrlByRole(userRole || '')
 
-    // 执行重定向逻辑
-    const redirectUrl = `/${lang}/login`
+    // 执行重定向逻辑（managelogin 用过的回到 managelogin，否则回到 userlogin）
+    const loginPath = getLoginPathBySource()
+    const redirectUrl = `/${lang}${loginPath}`
     const homePage = getLocalizedUrl(currentHomePageUrl, lang)
 
     let targetUrl: string
     if (pathname === homePage) {
-      targetUrl = login
+      targetUrl = redirectUrl
     } else {
       targetUrl = redirectUrl
     }
@@ -68,7 +71,7 @@ const AuthRedirect = ({ lang }: { lang: Locale }) => {
 
     // 使用router.replace进行客户端重定向
     router.replace(targetUrl)
-  }, [lang, pathname, router, login])
+  }, [lang, pathname, router])
 
   // 显示空内容，避免重定向过程中的闪烁
   return <></>

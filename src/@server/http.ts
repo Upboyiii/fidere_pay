@@ -14,6 +14,7 @@ import { SERVER_CONFIG } from '@server/config'
 // Utils Imports
 import { TokenManager } from '@/utils/tokenManager'
 import { getLocalizedUrl } from '@/utils/i18n'
+import { getLoginPathBySource } from '@/utils/loginSource'
 import { i18n } from '@configs/i18n'
 
 const LOCAL_CONFIG = {
@@ -300,10 +301,11 @@ async function request<T = any>(url: string, options: RequestOptions = {}): Prom
               callbackUrl: '/login'
             })
 
-            // 跳转到登录页面（保留语言前缀）
+            // 跳转到登录页面（managelogin 用过的回到 managelogin）
             if (typeof window !== 'undefined') {
               const locale = getCurrentLocale()
-              const loginUrl = getLocalizedUrl('/login', locale)
+              const loginPath = getLoginPathBySource()
+              const loginUrl = getLocalizedUrl(loginPath, locale)
               window.location.href = loginUrl
             }
           } catch (error) {
@@ -314,7 +316,8 @@ async function request<T = any>(url: string, options: RequestOptions = {}): Prom
                 TokenManager.clearTokens()
                 localStorage.removeItem('userRole')
                 const locale = getCurrentLocale()
-                const loginUrl = getLocalizedUrl('/login', locale)
+                const loginPath = getLoginPathBySource()
+                const loginUrl = getLocalizedUrl(loginPath, locale)
                 window.location.href = loginUrl
               } catch (fallbackError) {
                 console.error('退出登录 fallback 处理失败:', fallbackError)

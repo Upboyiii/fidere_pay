@@ -43,7 +43,7 @@ const RouteGuard = ({ children }: { children: React.ReactNode }) => {
     const routePath = pathname.replace(/^\/([a-z]{2}(-[A-Z][a-zA-Z]*)?)/, '') || '/'
 
     // 检查是否是公开路径
-    const publicPaths = ['/login', '/register', '/not-authorized', '/not-found']
+    const publicPaths = ['/login', '/managelogin', '/userlogin', '/register', '/not-authorized', '/not-found']
     if (publicPaths.some(path => routePath === path || routePath.startsWith(path))) {
       setIsAuthorized(true)
       setIsChecking(false)

@@ -37,6 +37,7 @@ import { useSettings } from '@core/hooks/useSettings'
 
 // Util Imports
 import { getLocalizedUrl } from '@/utils/i18n'
+import { getLoginPathBySource } from '@/utils/loginSource'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -139,10 +140,9 @@ const UserDropdown = () => {
       console.warn('signOut调用失败，但继续清理流程:', signOutError)
     }
 
-    // 强制跳转到登录页，确保浏览器加载最新代码
-    // 问题场景：如果用户之前打开过页面，关闭后发布了新版本，浏览器可能缓存了旧的JavaScript代码
-    // 解决方案：使用window.location.replace + 时间戳参数，强制浏览器重新加载页面，不使用任何缓存
-    const loginUrl = getLocalizedUrl('/login', locale as string)
+    // 强制跳转到登录页（managelogin 退出回到 managelogin，userlogin 退出回到 userlogin）
+    const loginPath = getLoginPathBySource()
+    const loginUrl = getLocalizedUrl(loginPath, locale as string)
     // 添加时间戳和随机参数，强制浏览器重新加载页面，不使用缓存
     const separator = loginUrl.includes('?') ? '&' : '?'
     const timestamp = Date.now()
